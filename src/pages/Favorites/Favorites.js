@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import HeaderSimplif from "../../components/HeaderSimplif/HeaderSimplif";
+import HeaderSimplifFAV from "../../components/HeaderSimplif/HeaderSimplifFAV";
 import { useFavorites } from "../../components/Favorites/FavoritesContext";
 import { useCart } from "../../components/Cart/CartContext";
 import "./Favorites.css";
@@ -16,8 +16,6 @@ const money = (n = 0, cur = "UYU") =>
 
 export default function Favorites() {
   const navigate = useNavigate();
-
-  // Traemos los favoritos desde el MISMO contexto que usa el header/drawer
   const { items, remove, clear } = useFavorites();
   const { add: addToCart } = useCart();
 
@@ -25,15 +23,15 @@ export default function Favorites() {
 
   return (
     <>
-      <HeaderSimplif />
+      <HeaderSimplifFAV />
 
       <main className="fav-wrap">
         <section className="fav-card">
           <header className="fav-header">
-            <h1>Favoritos</h1>
-            <p className="lead">
-              Guardá y compará las camisetas que más te gustan.
-            </p>
+            <div>
+              <h1>Favoritos</h1>
+              <p className="lead">Guardá y compará las camisetas que más te gustan.</p>
+            </div>
 
             {items.length > 0 && (
               <button
@@ -42,20 +40,24 @@ export default function Favorites() {
                 onClick={clear}
                 aria-label="Vaciar favoritos"
                 title="Vaciar favoritos"
-                style={{ marginLeft: "auto" }}
               >
                 Vaciar lista
               </button>
             )}
           </header>
 
-          {/* Estado vacío */}
           {items.length === 0 ? (
             <div className="fav-empty">
-              <p>No tenés camisetas en Favoritos todavía.</p>
-              <Link to="/" className="btn ghost">
-                Explorar catálogo
-              </Link>
+              <div className="empty-illus" aria-hidden>
+                <svg width="96" height="96" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 3h2l.4 2M7 13h9l3-7H6.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="9" cy="19" r="1.5" fill="currentColor"/>
+                  <circle cx="17" cy="19" r="1.5" fill="currentColor"/>
+                </svg>
+              </div>
+              <h3>Tu lista está vacía</h3>
+              <p>Agregá favoritos para verlos acá y decidir después.</p>
+              <Link to="/" className="btn ghost">Explorar catálogo</Link>
             </div>
           ) : (
             <div className="fav-grid">
@@ -75,9 +77,7 @@ export default function Favorites() {
                       <img
                         src={img}
                         alt={nombre}
-                        onError={(e) => {
-                          e.currentTarget.src = PLACEHOLDER;
-                        }}
+                        onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
                       />
                     </button>
 
@@ -119,17 +119,11 @@ export default function Favorites() {
                         Agregar al carrito
                       </button>
 
-                      <button
-                        className="btn danger"
-                        onClick={() => remove(p.id)}
-                      >
+                      <button className="btn danger" onClick={() => remove(p.id)}>
                         Quitar
                       </button>
 
-                      <button
-                        className="btn link"
-                        onClick={() => goTo(p.id)}
-                      >
+                      <button className="btn link" onClick={() => goTo(p.id)}>
                         Ver
                       </button>
                     </div>

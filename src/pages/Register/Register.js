@@ -1,4 +1,3 @@
-// src/pages/Register/Register.js
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -110,7 +109,8 @@ export default function Register() {
       const redirectTo =
         window.location.origin + "/login" + (location.search || "");
 
-      const { data, error: signErr } = await supabase.auth.signUp({
+      // ⚠️ eliminamos la variable 'data' para evitar "assigned and never used"
+      const { error: signErr } = await supabase.auth.signUp({
         email: form.email.trim(),
         password: form.password,
         options: {

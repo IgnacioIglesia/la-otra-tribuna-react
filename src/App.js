@@ -19,6 +19,9 @@ import Perfil from "./pages/Perfil/Perfil";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import MyListings from "./pages/MyListings/MyListings";
 import Publication from "./pages/Publication/Publication";
+import Checkout from "./pages/Checkout/Checkout"
+import ForgotPassword from "./pages/Auth/ForgetPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 // Drawers (SOLO componentes, sin Providers acá)
 import FavoritesDrawer from "./components/Favorites/FavoritesDrawer";
@@ -48,6 +51,8 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/my-listings" element={<MyListings />} />
         <Route path="/publication/:id" element={<Publication />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Rutas protegidas */}
         <Route element={<ProtectedRoute />}>
@@ -55,6 +60,7 @@ export default function App() {
           <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/help" element={<Help />} />
+          <Route path='/checkout' element={<Checkout />} />
         </Route>
       </Routes>
     </>

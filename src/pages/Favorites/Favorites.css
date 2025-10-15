@@ -1,229 +1,202 @@
-/* ===========================
-   Favoritos — estilos
-   =========================== */
-
-/* ——— Paleta base (podés ajustar a gusto) ——— */
-:root {
-    --bg: #f6f7f9;
-    --card: #ffffff;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --shadow: 0 6px 18px rgba(0,0,0,.06);
-  
-    --brand: #0a4e3b;
-    --brand-600: #0b5f49;
-    --danger: #dc2626;
-    --danger-600: #b91c1c;
-  }
-  
-  /* ===== WRAP / CARD ===== */
-  .fav-wrap {
-    background: var(--bg);
-    min-height: 100vh;
-    padding: 24px 0 56px;
+/* ===== Contenedor ===== */
+.fav-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
   }
   
   .fav-card {
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: var(--shadow);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(16, 24, 40, 0.06);
     padding: 18px;
-    max-width: 1080px;
-    margin: 0 auto;
   }
   
-  /* ===== HEADER (título + Vaciar lista) ===== */
   .fav-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   
   .fav-header h1 {
-    margin: 0;
     font-size: 22px;
     font-weight: 800;
+    margin: 0;
   }
   
   .fav-header .lead {
-    margin: 2px 0 0;
-    color: var(--muted);
-    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
   }
   
-  /* botón "Vaciar lista" arriba a la derecha */
-  .fav-header .btn.ghost {
-    margin-left: auto;
-  }
-  
-  /* ===== ESTADO VACÍO ===== */
+  /* ===== Estado vacío ===== */
   .fav-empty {
-    display: grid;
-    place-items: center;
-    text-align: center;
-    padding: 40px 16px;
-    border: 1px dashed var(--line);
-    border-radius: 12px;
-    color: var(--muted);
+    padding: 28px 6px 8px;
+    color: #6b7280;
   }
   
-  /* ===== GRID ===== */
+  /* ===== Listado ===== */
   .fav-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
+    gap: 12px;
   }
   
-  /* ===== ITEM (tarjeta) ===== */
+  /* Item en fila: miniatura | info | acciones */
   .fav-item {
-    display: flex;
-    flex-direction: column;
-    background: var(--card);
-    border: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 96px 1fr auto;  /* ⬅ miniatura más grande */
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
     border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    height: 100%;
+    background: #fff;
   }
   
-  /* Imagen consistente */
-  .fav-item > img {
-    width: 100%;
-    aspect-ratio: 4 / 5;     /* todas con la misma proporción */
-    object-fit: cover;       /* recorte homogéneo */
+  /* Miniatura */
+  .fav-item .thumb {
+    width: 96px;
+    height: 96px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  .fav-item .thumb img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
     display: block;
   }
   
-  /* Cuerpo */
+  /* Info */
   .fav-info {
-    padding: 10px 12px 0;
+    min-width: 0;
     display: grid;
-    gap: 6px;
+    gap: 1px;
   }
   
-  /* Título a 2 líneas como máximo */
-  .fav-info h4 {
+  .fav-title {
     margin: 0;
-    font-size: 16px;
-    font-weight: 800;
+    font-size: 20px;       /* ⬅ título más grande */
     line-height: 1.25;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-weight: 700;
   }
   
-  /* Subtítulo (club • categoría) a 1 línea */
-  .fav-info .sub {
-    color: var(--muted);
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  /* Precio */
-  .fav-info .price {
-    font-weight: 800;
-    color: var(--brand);
-    margin-top: 2px;
-  }
-  
-  /* Acciones */
-  .fav-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding: 12px;
-    margin-top: auto;          /* empuja acciones al pie de la tarjeta */
-  }
-  
-  /* El botón principal ocupa todo el ancho y los otros se ajustan */
-  .fav-actions .btn.primary {
-    flex: 1 1 auto;
-  }
-  .fav-actions .btn.link,
-  .fav-actions .btn.danger {
-    flex: 0 0 auto;
-  }
-  
-  /* ===== BOTONES GENÉRICOS ===== */
-  .btn {
-    appearance: none;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: #fff;
-    color: #111827;
-    height: 40px;
-    padding: 0 14px;
-    line-height: 40px;   /* asegura altura uniforme */
+  .linklike {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: #0f766e;
     font-weight: 700;
     cursor: pointer;
-    transition: background .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
-    user-select: none;
-    display: inline-flex;
+  }
+  .linklike:hover { text-decoration: underline; }
+  
+  .fav-sub {
+    color: #6b7280;
+    font-size: 15px;        /* ⬅ subtexto un poco más grande */
+  }
+  
+  .price {
+    font-weight: 800;
+    color: #0a4e3b;
+    font-size: 16px;        /* ⬅ precio más grande */
+  }
+  
+  /* ===== Acciones: botones en columna ===== */
+  .fav-actions {
+    display: flex;
+    flex-direction: column;  /* ⬅ vertical */
+    align-items: center;
+    align-self: center;
+    gap: 8px;
+  }
+  
+  /* Botones con tamaño consistente */
+  .fav-actions .btn,
+  .fav-actions .btn.primary,
+  .fav-actions .btn.danger,
+  .fav-actions .btn.link {
+    width: 168px;            /* ⬅ un toque más anchos */
+    height: 44px;            /* ⬅ un toque más altos */
+    display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;   /* por si es Link */
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 10px;
   }
   
-  /* Tamaño pequeño opcional */
-  .btn.sm {
-    height: 34px;
-    line-height: 34px;
-    padding: 0 12px;
-    border-radius: 8px;
+  .btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    cursor: pointer;
   }
   
-  /* Botón a lo ancho (si lo necesitás en algún lado) */
-  .btn.block { width: 100%; }
-  
-  /* Variantes */
-  .btn.primary {
-    background: var(--brand);
+  .fav-actions .btn.primary {
+    background: #0e5135;
     color: #fff;
-    border-color: var(--brand);
+    border-color: #0e5135;
   }
-  .btn.primary:hover { background: var(--brand-600); border-color: var(--brand-600); }
+  .fav-actions .btn.primary:hover { background: #0b5f49; }
   
-  .btn.ghost {
+  .fav-actions .btn.danger {
     background: #fff;
-    color: #111827;
-    border-color: var(--line);
+    color: #b91c1c;
+    border: 1.5px solid #fecaca;
   }
-  .btn.ghost:hover { background: #f8fafc; }
   
-  .btn.link {
+  .fav-actions .btn.link {
     background: #fff;
-    color: var(--brand);
-    border-color: var(--line);
+    color: #0e5135;
+    border: 1.5px solid #d1e4dc;
   }
-  .btn.link:hover { background: #f5fffb; border-color: #b7e3d7; }
   
-  .btn.danger {
+  /* Botón “Vaciar lista” del header */
+  .fav-header .btn.ghost {
+    margin-left: auto;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
     background: #fff;
-    color: var(--danger);
-    border-color: var(--line);
-  }
-  .btn.danger:hover { background: #fff5f5; border-color: #f4caca; }
-  
-  /* Focus accesible */
-  .btn:focus-visible {
-    outline: 2px solid #7dd3fc;
-    outline-offset: 2px;
+    font-weight: 700;
   }
   
-  /* ===== RESPONSIVE ===== */
+  /* ===== Responsive ===== */
   @media (max-width: 640px) {
-    .fav-header {
-      flex-wrap: wrap;
+    .fav-item {
+      grid-template-columns: 72px 1fr;  /* miniatura más chica en móvil */
+      grid-template-areas:
+        "thumb info"
+        "actions actions";
+      align-items: start;
     }
-    .fav-header .btn.ghost {
-      order: 2;
+  
+    .fav-item .thumb,
+    .fav-item .thumb img {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+    }
+  
+    .fav-actions {
+      grid-area: actions;
+      justify-content: flex-start;
+      margin-top: 8px;
+    }
+  
+    .fav-actions .btn,
+    .fav-actions .btn.primary,
+    .fav-actions .btn.danger,
+    .fav-actions .btn.link {
       width: 100%;
+      max-width: 320px;
     }
   }

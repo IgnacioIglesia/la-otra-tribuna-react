@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import "./Login.css";
 import HeaderSimplif from "../../components/HeaderSimplif/HeaderSimplif";
@@ -49,6 +49,7 @@ function Toast({ type = "success", message, duration = 2000, onClose }) {
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -57,10 +58,22 @@ export default function Login() {
   // estado del toast (null ó {type, message})
   const [toast, setToast] = useState(null);
 
+  // Forgot password modal
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSending, setForgotSending] = useState(false);
+
+  // Recovery flow (si el usuario viene del link del email)
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [newPwd1, setNewPwd1] = useState("");
+  const [newPwd2, setNewPwd2] = useState("");
+  const [savingNewPwd, setSavingNewPwd] = useState(false);
+
   const showToast = (message, type = "success") => {
     setToast({ message, type });
   };
 
+  // Manejo de login normal
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -76,8 +89,66 @@ export default function Login() {
     localStorage.setItem("user", JSON.stringify(data.user));
     showToast("Sesión iniciada correctamente");
     // damos tiempo a ver el toast y redirigimos
-    setTimeout(() => navigate("/"), 1100);
+    setTimeout(() => {
+      const params = new URLSearchParams(location.search);
+      const back = params.get("return");
+      navigate(back || "/", { replace: true });
+    }, 1100);
     setLoading(false);
+  };
+
+  // Enviar email de recuperación
+  const sendRecovery = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+      return showToast("Ingresá un email válido.", "error");
+    }
+    setForgotSending(true);
+    try {
+      const redirectTo = window.location.origin + "/login"; // volvemos al login para completar el cambio
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo,
+      });
+      if (error) throw error;
+      showToast("Te enviamos un email para restablecer la contraseña.");
+      setForgotOpen(false);
+      setForgotEmail("");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "No se pudo enviar el email.", "error");
+    } finally {
+      setForgotSending(false);
+    }
+  };
+
+  // Si volvemos del correo con "PASSWORD_RECOVERY", abrimos modal para setear nueva contraseña
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryOpen(true);
+      }
+    });
+    return () => sub?.subscription?.unsubscribe?.();
+  }, []);
+
+  const submitNewPassword = async (e) => {
+    e.preventDefault();
+    if (newPwd1.length < 6) return showToast("La contraseña debe tener al menos 6 caracteres.", "error");
+    if (newPwd1 !== newPwd2) return showToast("Las contraseñas no coinciden.", "error");
+    setSavingNewPwd(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd1 });
+      if (error) throw error;
+      showToast("¡Contraseña actualizada!");
+      setRecoveryOpen(false);
+      setNewPwd1("");
+      setNewPwd2("");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "No se pudo actualizar la contraseña.", "error");
+    } finally {
+      setSavingNewPwd(false);
+    }
   };
 
   return (
@@ -105,7 +176,17 @@ export default function Login() {
             </div>
 
             <div className="field">
-              <span>Contraseña</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Contraseña</span>
+                <button
+                  type="button"
+                  className="btn-link"
+                  onClick={() => { setForgotEmail(email || ""); setForgotOpen(true); }}
+                  style={{ fontSize: 13 }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
               <input
                 type="password"
                 placeholder="Tu contraseña"
@@ -126,6 +207,87 @@ export default function Login() {
           </div>
         </form>
       </main>
+
+      {/* Modal Forgot Password */}
+      {forgotOpen && (
+        <div className="addr-modal-backdrop" onClick={() => setForgotOpen(false)}>
+          <form
+            className="addr-modal"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={sendRecovery}
+          >
+            <div className="addr-modal-head">
+              <h3 className="addr-title">Restablecer contraseña</h3>
+              <button className="addr-close" type="button" onClick={() => setForgotOpen(false)}>✕</button>
+            </div>
+
+            <div className="addr-form">
+              <div className="f">
+                <label>Email de tu cuenta</label>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="tucorreo@ejemplo.com"
+                  required
+                />
+              </div>
+
+              <div className="addr-footer">
+                <button type="button" className="btn" onClick={() => setForgotOpen(false)}>Cancelar</button>
+                <button type="submit" className="btn primary" disabled={forgotSending}>
+                  {forgotSending ? "Enviando…" : "Enviar email"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal Recovery (llegando desde el link del mail) */}
+      {recoveryOpen && (
+        <div className="addr-modal-backdrop" onClick={() => setRecoveryOpen(false)}>
+          <form
+            className="addr-modal"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={submitNewPassword}
+          >
+            <div className="addr-modal-head">
+              <h3 className="addr-title">Definir nueva contraseña</h3>
+              <button className="addr-close" type="button" onClick={() => setRecoveryOpen(false)}>✕</button>
+            </div>
+
+            <div className="addr-form">
+              <div className="f">
+                <label>Nueva contraseña</label>
+                <input
+                  type="password"
+                  value={newPwd1}
+                  onChange={(e) => setNewPwd1(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                />
+              </div>
+              <div className="f">
+                <label>Repetir contraseña</label>
+                <input
+                  type="password"
+                  value={newPwd2}
+                  onChange={(e) => setNewPwd2(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="addr-footer">
+                <button type="button" className="btn" onClick={() => setRecoveryOpen(false)}>Cancelar</button>
+                <button type="submit" className="btn primary" disabled={savingNewPwd}>
+                  {savingNewPwd ? "Guardando…" : "Guardar contraseña"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {toast && (
         <Toast

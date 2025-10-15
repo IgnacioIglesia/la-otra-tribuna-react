@@ -594,3 +594,22 @@
     .top-inner{ gap: 12px; }
     .actions .hello{ display:none; }
   }
+
+  /* Espaciador que mantiene el ancho del botón de favoritos pero es invisible */
+.actions .pill.pill--spacer {
+    /* ocupa espacio pero no se ve ni recibe clics */
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+  
+    /* asegura el mismo tamaño que una pill “normal” */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  
+    /* ajustá estos valores si tu .pill tiene otros */
+    height: 32px;         /* mismo alto de las pills */
+    min-width: 52px;      /* ancho típico del botón con icono+badge */
+    border-radius: 9999px;
+    margin-left: 8px;     /* respeta el gap entre pills */
+  }

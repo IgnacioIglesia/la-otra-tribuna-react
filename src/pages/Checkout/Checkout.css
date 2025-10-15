@@ -1,0 +1,382 @@
+.checkout {
+    padding: 24px 0 48px;
+  }
+  
+  .ck-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+  
+  /* GRID */
+  .ck-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+  }
+  
+  .ck-col,
+  .ck-aside {
+    display: grid;
+    gap: 18px;
+  }
+  
+  /* CARD */
+  .ck-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+  }
+  
+  .ck-h2 {
+    font-size: 18px;
+    font-weight: 800;
+    margin: 2px 0 12px;
+  }
+  
+  .ck-h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 2px 0 8px;
+  }
+  
+  /* FORM LAYOUT */
+  .ck-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .ck-field {
+    display: grid;
+    gap: 6px;
+  }
+  
+  .ck-field label {
+    font-size: 13px;
+    color: #6b7280;
+  }
+  
+  .ck-field input,
+  .ck-field select,
+  .ck-field textarea {
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 12px;
+    outline: none;
+    font: inherit;
+  }
+  
+  .ck-field input:focus,
+  .ck-field select:focus,
+  .ck-field textarea:focus {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+  }
+  
+  /* Dirección */
+  .addr-line {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  .muted {
+    color: #6b7280;
+    font-size: 14px;
+  }
+  .muted.xs {
+    font-size: 12px;
+  }
+  
+  /* Pago */
+  .ck-pay-list {
+    display: grid;
+    gap: 12px;
+  }
+  
+  .pay-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .pay-head {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    cursor: pointer;
+  }
+  
+  .pay-head input {
+    accent-color: #0f766e;
+  }
+  
+  .pay-head span {
+    font-weight: 600;
+  }
+  
+  .pay-icons {
+    opacity: 0.9;
+  }
+  
+  .pay-body {
+    border-top: 1px dashed #e5e7eb;
+    padding: 12px;
+    background: #fafafa;
+  }
+  
+  .bank-box {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: grid;
+    gap: 4px;
+  }
+  
+  /* Aside - mini cart */
+  .mini-cart {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+  }
+  
+  .mini-item {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .mini-item img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .mi-info {
+    min-width: 0;
+  }
+  
+  .mi-name {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mi-sub {
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .mi-price {
+    font-weight: 700;
+    font-size: 14px;
+  }
+  
+  /* Totals */
+  .ck-totals {
+    margin-top: 10px;
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 12px;
+    display: grid;
+    gap: 6px;
+  }
+  
+  .ck-totals > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  /* Buttons */
+  .ck-submit {
+    width: 100%;
+    margin-top: 12px;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: #0a4e3b;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .ck-submit:hover {
+    background: #0b5f49;
+  }
+  
+  .ck-back {
+    width: 100%;
+    margin-top: 8px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #0a4e3b;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .ck-grid {
+      grid-template-columns: 1fr;
+    }
+    .ck-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* ===== Address Modal ===== */
+  .addr-modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, .45);
+    display: grid; place-items: center;
+    z-index: 60;
+  }
+  
+  .addr-modal {
+    width: min(720px, 92vw);
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 14px;
+  }
+  
+  .addr-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .addr-title { font-size: 18px; font-weight: 800; margin: 0; }
+  .addr-close {
+    border: 0; background: #fff; border-radius: 8px; width: 32px; height: 32px;
+    cursor: pointer; border: 1px solid #e5e7eb;
+  }
+  
+  .addr-list { display: grid; gap: 10px; margin-top: 6px; }
+  
+  .addr-item {
+    border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px;
+    display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  }
+  .addr-item.is-selected { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+  
+  .addr-radio { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; }
+  .addr-radio input { margin-top: 4px; accent-color: #0f766e; }
+  
+  /* Acciones por fila: que no se corten y altura consistente */
+  .addr-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap: nowrap;
+  }
+  .btn-sm{
+    height:32px;
+    padding:0 12px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    background:#fff;
+    font-weight:600;
+    cursor:pointer;
+    white-space: nowrap;               /* evita cortes "Edi | tar" */
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+  }
+  .btn-sm.danger { border-color: #fca5a5; color: #b91c1c; }
+  
+  /* Footer del modal: alineado y sin cortes de texto */
+  .addr-footer{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:8px;
+  }
+  .addr-footer .spacer{ flex:1; }
+  .addr-footer .btn{ white-space: nowrap; }
+  
+  .btn {
+    height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #cbd5e1;
+    background:#fff; font-weight:700; cursor:pointer;
+  }
+  .btn.primary { background:#0a4e3b; color:#fff; border-color:#0a4e3b; }
+  
+  .add-new-btn{ white-space: nowrap; }      /* “Agregar nueva” sin salto */
+  .use-address-btn{ padding: 12px 18px; font-weight: 800; }
+  
+  .btn-link {
+    border: 0; background: none; color: #0f766e; font-weight: 700; cursor: pointer;
+  }
+  .btn-link:hover { text-decoration: underline; }
+  
+  .addr-form { display: grid; gap: 12px; margin-top: 6px; }
+  .addr-form .grid-2 { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+  .addr-form .f { display: grid; gap: 6px; }
+  .addr-form input, .addr-form select {
+    border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font: inherit; outline: none;
+  }
+  .addr-form input:focus, .addr-form select:focus {
+    border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.15);
+  }
+  .checkline { display: flex; align-items: center; gap: 8px; }
+  
+  @media (max-width: 640px) {
+    .addr-form .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Selects consistentes (Safari, Chrome, Firefox) */
+.ck-field select,
+.addr-form select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  display: block;
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 40px 10px 12px; /* espacio a la derecha para el caret */
+  background-color: #fff;
+
+  /* caret (chevron) embebido */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%236b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+.ck-field select:focus,
+.addr-form select:focus {
+  outline: none;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+/* Para que nunca se corte el texto verticalmente */
+.ck-field select,
+.addr-form select {
+  line-height: 1.25;
+  min-height: 44px; /* misma altura que los inputs */
+}
+
+/* En iOS/macOS a veces el select hereda un line-height raro */
+@supports (-webkit-touch-callout: none) {
+  .ck-field select,
+  .addr-form select {
+    line-height: normal;
+  }
+}

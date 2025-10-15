@@ -1,5 +1,6 @@
 // src/components/Cart/CartDrawer.js
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Drawer from "../Drawer/Drawer";
 import { useCart } from "./CartContext";
 import "./CartDrawer.css";
@@ -14,6 +15,12 @@ function money(n) {
 
 export default function CartDrawer() {
   const { isOpen, closeCart, items, inc, dec, remove, clear, total } = useCart();
+  const navigate = useNavigate();
+
+  const goCheckout = () => {
+    closeCart();
+    navigate("/checkout"); // la página Checkout maneja sesión y validaciones
+  };
 
   return (
     <Drawer
@@ -32,7 +39,7 @@ export default function CartDrawer() {
               <button className="btn-clear" onClick={clear}>
                 Vaciar
               </button>
-              <button className="btn-primary" onClick={closeCart}>
+              <button className="btn-primary" onClick={goCheckout}>
                 Finalizar compra
               </button>
             </div>
