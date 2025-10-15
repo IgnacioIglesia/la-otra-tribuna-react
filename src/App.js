@@ -1,25 +1,62 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js
+import React from "react";
+import { Routes, Route } from "react-router-dom";
 
-function App() {
+// Páginas
+import Home from "./pages/Home/Home";
+import Login from "./pages/Login/Login";
+import Register from "./pages/Register/Register";
+import Terms from "./pages/Terms/Terms";
+import Privacy from "./pages/Privacy/Privacy";
+import Help from "./pages/Help/Help";
+import Authenticity from "./pages/Authenticity/Authenticity";
+import HowItWorks from "./pages/HowItWorks/HowItWorks";
+import Favorites from "./pages/Favorites/Favorites";
+import TrackOrder from "./pages/Track/TrackOrder";
+import Vender from "./pages/Sell/Vender";
+import Offers from "./pages/Offers/Offers";
+import Perfil from "./pages/Perfil/Perfil";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import MyListings from "./pages/MyListings/MyListings";
+import Publication from "./pages/Publication/Publication";
+
+// Drawers (SOLO componentes, sin Providers acá)
+import FavoritesDrawer from "./components/Favorites/FavoritesDrawer";
+import CartDrawer from "./components/Cart/CartDrawer";
+
+// Estilos globales
+import "./styles/main.css";
+import "./styles/mobile.css";
+import "./styles/user-widget.css";
+
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      {/* Montados una sola vez. Usan los Providers declarados en index.js */}
+      <FavoritesDrawer />
+      <CartDrawer />
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/offers" element={<Offers />} />
+        <Route path="/authenticity" element={<Authenticity />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/my-listings" element={<MyListings />} />
+        <Route path="/publication/:id" element={<Publication />} />
+
+        {/* Rutas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/sell" element={<Vender />} />
+          <Route path="/track-order" element={<TrackOrder />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/help" element={<Help />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
-
-export default App;

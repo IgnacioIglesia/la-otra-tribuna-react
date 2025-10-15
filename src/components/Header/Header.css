@@ -1,0 +1,596 @@
+/* ===== HEADER CON EFECTO GLASS COMPLETO ===== */
+
+/* Altura sincronizada entre top y subnav */
+:root { --top-h: 68px; }
+
+/* Header principal */
+#siteHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: transparent !important;
+  border-bottom: none;
+}
+
+/* Top bar (glass) */
+.top {
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 32px rgba(16, 24, 40, 0.08);
+  position: relative;
+  z-index: 1000;
+}
+
+.top-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 0;
+  min-height: var(--top-h);
+}
+
+/* Contenedor */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* Logo: grande y sin deformación */
+.brand-wrap { display: flex; align-items: center; }
+.logo {
+  height: 64px !important;
+  width: auto !important;
+  max-height: none !important;
+  object-fit: contain;
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* Buscador */
+.search {
+  flex: 1.5;
+  max-width: 500px;
+}
+.search input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* Mensaje */
+.header-messages {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* Acciones (derecha) */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botón Iniciar sesión */
+.login-btn {
+  background: #0b4d27;
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  width: 210px; 
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.login-btn:hover { background: #0a3f20; }
+.login-btn:active { background: #00361b; transform: translateY(0); }
+
+/* === “Hola, Nombre” como TEXTO PLANO (sin pastilla) === */
+.actions .user-menu { position: relative; }
+
+.actions .user-btn {
+    all: unset;                  /* 🔥 elimina TODO estilo nativo del botón */
+    display: inline-block;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    vertical-align: middle;
+  }
+  
+  .actions .user-btn .avatar {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0E5135;
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    text-align: center;
+    line-height: 26px; /* centra la inicial dentro del círculo */
+    margin-right: 6px;
+  }
+  
+  .actions .user-btn .hello {
+    font-size: 14px;
+    color: #1b1b1f;
+    font-weight: 400;
+  }
+  
+  /* Si el nombre está envuelto en <strong>, lo dejamos igual de fino */
+  .actions .user-btn .hello strong {
+    font-weight: 400;
+  }
+  
+  .actions .user-btn .chev {
+    font-size: 12px;
+    color: #475569;
+    opacity: .7;
+    margin-left: 3px;
+  }
+
+/* Accesibilidad foco (sin fondo) */
+.actions .user-btn:focus-visible {
+  outline: 2px solid #dbeafe;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Dropdown del usuario */
+.actions .user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 210px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16,24,40,.14);
+  padding: 6px;
+  z-index: 2000;
+}
+
+.actions .user-item {
+  width: 100%;
+  display: block;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  text-decoration: none;
+}
+.actions .user-item:hover { background: #f8fafc; }
+.actions .user-item.danger { color: #b91c1c; }
+.actions .user-item.danger:hover { background: #fee2e2; }
+
+/* ===== Botones circulares (favoritos, carrito, notificaciones) ===== */
+.pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 40px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  color: #1b1b1f;
+}
+.pill span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1b1b1f;
+}
+.pill:hover {
+  background: rgba(0, 66, 37, 0.06);
+  box-shadow: 0 3px 10px rgba(0, 66, 37, 0.15);
+  transform: translateY(-1px);
+}
+.pill:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 66, 37, 0.15);
+}
+.pill.active {
+  background: #004225;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 66, 37, 0.25);
+}
+
+/* ===== SUBNAV con efecto glass ===== */
+.subnav {
+  position: sticky;
+  top: var(--top-h);
+  z-index: 999;
+  background: transparent !important;
+  isolation: isolate;
+}
+.subnav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 32px rgba(16, 24, 40, 0.08);
+  z-index: -1;
+}
+.subnav-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 0;
+  min-height: 56px;
+}
+
+/* Enlaces subnav */
+.subnav-link,
+.subnav .loc-link,
+.subnav .dropdown > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1b1b1f;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+.subnav-link:hover,
+.subnav .loc-link:hover,
+.subnav .dropdown > button:hover {
+  background: rgba(0, 66, 37, 0.06);
+  color: #004225;
+}
+
+/* Icono ubicación */
+.loc-link svg {
+  opacity: 0.7;
+  color: #004225;
+}
+
+/* Dropdown categorías */
+.dropdown { position: relative; }
+.dropdown .subnav-link { padding-right: 8px; }
+.chev { font-size: 12px; opacity: 0.7; }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  min-width: 180px;
+  z-index: 20;
+}
+.dropdown-menu button {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-size: 14px;
+  color: #1b1b1f;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.dropdown-menu button:hover { background: #f8fafc; }
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .search { max-width: 280px; }
+  .header-messages { display: none; }
+  .top-inner { gap: 18px; }
+}
+@media (max-width: 640px) {
+  .search { display: none; }
+  .top-inner { gap: 12px; }
+  .actions .hello { display: none; }  /* dejar solo avatar */
+}
+
+/* ========= HEADER (glass) ========= */
+
+/* Altura sincronizada entre top y subnav */
+:root {
+    --top-h: 68px;
+    --pill-size: 36px;     /* tamaño fijo de cada pastilla (fav, carrito, notifs) */
+  }
+  
+  /* Header principal */
+  #siteHeader{
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: transparent !important;
+    border-bottom: none;
+  }
+  
+  /* Top bar con efecto glass */
+  .top{
+    background: rgba(255,255,255,.78);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid rgba(15,23,42,.06);
+    box-shadow: 0 8px 32px rgba(16,24,40,.08);
+    position: relative;
+    z-index: 1000;
+  }
+  
+  /* Contenedor y fila */
+  .container{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+  .top-inner{
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-height: var(--top-h);
+    padding: 12px 0;
+  }
+  
+  /* Logo (sin deformación) */
+  .brand-wrap{ display:flex; align-items:center; }
+  .logo{
+    height: 72px;                     /* ========= LOGO GRANDE ========= */
+    width: auto !important;
+    max-height: none !important;
+    object-fit: contain;
+    display: block;
+    flex: 0 0 auto;
+  }
+  
+  /* Buscador (un poco más chico) */
+  .search{
+    flex: 1;
+    max-width: 520px;
+  }
+  .search input{
+    width: 100%;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+  }
+  
+  /* Mensaje */
+  .header-messages{
+    font-size: 14px;
+    color: #475569;
+    white-space: nowrap;
+    flex: 0 1 auto;
+  }
+  
+  /* Acciones (user / pills) */
+  .actions{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  
+  /* ====== User: “Hola, Nombre” como texto ====== */
+  .actions .user-menu{ position: relative; }
+  
+  .actions .user-btn{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    height: auto;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+  }
+  .actions .user-btn .avatar{
+    width: 22px; height: 22px;
+    border-radius: 999px;
+    background: #0E5135; color: #fff;
+    font-weight: 700; font-size: 11px;
+    display: grid; place-items: center;
+  }
+  .actions .user-btn .hello{
+    font-size: 15px;                 /* un toque más grande y centrado óptico */
+    color: #1b1b1f;
+    white-space: nowrap;
+    line-height: 1.1;
+  }
+  .actions .user-btn .chev{
+    font-size: 12px; opacity:.7; color:#475569;
+  }
+  
+  /* Dropdown de usuario */
+  .actions .user-dropdown{
+    position: absolute;
+    right: 0; top: calc(100% + 8px);
+    min-width: 210px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(16,24,40,.14);
+    padding: 6px;
+    z-index: 2000;
+  }
+  .actions .user-item{
+    width: 100%;
+    display: block;
+    text-align: left;
+    padding: 10px 12px;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .actions .user-item:hover{ background:#f8fafc; }
+  .actions .user-item.danger{ color:#b91c1c; }
+  .actions .user-item.danger:hover{ background:#fee2e2; }
+  
+  /* ====== Pastillas (fav / carrito / notifs) ====== */
+  .pill{
+    width: var(--pill-size);
+    height: var(--pill-size);
+    min-width: var(--pill-size);
+    min-height: var(--pill-size);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    background: #fff;
+    color: #1b1b1f;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    transition: background-color .2s ease, transform .1s ease, box-shadow .2s ease;
+  }
+  .pill span{ font-size: 13px; font-weight: 500; color:#1b1b1f; }
+  .pill:hover{
+    background: rgba(0,66,37,.06);
+    box-shadow: 0 3px 10px rgba(0,66,37,.15);
+    transform: translateY(-1px);
+  }
+  .pill:active{
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0,66,37,.15);
+  }
+  
+  /* Placeholders: ocupan el ancho sin mostrar nada */
+  .pill--placeholder{
+    visibility: hidden;     /* invisible */
+    pointer-events: none;   /* no clickeable */
+  }
+  
+  /* ========= SUBNAV ========= */
+  .subnav{
+    position: sticky;
+    top: var(--top-h);
+    z-index: 999;
+    background: transparent !important;
+    isolation: isolate;
+  }
+  .subnav::before{
+    content: "";
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,.78);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    backdrop-filter: saturate(180%) blur(14px);
+    border-top: 1px solid rgba(15,23,42,.06);
+    border-bottom: 1px solid rgba(15,23,42,.06);
+    box-shadow: 0 8px 32px rgba(16,24,40,.08);
+    z-index: -1;
+  }
+  .subnav-inner{
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 56px;
+    padding: 10px 0;
+  }
+  
+  /* Enlaces Subnav */
+  .subnav-link,
+  .subnav .loc-link,
+  .subnav .dropdown > button{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1b1b1f;
+    text-decoration: none;
+    background: transparent;
+    border: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color .18s ease, background-color .18s ease;
+  }
+  .subnav-link:hover,
+  .subnav .loc-link:hover,
+  .subnav .dropdown > button:hover{
+    background: rgba(0,66,37,.06);
+    color: #004225;
+  }
+  
+  /* Ubicación */
+  .loc-link svg{ opacity:.7; color:#004225; }
+  
+  /* Dropdown categorías */
+  .dropdown{ position: relative; }
+  .dropdown .subnav-link{ padding-right: 8px; }
+  .chev{ font-size: 12px; opacity:.7; }
+  .dropdown-menu{
+    position: absolute; top: calc(100% + 10px); left: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.08);
+    padding: 6px;
+    min-width: 180px;
+    z-index: 20;
+  }
+  .dropdown-menu button{
+    width: 100%;
+    background: transparent; border: 0;
+    text-align: left; font-size: 14px; color: #1b1b1f;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .dropdown-menu button:hover{ background:#f8fafc; }
+  
+  /* Accesibilidad foco */
+  .actions .user-btn:focus-visible,
+  .subnav-link:focus-visible,
+  .loc-link:focus-visible,
+  .dropdown > button:focus-visible{
+    outline: 2px solid #dbeafe;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  
+  /* ========= Responsive ========= */
+  @media (max-width: 1100px){
+    .search{ max-width: 460px; }
+  }
+  @media (max-width: 900px){
+    .header-messages{ display:none; }
+    .search{ max-width: 420px; }
+  }
+  @media (max-width: 640px){
+    .search{ display:none; }
+    .top-inner{ gap: 12px; }
+    .actions .hello{ display:none; }
+  }

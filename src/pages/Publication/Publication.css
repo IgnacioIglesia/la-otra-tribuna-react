@@ -1,0 +1,212 @@
+/* ===== PAGE WRAP ===== */
+.pub-page {
+    padding: 24px 0 48px;
+  }
+  
+  .pub-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 18px;
+  }
+  
+  /* ===== LAYOUT ===== */
+  .pub-layout {
+    display: grid;
+    grid-template-columns: minmax(520px, 720px) 1fr; /* ancho visual para la foto */
+    gap: 24px;
+  }
+  
+  /* ===== MEDIA: tamaño consistente ===== */
+  .pub-media {
+    position: relative;
+    width: 100%;
+    height: clamp(360px, 56vw, 560px); /* alto fijo/consistente */
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0b0f13;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* que la imagen ocupe todo */
+  }
+  
+  .pub-media img.pub-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;            /* uniformidad de recorte */
+    object-position: 50% 50%;     /* foco vertical ajustable */
+    will-change: transform, object-position;
+    transition: transform 120ms ease-out, object-position 120ms ease-out;
+  }
+  
+  /* Chip favorito */
+  .fav-chip {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 8px 10px;
+    font-size: 18px;
+    box-shadow: 0 8px 18px rgba(0,0,0,.12);
+    cursor: pointer;
+  }
+  .fav-chip.is-active { color: #e11; }
+  
+  /* Controles de zoom */
+  .zoom-controls{
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    display:flex;
+    gap:8px;
+  }
+  .zoom-btn{
+    width:36px;height:36px;border-radius:999px;
+    background:#ffffffcc;
+    border:1px solid #e5e7eb;
+    display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    color:#0b0f13;
+    transition: background 120ms ease, transform 120ms ease;
+    backdrop-filter: blur(4px);
+  }
+  .zoom-btn:hover{ background:#fff; transform: translateY(-1px); }
+  .zoom-btn.reset{ width:36px; }
+  
+  /* ===== INFO COLUMNA DERECHA ===== */
+  .pub-info .back {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: #0f766e;
+    font-weight: 600;
+    margin-bottom: 8px;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+  .pub-info .back:hover { color: #064e3b; text-decoration: underline; }
+  
+  .pub-title {
+    font-weight: 800;
+    font-size: 28px;
+    line-height: 1.15;
+    margin: 6px 0 8px;
+  }
+  
+  .pub-submeta {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .pub-price {
+    font-weight: 800;
+    font-size: 28px;
+    color: #064e3b;
+    margin: 8px 0 14px;
+  }
+  
+  .pub-attrs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 16px;
+    margin: 12px 0 16px;
+  }
+  .pub-attrs .k { display:block; color:#6b7280; font-size:12px; }
+  .pub-attrs .v { font-weight:600; }
+  
+  /* ===== ACCIONES ===== */
+  .pub-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin: 6px 0 12px;
+  }
+  
+  .lot-btn-primary {
+    background: #0a4e3b;
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    height: 42px;
+    padding: 0 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .lot-btn-primary:hover { background: #0b5f49; }
+  
+  .lot-btn-secondary {
+    background: #fff;
+    color: #0a4e3b;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    height: 42px;
+    padding: 0 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  /* badges debajo de acciones */
+  .pub-badges {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    color: #6b7280;
+    font-size: 13px;
+  }
+  
+  /* Descripción */
+  .pub-desc-title{ margin: 14px 0 6px; font-weight: 700; }
+  .pub-desc{ white-space: pre-wrap; color:#111827; }
+  
+  /* ===== SELLER CARD ===== */
+  .seller-card {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  
+  .seller-left { display: flex; gap: 12px; align-items: center; }
+  
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #eceff3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  
+  .seller-name { font-weight: 700; }
+  .seller-sub  { color: #6b7280; font-size: 13px; }
+  
+  /* ===== EMPTY / ERROR ===== */
+  .empty {
+    background: #f9fafb;
+    border: 1px dashed #e5e7eb;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1100px) {
+    .pub-layout { grid-template-columns: 1fr; }
+    .pub-media { height: 440px; }
+  }
+  @media (max-width: 640px) {
+    .pub-media { height: 320px; }
+  }

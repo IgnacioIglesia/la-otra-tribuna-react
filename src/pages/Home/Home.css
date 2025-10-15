@@ -1,0 +1,173 @@
+/* ===== HERO con rotación y fade ===== */
+.hero {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    min-height: 560px;
+    overflow: hidden;
+  }
+  
+  /* capa que recibe la imagen actual (desde Home.js) */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    transition: opacity .25s ease;
+    opacity: 1;
+  }
+  .hero-bg.is-fading { opacity: 0; }
+  
+  /* oscurecido uniforme para leer el texto */
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68));
+  }
+  
+  /* contenido centrado y con poco espacio entre líneas */
+  .hero-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #fff;
+    gap: 8px;                 /* <- espacio corto entre título y subtítulo */
+    padding: 0 16px;
+  }
+  
+  .hero-title {
+    margin: 0;
+    font-size: clamp(28px, 4.4vw, 48px);
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: -.02em;
+  }
+  
+  .hero-subtitle {
+    margin: 0;
+    font-size: 16px;
+    opacity: .95;
+    text-shadow: 0 2px 6px rgba(0,0,0,.35);
+  }
+  
+  /* ===== Catálogo ===== */
+  .catalog { padding: 28px 0 48px; }
+  .catalog-head { margin-bottom: 12px; }
+  .catalog-title { font-size: 22px; margin: 0; }
+  .catalog-sub { color: #64748b; margin: 6px 0 0; }
+  
+  /* Controles */
+  .controls {
+    margin-top: 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(16,24,40,.06);
+  }
+  .control { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .control label { font-size: 14px; color: #334155; }
+  select {
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+  }
+  .filters-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  
+  /* Slider precio */
+  .price-filter { display: grid; gap: 6px; }
+  .price-filter label { font-size: 14px; color: #334155; }
+  .price-filter input[type="range"] { width: 100%; }
+  
+  /* Grid de productos */
+  .products-grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+  
+  /* Vacío */
+  .empty {
+    margin-top: 24px;
+    padding: 22px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #475569;
+    text-align: center;
+  }
+  
+  /* Responsive */
+  @media (max-width: 1100px) {
+    .products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 820px) {
+    .filters-row { grid-template-columns: 1fr 1fr; }
+    .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hero { height: 400px; }  /* un poco más alto que antes para que luzca */
+  }
+  @media (max-width: 520px) {
+    .products-grid { grid-template-columns: 1fr; }
+    .hero { height: 320px; }
+  }
+
+/* ===== Catálogo de productos ===== */
+.catalog {
+  margin-top: 40px;
+}
+
+/* Mantiene el mismo ancho de los filtros */
+.catalog .products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* base adaptable */
+  grid-template-columns: repeat(4, 1fr); /* fuerza 4 columnas */
+  gap: 24px;
+  justify-content: center;
+  align-items: start;
+}
+
+/* Ajusta los márgenes laterales para alinear con los filtros */
+.catalog .products-grid {
+  margin-top: 24px;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Tarjeta consistente */
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* Imagen con proporción fija */
+.card .media img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+}
+
+/* Asegura que todas las cards se alineen correctamente */
+.products-grid > * {
+  min-width: 0; /* evita que se rompa el grid */
+}

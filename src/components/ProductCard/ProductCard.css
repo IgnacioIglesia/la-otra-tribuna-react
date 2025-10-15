@@ -1,0 +1,215 @@
+/* ===== GRID ===== */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    align-items: stretch;
+  }
+  
+  @media (max-width: 1200px) {
+    .products-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  
+  @media (max-width: 900px) {
+    .products-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  
+  @media (max-width: 560px) {
+    .products-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* ===== CARD ===== */
+  .card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    height: 100%;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* ===== Imagen ===== */
+  .card .media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #e9ecef;
+    overflow: hidden;
+  }
+  
+  .card .media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  /* ===== Cuerpo ===== */
+  .card .body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px 12px;
+    gap: 6px;
+    min-height: 140px;
+  }
+  
+  /* ===== Texto ===== */
+  .card .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+  }
+  
+  .card .card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #111827;
+    margin: 0 0 2px 0;
+  }
+  
+  .card .card-subtitle {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  
+    color: #6b7280;
+    font-size: 11.5px;
+    line-height: 1.1;
+  }
+  
+  /* ===== Precios ===== */
+  .price {
+    text-align: right;
+  }
+  .price .old {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 11.5px;
+    margin-bottom: 2px;
+  }
+  .price .new {
+    font-weight: 700;
+    color: #064e3b;
+    font-size: 13px;
+  }
+  
+  /* ===== Botón ===== */
+  .card .btn.primary {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 15x; /* 🔥 más bajo */
+    border-radius: 6px;
+    font-size: 13px; /* más chico y limpio */
+    font-weight: 600;
+    border: none;
+    background: #064e3b;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    line-height: 1;
+    padding: 0;
+  }
+  
+  .card .btn.primary:hover {
+    background: #046c4e;
+    transform: scale(1.02);
+  }
+  
+  /* ===== Corazón ===== */
+  .fav-toggle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    padding: 4px 8px;
+    line-height: 1;
+    cursor: pointer;
+    font-size: 15px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  .fav-toggle:hover {
+    transform: scale(1.08);
+  }
+  .fav-toggle.active {
+    color: #e11;
+  }
+  
+  /* ===== Badge oferta ===== */
+  .badge-offer {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    background: #d92d20;
+    color: #fff;
+    border-radius: 999px;
+    padding: 3px 7px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .products-grid .card .meta div:first-child .title-2lines {
+    font-weight: 700 !important;
+  }
+  
+  .products-grid .card .meta div:first-child {
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* máximo 2 líneas */
+    line-clamp: 2; /* estándar */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* ===== Subtítulo (máx. 1 línea, gris claro) ===== */
+  .products-grid .card .meta .muted {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 1; /* máximo 1 línea */
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
