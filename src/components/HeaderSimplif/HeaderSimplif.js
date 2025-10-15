@@ -157,7 +157,7 @@ export default function HeaderSimplif() {
                 {menuOpen && (
                   <div className="user-dropdown" role="menu">
                     <button className="user-item" onClick={() => goAndClose("/perfil")}>Mi perfil</button>
-                    <button className="user-item" onClick={() => goAndClose("/publicaciones")}>Mis publicaciones</button>
+                    <button className="user-item" onClick={() => goAndClose("/my-listings")}>Mis publicaciones</button>
                     <button className="user-item" onClick={() => goAndClose("/pedidos")}>Mis pedidos</button>
                     <button className="user-item danger" onClick={handleLogout}>Cerrar sesión</button>
                   </div>

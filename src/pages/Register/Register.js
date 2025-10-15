@@ -10,7 +10,7 @@ export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1 = datos básicos, 2 = dirección
+  // pasos
   const [step, setStep] = useState(1);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -62,7 +62,7 @@ export default function Register() {
     return null;
   };
 
-  // Paso 1 → Paso 2 (intenta RPC email_existe, pero si falla sigue igual)
+  // Paso 1 → Paso 2 (intenta RPC email_existe; si falla, continúa igual)
   const handleNext = async (e) => {
     e.preventDefault();
     const msg = validateStep1();
@@ -98,6 +98,7 @@ export default function Register() {
     setStep(1);
   };
 
+  // REGISTRO REAL con supabase.auth.signUp
   const handleSubmit = async (e) => {
     e.preventDefault();
     const msg = validateStep2();
@@ -141,7 +142,7 @@ export default function Register() {
         return;
       }
 
-      // Si tenés confirmación por email activada, probablemente NO haya sesión
+      // Si confirmación por email está ON, no habrá sesión inmediata (es normal)
       const { data: sess } = await supabase.auth.getSession();
       if (!sess?.session) {
         setOverlay({
@@ -155,7 +156,7 @@ export default function Register() {
         return;
       }
 
-      // Sesión inmediata (confirmación OFF)
+      // Sin confirmación (ON/OFF): si hay sesión directa
       setOverlay({
         open: true,
         type: "ok",
