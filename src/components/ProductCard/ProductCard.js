@@ -30,11 +30,17 @@ export default function ProductCard({ product }) {
   };
 
   const goDetail = () => navigate(`/publication/${product.id}`);
+  const onKeyGo = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      goDetail();
+    }
+  };
 
   return (
     <article className="card">
       {/* CLIC EN IMAGEN -> DETALLE */}
-      <div className="media" onClick={goDetail} role="button" tabIndex={0}>
+      <div className="media" onClick={goDetail} role="button" tabIndex={0} onKeyDown={onKeyGo}>
         <img
           src={product.img || PLACEHOLDER}
           alt={product.nombre}

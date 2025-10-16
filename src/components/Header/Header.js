@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import { useFavorites } from "../Favorites/FavoritesContext";
 import { useCart } from "../Cart/CartContext";
+import MobileDrawer from "../Drawer/MobileDrawer";
 import "./Header.css";
 
 function getInitials(user) {
@@ -24,6 +25,19 @@ export default function Header() {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);  // << NUEVO
+
+  // Ítems del menú móvil (las mismas opciones de tu barra, SIN "Iniciar sesión")
+  const MOBILE_MENU = [
+    { label: "Categorías", href: "/categorias" },
+    { label: "Ofertas", href: "/offers" },
+    { label: "Vender", href: "/sell" },
+    { label: "Rastrear Pedido", href: "/track-order" },
+    { label: "Favoritos", href: "/favorites" },
+    { label: "Cómo funciona", href: "/how-it-works" },
+    { label: "Autenticidad", href: "/authenticity" },
+    { label: "Ayuda", href: "/help" },
+  ];
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
@@ -112,6 +126,16 @@ export default function Header() {
       {/* ===== TOP BAR ===== */}
       <div className="top">
         <div className="container top-inner">
+            {/* Hamburguesa (móvil) */}
+            <button
+              className="lot-burger lg-hidden"
+              aria-label="Abrir menú"
+              onClick={() => setDrawerOpen(true)}
+            >
+              <span className="burger-line" />
+              <span className="burger-line" />
+              <span className="burger-line" />
+            </button>
           <div className="brand-wrap">
             <a href="/" className="logo-link" aria-label="Ir al inicio">
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
@@ -264,6 +288,13 @@ export default function Header() {
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
         onLocationSelect={handleLocationSelect}
+      />
+
+      {/* Drawer móvil */}
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        items={MOBILE_MENU}
       />
     </header>
   );

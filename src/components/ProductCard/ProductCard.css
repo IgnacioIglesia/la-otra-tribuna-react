@@ -18,7 +18,7 @@
     }
   }
   
-  @media (max-width: 560px) {
+  @media (max-width: 640px) {
     .products-grid {
       grid-template-columns: 1fr;
     }
@@ -47,19 +47,23 @@
   .card .media {
     position: relative;
     width: 100%;
-    aspect-ratio: 3 / 4;
-    background: #e9ecef;
+    aspect-ratio: 4 / 5;
+    background: #f5f7f9;
     overflow: hidden;
   }
-  
+
   .card .media img {
     position: absolute;
     inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     display: block;
   }
+
   
   /* ===== Cuerpo ===== */
   .card .body {
@@ -124,7 +128,20 @@
     color: #064e3b;
     font-size: 13px;
   }
-  
+
+  /* Mapeo a tus classnames reales */
+  .price-old {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 11.5px;
+    margin-bottom: 2px;
+  }
+  .price-new {
+    font-weight: 700;
+    color: #064e3b;
+    font-size: 13px;
+  }
+
   /* ===== Botón ===== */
   .card .btn.primary {
     margin-top: auto;
@@ -132,7 +149,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 15x; /* 🔥 más bajo */
+    height: 36px;
+    padding: 0 10px;
     border-radius: 6px;
     font-size: 13px; /* más chico y limpio */
     font-weight: 600;
@@ -213,3 +231,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* Mejora de alineación del bloque meta/precio */
+  .card .meta { align-items: flex-start; gap: 10px; }
+  .card .price { min-width: 86px; }

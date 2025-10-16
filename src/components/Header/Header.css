@@ -613,3 +613,30 @@
     border-radius: 9999px;
     margin-left: 8px;     /* respeta el gap entre pills */
   }
+
+  /* ===== Helpers de visibilidad (si no los tenías) ===== */
+.lg-visible{ display:none; }     /* visible desde >=1024px */
+.md-visible{ display:none; }     /* visible desde >=768px */
+.lg-hidden{ display:inline-flex; }
+.md-hidden{ display:inline-flex; }
+
+@media (min-width: 768px){
+  .md-visible{ display:block; }
+  .md-hidden{ display:none; }
+}
+@media (min-width: 1024px){
+  .lg-visible{ display:block; }
+  .lg-hidden{ display:none; }
+}
+
+/* ===== Botón hamburguesa ===== */
+.lot-burger{
+  display:inline-flex; flex-direction:column; gap:4px;
+  background:none; border:none; padding:6px;
+}
+.burger-line{ width:22px; height:2px; background:#222; display:block; border-radius:2px; }
+
+/* En móvil, la subnav la ocultamos (está dentro del Drawer) */
+@media (max-width: 1023px){
+  .subnav{ display:none; }
+}

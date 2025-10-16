@@ -1,0 +1,12 @@
+.catalog{ padding:16px; }
+
+/* 1 col en mobile, 2 en tablet, 4 en desktop */
+.catalog-grid{
+  display:grid; gap:16px; grid-template-columns: 1fr;
+}
+@media (min-width:768px){
+  .catalog-grid{ grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width:1024px){
+  .catalog-grid{ grid-template-columns: repeat(4, 1fr); }
+}
