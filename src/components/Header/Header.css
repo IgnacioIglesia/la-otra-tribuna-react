@@ -88,7 +88,9 @@
   border-radius: 999px;
   border: none;
   cursor: pointer;
-  width: 210px; 
+  width: auto;        /* ✅ deja que se adapte */
+  max-width: 60vw;    /* ✅ nunca más grande que el viewport */
+  white-space: nowrap;
   text-decoration: none;
   transition: background 0.2s ease;
 }
@@ -640,3 +642,16 @@
 @media (max-width: 1023px){
   .subnav{ display:none; }
 }
+
+@media (max-width: 380px){
+  .login-btn{ padding: 8px 12px; font-size: 14px; }
+}
+
+/* Aseguramos que el header esté sobre el contenido */
+#siteHeader{ z-index: 5000; }
+
+/* El drawer por encima del header y del hero */
+.lot-drawer{ position: fixed; inset: 0; z-index: 6000; }
+.drawer-backdrop{ z-index: 6000; }
+.drawer-panel{ z-index: 6001; }
+
