@@ -676,3 +676,62 @@
 .drawer-backdrop{ z-index: 6000; }
 .drawer-panel{ z-index: 6001; }
 
+/* ===== Header compacto en móvil ===== */
+@media (max-width: 640px) {
+  .top-inner {
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  /* Logo más chico */
+  .logo {
+    height: 48px !important;
+  }
+
+  /* Ocultamos el texto "Hola, nombre" para dejar solo avatar + flecha */
+  .actions .user-btn .hello {
+    display: none !important;
+  }
+
+  /* Mantenemos el avatar visible y centrado */
+  .actions .user-btn .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* Aseguramos que el logo y el menú queden en la misma línea */
+  .lot-burger {
+    order: 1;
+  }
+
+  .brand-wrap {
+    order: 2;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .actions {
+    order: 3;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-wrap {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .lot-burger {
+    margin-right: auto;
+  }
+
+  .actions {
+    margin-left: auto;
+  }
+}
+

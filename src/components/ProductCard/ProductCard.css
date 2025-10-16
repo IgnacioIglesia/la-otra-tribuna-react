@@ -1,28 +1,6 @@
 /* ===== GRID ===== */
 /* ===== GRID ===== */
-/* Mobile-first: 1 col (móvil), 2 cols (tablet), 4 cols (desktop) */
-.products-grid {
-  display: grid;
-  gap: 20px;
-  align-items: stretch;
-  grid-template-columns: 1fr;              /* ✅ Móvil: una por fila */
-}
 
-/* ✅ Tablet: dos por fila */
-@media (min-width: 768px) {
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-/* ✅ Desktop: cuatro por fila */
-@media (min-width: 1024px) {
-  .products-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-  
   /* ===== CARD ===== */
   .card {
     display: flex;
