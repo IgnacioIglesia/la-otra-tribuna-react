@@ -163,7 +163,9 @@ export default function Header() {
                     <strong>
                       {user?.user_metadata?.nombre && user?.user_metadata?.apellido
                         ? `${user.user_metadata.nombre} ${user.user_metadata.apellido}`
-                        : displayName || "Usuario"}
+                        : user?.user_metadata?.nombre ||
+                          user?.user_metadata?.full_name ||
+                          (user?.email ? user.email.split("@")[0] : "Usuario")}
                     </strong>
                   </span>
                   <span className="chev">▾</span>

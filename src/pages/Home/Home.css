@@ -5,7 +5,9 @@
     margin-left: calc(-50vw + 50%);
     min-height: 560px;
     overflow: hidden;
+    margin-bottom: 60px;
   }
+  
   
   /* capa que recibe la imagen actual (desde Home.js) */
   .hero-bg {
@@ -56,8 +58,12 @@
   }
   
   /* ===== Catálogo ===== */
-  .catalog { padding: 28px 0 48px; }
-  .catalog-head { margin-bottom: 12px; }
+  .catalog {
+    margin-top: 40px;          /* separación respecto al hero */
+    padding: 28px 0 48px;      /* espacio interno */
+    background-color: #fff;    /* ✅ transición limpia desde el hero */
+    border-radius: 16px;
+  }
   .catalog-title { font-size: 22px; margin: 0; }
   .catalog-sub { color: #64748b; margin: 6px 0 0; }
   
@@ -91,13 +97,7 @@
   .price-filter label { font-size: 14px; color: #334155; }
   .price-filter input[type="range"] { width: 100%; }
   
-  /* Grid de productos */
-  .products-grid {
-    margin-top: 18px;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 18px;
-  }
+  
   
   /* Vacío */
   .empty {
@@ -109,19 +109,6 @@
     text-align: center;
   }
   
-  /* Responsive */
-  @media (max-width: 1100px) {
-    .products-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  }
-  @media (max-width: 820px) {
-    .filters-row { grid-template-columns: 1fr 1fr; }
-    .products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .hero { height: 400px; }  /* un poco más alto que antes para que luzca */
-  }
-  @media (max-width: 520px) {
-    .products-grid { grid-template-columns: 1fr; }
-    .hero { height: 320px; }
-  }
 
 /* ===== Catálogo de productos ===== */
 .catalog {
@@ -129,14 +116,23 @@
 }
 
 /* Mantiene el mismo ancho de los filtros */
-.catalog .products-grid {
+/* Grilla: 1 en móvil, 2 en tablet, 4 en desktop */
+.catalog .products-grid{
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* base adaptable */
-  grid-template-columns: repeat(4, 1fr); /* fuerza 4 columnas */
-  gap: 24px;
-  justify-content: center;
+  gap: 18px;
   align-items: start;
+  margin-top: 24px;
+  grid-template-columns: 1fr;                 /* 📱 móvil */
 }
+
+@media (min-width: 768px){
+  .catalog .products-grid{ grid-template-columns: repeat(2, 1fr); } /* 🧪 tablet */
+}
+
+@media (min-width: 1024px){
+  .catalog .products-grid{ grid-template-columns: repeat(4, 1fr); } /* 🖥️ desktop */
+}
+
 
 /* Ajusta los márgenes laterales para alinear con los filtros */
 .catalog .products-grid {

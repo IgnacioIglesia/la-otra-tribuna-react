@@ -77,7 +77,20 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
+@media (max-width: 480px) {
+  .actions {
+    gap: 6px;
+  }
+
+  .pill {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
 
 /* Botón Iniciar sesión */
 .login-btn {
@@ -350,16 +363,24 @@
     margin: 0 auto;
     padding: 0 16px;
   }
-  .top-inner{
+  .top-inner {
     display: flex;
     align-items: center;
-    gap: 18px;
+    justify-content: space-between; /* ✅ distribuye logo y acciones a los extremos */
+    gap: 16px;
     min-height: var(--top-h);
     padding: 12px 0;
+    flex-wrap: wrap; /* ✅ evita que se corte en móvil */
   }
+
   
   /* Logo (sin deformación) */
-  .brand-wrap{ display:flex; align-items:center; }
+  .brand-wrap {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;   /* ✅ evita que se achique o desaparezca */
+    z-index: 2000;    /* ✅ queda por encima del resto */
+  }
   .logo{
     height: 72px;                     /* ========= LOGO GRANDE ========= */
     width: auto !important;
