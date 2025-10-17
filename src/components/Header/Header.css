@@ -749,3 +749,68 @@
   }
 }
 
+/* ===== Header ultra-compacto en móvil ===== */
+@media (max-width: 640px) {
+
+  /* fila del header más baja y con distribución correcta */
+  .top-inner{
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  /* logo más chico, no se achica ni se tapa */
+  .brand-wrap{ flex-shrink: 0; }
+  .logo{ height: 48px !important; }
+
+  /* === Perfil reducido: solo círculo con iniciales + chevron === */
+  .actions .user-btn{
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: none;
+  }
+  .actions .user-btn .hello{        /* oculta “Hola, Nombre” en móvil */
+    display: none !important;
+  }
+  .actions .user-btn .avatar{
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    line-height: 28px;
+  }
+  .actions .user-btn .chev{
+    font-size: 12px;
+    margin: 0;
+  }
+
+  /* pills más chicas para que entren todas */
+  .actions{
+    gap: 6px;
+    flex-wrap: nowrap;              /* no hacer wrap, mantener una línea */
+  }
+  .pill{
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 14px;
+  }
+
+  /* orden en una línea: ☰  [LOGO CENTRADO]  [avatar/íconos] */
+  .lot-burger{ order: 1; }
+  .brand-wrap{ order: 2; flex: 1; display:flex; justify-content:center; }
+  .actions{ order: 3; }
+
+  /* botón “Iniciar sesión” también compacto en móvil */
+  .login-btn{
+    padding: 6px 10px;
+    font-size: 14px;
+    max-width: 52vw;
+  }
+}
+
