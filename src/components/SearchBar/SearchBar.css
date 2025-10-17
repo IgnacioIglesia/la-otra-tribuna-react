@@ -1,0 +1,542 @@
+/* src/components/SearchBar/SearchBar.css */
+.search-bar {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    height: 44px; /* Altura más compacta */
+  }
+  
+  /* Contenedor del input - MÁS COMPACTO */
+  .search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px; /* Bordes menos redondeados */
+    padding: 6px 14px; /* Padding más compacto */
+    transition: all 0.2s ease; /* Transición más rápida */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    height: 44px; /* Altura fija más pequeña */
+    box-sizing: border-box;
+  }
+  
+  .search-input-container:hover {
+    border-color: #9ca3af;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Icono de búsqueda - MÁS PEQUEÑO */
+  .search-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+    width: 16px; /* Tamaño fijo más pequeño */
+    height: 16px;
+  }
+  
+  .search-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* Input principal */
+  .search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 15px; /* Texto ligeramente más pequeño */
+    font-weight: 400;
+    color: #111827;
+    padding: 6px 0;
+    line-height: 1.4;
+    height: 100%;
+  }
+  
+  .search-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+    font-size: 15px;
+  }
+  
+  .search-input:focus {
+    outline: none;
+  }
+  
+  /* Botón de limpiar - MÁS PEQUEÑO */
+  .clear-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 28px; /* Más pequeño */
+    height: 28px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 6px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  
+  .clear-button:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  
+  .clear-button svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Panel de resultados - POSICIÓN FIJA SIN DESPLAZAR */
+  .search-results-panel {
+    position: absolute;
+    top: calc(100% + 2px); /* Pequeño espacio del borde */
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #0b4d27;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    max-height: 400px; /* Altura máxima reducida */
+    overflow-y: auto;
+    z-index: 1001; /* Mayor z-index para estar sobre todo */
+    animation: slideDown 0.15s ease-out; /* Animación más rápida */
+    margin-top: 0;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Elementos de resultado - MÁS COMPACTOS */
+  .search-result-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 14px; /* Padding más compacto */
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 10px;
+    box-sizing: border-box;
+  }
+  
+  .search-result-item:last-of-type {
+    border-bottom: none;
+  }
+  
+  .search-result-item:hover {
+    background: #f8fafc;
+  }
+  
+  .search-result-item.active {
+    background: #f0f9f0;
+    border-left: 3px solid #0b4d27;
+  }
+  
+  /* Imagen del resultado - MÁS PEQUEÑA */
+  .result-image {
+    flex-shrink: 0;
+    width: 50px; /* Más pequeña */
+    height: 50px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .result-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+  }
+  
+  .search-result-item:hover .result-image img {
+    transform: scale(1.05);
+  }
+  
+  /* Información del resultado */
+  .result-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  
+  .result-title {
+    font-size: 14px; /* Texto más compacto */
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.3;
+    margin-bottom: 1px;
+  }
+  
+  .highlight-match {
+    background: linear-gradient(120deg, #e8f5e8 0%, #d0edd0 100%);
+    color: #0b4d27;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+  
+  .result-details {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  
+  .club, .category {
+    font-size: 12px; /* Texto más pequeño */
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .separator {
+    color: #d1d5db;
+    font-size: 10px;
+  }
+  
+  .offer-badge {
+    background: linear-gradient(135deg, #dc2626, #ef4444);
+    color: white;
+    font-size: 10px; /* Más pequeño */
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  /* Precio */
+  .result-price {
+    font-size: 14px; /* Más pequeño */
+    font-weight: 700;
+    color: #0b4d27;
+    white-space: nowrap;
+    margin-left: auto;
+    padding-left: 10px;
+  }
+  
+  /* Estados de carga y sin resultados - MÁS COMPACTOS */
+  .loading-state, .no-results {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 14px;
+    color: #6b7280;
+    border: none;
+    background: transparent;
+    width: 100%;
+    cursor: default;
+  }
+  
+  .loading-state:hover, .no-results:hover {
+    background: transparent;
+  }
+  
+  .loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e5e7eb;
+    border-left: 2px solid #0b4d27;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .no-results-icon {
+    font-size: 20px;
+  }
+  
+  .no-results-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .no-results-text p {
+    margin: 0;
+    font-size: 13px;
+  }
+  
+  /* Header de resultados - MÁS COMPACTO */
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f3f4f6;
+    background: #f8fafc;
+  }
+  
+  .results-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  
+  /* Historial - MÁS COMPACTO */
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  
+  .history-icon {
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+  }
+  
+  .history-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .history-term {
+    flex: 1;
+    text-align: left;
+    color: #374151;
+    font-size: 13px;
+  }
+  
+  .remove-history-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+  
+  .history-item:hover .remove-history-btn {
+    opacity: 1;
+  }
+  
+  .remove-history-btn:hover {
+    color: #ef4444;
+    background: #fef2f2;
+  }
+  
+  .remove-history-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .clear-history-btn {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+  }
+  
+  .clear-history-btn:hover {
+    color: #ef4444;
+    background: #fef2f2;
+  }
+  
+  /* Botones de acción */
+  .view-all-button, .view-all-results-button {
+    background: transparent;
+    border: none;
+    color: #0b4d27;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 13px;
+    padding: 0;
+    text-align: left;
+  }
+  
+  .view-all-button:hover, .view-all-results-button:hover {
+    color: #08381d;
+    text-decoration: underline;
+  }
+  
+  /* Footer de resultados - MÁS COMPACTO */
+  .search-footer {
+    padding: 12px 14px;
+    border-top: 1px solid #f3f4f6;
+    background: #f8fafc;
+  }
+  
+  .view-all-results-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+  
+  .view-all-results-button:hover {
+    background: #0b4d27;
+    color: white;
+    border-color: #0b4d27;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(11, 77, 39, 0.3);
+  }
+  
+  .view-all-results-button svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Scrollbar personalizado */
+  .search-results-panel::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .search-results-panel::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 0 0 10px 0;
+  }
+  
+  .search-results-panel::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+  
+  .search-results-panel::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .search-bar {
+      height: 42px;
+      max-width: 100%;
+    }
+    
+    .search-input-container {
+      height: 42px;
+      padding: 5px 12px;
+    }
+    
+    .search-input {
+      font-size: 14px;
+    }
+  
+    .search-input::placeholder {
+      font-size: 14px;
+    }
+    
+    .result-image {
+      width: 45px;
+      height: 45px;
+    }
+    
+    .result-title {
+      font-size: 13px;
+    }
+    
+    .result-price {
+      font-size: 13px;
+    }
+  }
+  
+  /* Mejoras de accesibilidad */
+  @media (prefers-reduced-motion: reduce) {
+    .search-results-panel,
+    .search-result-item,
+    .clear-button,
+    .view-all-results-button {
+      animation: none;
+      transition: none;
+    }
+  }
+  
+  /* Focus visible para navegación con teclado */
+  .search-result-item:focus-visible {
+    outline: 2px solid #0b4d27;
+    outline-offset: -2px;
+  }
+  
+  /* Eliminar estilos por defecto de botones */
+  .search-bar button {
+    border: none;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  
+  /* Asegurar que no haya cruces o recuadros no deseados */
+  .search-bar * {
+    box-sizing: border-box;
+  }
+  
+  .search-bar button::-moz-focus-inner {
+    border: 0;
+  }
+  
+  .search-bar input[type="search"]::-webkit-search-cancel-button {
+    display: none;
+  }
+  
+  .search-bar input[type="search"]::-ms-clear {
+    display: none;
+  }
+  
+  /* IMPORTANTE: Asegurar que el header no se desplace */
+  .header {
+    position: relative; /* O sticky/fixed según tu implementación */
+    z-index: 1000;
+  }
+  
+  /* Prevenir scroll del body cuando el dropdown está abierto */
+  body.search-dropdown-open {
+    overflow: hidden;
+  }
