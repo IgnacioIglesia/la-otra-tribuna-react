@@ -735,3 +735,17 @@
   }
 }
 
+/* Burger: solo móvil */
+.lot-burger{ display: none; }              /* oculto por defecto (>= 1024px) */
+
+@media (max-width: 1023px){
+  .lot-burger{
+    display: inline-flex !important;       /* visible en móvil/tablet */
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: 0;
+    padding: 6px;
+  }
+}
+
