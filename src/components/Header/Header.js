@@ -7,6 +7,7 @@ import { useFavorites } from "../Favorites/FavoritesContext";
 import { useCart } from "../Cart/CartContext";
 import MobileDrawer from "../Drawer/MobileDrawer";
 import "./Header.css";
+import SearchBar from "../SearchBar/SearchBar";
 
 function getInitials(user) {
   if (!user) return "U";
@@ -143,10 +144,8 @@ export default function Header() {
           </div>
 
           <div className="search">
-            <input type="search" placeholder="Buscar club o país…" autoComplete="off" />
+            <SearchBar />
           </div>
-
-          <div className="header-messages">Publicá, comprá y vendé.</div>
 
           <div className="actions">
             {user ? (

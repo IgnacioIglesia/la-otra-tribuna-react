@@ -22,6 +22,7 @@ import Publication from "./pages/Publication/Publication";
 import Checkout from "./pages/Checkout/Checkout"
 import ForgotPassword from "./pages/Auth/ForgetPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
+import SearchPage from "./components/SearchBar/SearchPage";
 
 // Drawers (SOLO componentes, sin Providers acá)
 import FavoritesDrawer from "./components/Favorites/FavoritesDrawer";
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/publication/:id" element={<Publication />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/search" element={<SearchPage />} />
 
         {/* Rutas protegidas */}
         <Route element={<ProtectedRoute />}>
