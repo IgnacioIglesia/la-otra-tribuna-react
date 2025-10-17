@@ -113,6 +113,14 @@ export default function Header() {
     const { departamento, ciudad } = selectedLocation;
     return `Enviar a ${ciudad}, ${departamento}`;
     };
+  
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setDrawerOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // ===== Categorías dropdown (mock) =====
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
