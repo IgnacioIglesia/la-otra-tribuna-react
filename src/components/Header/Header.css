@@ -393,7 +393,7 @@
   /* Buscador (un poco más chico) */
   .search{
     flex: 1;
-    max-width: 520px;
+    max-width: 400px;
   }
   .search input{
     width: 100%;
