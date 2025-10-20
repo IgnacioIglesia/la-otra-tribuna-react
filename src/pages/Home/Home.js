@@ -1,4 +1,3 @@
-// src/pages/Home/Home.js
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header/Header";
 import ProductCard from "../../components/ProductCard/ProductCard";
@@ -39,6 +38,7 @@ export default function Home() {
       i.src = src;
     });
   }, []);
+
   useEffect(() => {
     const id = setInterval(() => {
       setFading(true);
@@ -69,7 +69,7 @@ export default function Home() {
 
         if (error) throw error;
 
-        // 1) Excluir ofertas: permiso_oferta === true && 30+ días
+        // Excluir ofertas viejas
         const filtered = (data || []).filter((pub) => {
           const enOferta =
             pub.permiso_oferta === true &&
@@ -77,7 +77,7 @@ export default function Home() {
           return !enOferta;
         });
 
-        // 2) Mapear a shape del Card (con imagen)
+        // Mapear a formato para el card
         const mapped = filtered.map((pub) => {
           const primeraFoto =
             pub.foto && pub.foto.length ? pub.foto[0].url : null;
@@ -87,7 +87,6 @@ export default function Home() {
             nombre: pub.titulo,
             precio: Number(pub.precio) || 0,
             club: pub.club || "",
-            pais: "Uruguay",
             categoria: mapCategoria(pub.categoria),
             img: primeraFoto || PLACEHOLDER,
           };
@@ -95,7 +94,8 @@ export default function Home() {
 
         if (alive) setRows(mapped);
       } catch (e) {
-        if (alive) setError(e.message || "No se pudieron cargar las publicaciones.");
+        if (alive)
+          setError(e.message || "No se pudieron cargar las publicaciones.");
       } finally {
         if (alive) setLoading(false);
       }
@@ -106,43 +106,53 @@ export default function Home() {
   }, []);
 
   /* ===== Filtros + orden ===== */
-  const [club, setClub] = useState("Todos");
-  const [pais, setPais] = useState("Todos");
-  const [categoria, setCategoria] = useState("Todas");
-  const [maxPrecio, setMaxPrecio] = useState(0);
   const [sort, setSort] = useState("default");
+  const [categoria, setCategoria] = useState("Todas");
+  const [equipo, setEquipo] = useState("Todos");
+  const [maxPrecio, setMaxPrecio] = useState(0);
 
+  // Máximo absoluto para slider
   const maxPrecioAbsoluto = useMemo(() => {
     if (!rows.length) return 0;
     return Math.max(...rows.map((p) => Number(p.precio) || 0));
   }, [rows]);
 
-  // inicializar slider cuando llegan datos
+  // Inicializa slider cuando llegan datos
   useEffect(() => {
     if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto);
   }, [maxPrecioAbsoluto]);
 
-  const clubs = useMemo(
-    () => ["Todos", ...Array.from(new Set(rows.map((p) => p.club).filter(Boolean)))],
-    [rows]
-  );
-
-  const paises = useMemo(
-    () => ["Todos", ...Array.from(new Set(rows.map((p) => p.pais).filter(Boolean)))],
-    [rows]
-  );
-
+  // Categorías disponibles
   const categorias = useMemo(
-    () => ["Todas", ...Array.from(new Set(rows.map((p) => p.categoria).filter(Boolean)))],
+    () => [
+      "Todas",
+      ...Array.from(new Set(rows.map((p) => p.categoria).filter(Boolean))),
+    ],
     [rows]
   );
 
+  // Equipos según categoría elegida
+  const equipos = useMemo(() => {
+    const base =
+      categoria === "Todas"
+        ? []
+        : rows.filter((p) => p.categoria === categoria);
+    const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
+    return ["Todos", ...list];
+  }, [rows, categoria]);
+
+  // Reset equipo si cambia categoría
+  useEffect(() => {
+    if (!equipos.includes(equipo)) setEquipo("Todos");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoria, equipos.join("|")]);
+
+  // Filtrado de productos
   const productos = useMemo(() => {
     let list = rows.filter(
       (p) =>
-        (club === "Todos" || p.club === club) &&
-        (pais === "Todos" || p.pais === pais) &&
         (categoria === "Todas" || p.categoria === categoria) &&
+        (equipo === "Todos" || p.club === equipo) &&
         (Number(p.precio) || 0) <= (Number(maxPrecio) || 0)
     );
 
@@ -160,7 +170,12 @@ export default function Home() {
         break;
     }
     return list;
-  }, [rows, club, pais, categoria, maxPrecio, sort]);
+  }, [rows, categoria, equipo, maxPrecio, sort]);
+
+  // % del slider para el relleno verde
+  const pct = maxPrecioAbsoluto
+    ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
+    : 0;
 
   /* ===== Render ===== */
   return (
@@ -182,7 +197,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== Catálogo ===== */}
+      {/* ===== CATÁLOGO ===== */}
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Catálogo</h2>
@@ -191,7 +206,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Controles */}
+        {/* ===== CONTROLES ===== */}
         <div className="controls">
           <div className="control">
             <label htmlFor="orden">Ordenar por:</label>
@@ -208,30 +223,7 @@ export default function Home() {
           </div>
 
           <div className="filters-row">
-            <select
-              value={club}
-              onChange={(e) => setClub(e.target.value)}
-              aria-label="Filtrar por club"
-            >
-              {clubs.map((c) => (
-                <option key={c} value={c}>
-                  {c === "Todos" ? "Todos los clubes" : c}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={pais}
-              onChange={(e) => setPais(e.target.value)}
-              aria-label="Filtrar por país"
-            >
-              {paises.map((p) => (
-                <option key={p} value={p}>
-                  {p === "Todos" ? "Todos los países" : p}
-                </option>
-              ))}
-            </select>
-
+            {/* Categoría */}
             <select
               value={categoria}
               onChange={(e) => setCategoria(e.target.value)}
@@ -244,10 +236,30 @@ export default function Home() {
               ))}
             </select>
 
+            {/* Equipo / Club / Selección (bloqueado si no hay categoría) */}
+            <select
+              value={categoria === "Todas" ? "" : equipo}
+              onChange={(e) => setEquipo(e.target.value)}
+              aria-label="Filtrar por equipo"
+              disabled={categoria === "Todas"}
+            >
+              {categoria === "Todas" ? (
+                <option value="" disabled>
+                  Elegí una categoría primero
+                </option>
+              ) : (
+                equipos.map((eq) => (
+                  <option key={eq} value={eq}>
+                    {eq === "Todos" ? "Todos los equipos" : eq}
+                  </option>
+                ))
+              )}
+            </select>
+
+            {/* Precio máx con barra funcional */}
             <div className="price-filter">
               <label htmlFor="precio">
-                Precio máx.: $
-                {Number(maxPrecio || 0).toLocaleString("es-UY")}
+                Precio máx.: ${Number(maxPrecio || 0).toLocaleString("es-UY")}
               </label>
               <input
                 id="precio"
@@ -257,12 +269,13 @@ export default function Home() {
                 step="50"
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
+                style={{ "--pct": `${pct}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Estados */}
+        {/* ===== ESTADOS ===== */}
         {loading && <div className="empty">Cargando publicaciones…</div>}
         {error && !loading && (
           <div className="empty" role="alert">
@@ -270,7 +283,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Grid */}
+        {/* ===== GRILLA ===== */}
         {!loading && !error && (
           <>
             {productos.length === 0 ? (

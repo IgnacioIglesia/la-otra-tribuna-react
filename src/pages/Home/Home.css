@@ -1,139 +1,221 @@
-/* ===== HERO con rotación y fade ===== */
+/* ================================
+   HERO con rotación y fade
+==================================*/
 .hero {
-    position: relative;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    min-height: 560px;
-    overflow: hidden;
-    margin-bottom: 60px;
-  }
-  
-  
-  /* capa que recibe la imagen actual (desde Home.js) */
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    transition: opacity .25s ease;
-    opacity: 1;
-  }
-  .hero-bg.is-fading { opacity: 0; }
-  
-  /* oscurecido uniforme para leer el texto */
-  .hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68));
-  }
-  
-  /* contenido centrado y con poco espacio entre líneas */
-  .hero-content {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: #fff;
-    gap: 8px;                 /* <- espacio corto entre título y subtítulo */
-    padding: 0 16px;
-  }
-  
-  .hero-title {
-    margin: 0;
-    font-size: clamp(28px, 4.4vw, 48px);
-    line-height: 1.05;
-    font-weight: 800;
-    letter-spacing: -.02em;
-  }
-  
-  .hero-subtitle {
-    margin: 0;
-    font-size: 16px;
-    opacity: .95;
-    text-shadow: 0 2px 6px rgba(0,0,0,.35);
-  }
-  
-  /* ===== Catálogo ===== */
-  .catalog {
-    margin-top: 40px;          /* separación respecto al hero */
-    padding: 28px 0 48px;      /* espacio interno */
-    background-color: #fff;    /* ✅ transición limpia desde el hero */
-    border-radius: 16px;
-  }
-  .catalog-title { font-size: 22px; margin: 0; }
-  .catalog-sub { color: #64748b; margin: 6px 0 0; }
-  
-  /* Controles */
-  .controls {
-    margin-top: 12px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 6px 20px rgba(16,24,40,.06);
-  }
-  .control { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .control label { font-size: 14px; color: #334155; }
-  select {
-    height: 36px;
-    padding: 0 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fff;
-    font-size: 14px;
-  }
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  min-height: 560px;
+  overflow: hidden;
+  margin-bottom: 60px;
+}
+
+/* capa que recibe la imagen actual (desde Home.js) */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: opacity .25s ease;
+  opacity: 1;
+}
+.hero-bg.is-fading { opacity: 0; }
+
+/* oscurecido uniforme para leer el texto */
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68));
+}
+
+/* contenido centrado y compacto */
+.hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: clamp(28px, 4.4vw, 48px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: 16px;
+  opacity: .95;
+  text-shadow: 0 2px 6px rgba(0,0,0,.35);
+}
+
+
+/* ================================
+   Catálogo
+==================================*/
+.catalog {
+  margin-top: 40px;
+  padding: 28px 0 48px;
+  background-color: #fff;
+  border-radius: 16px;
+}
+
+.catalog-title { font-size: 22px; margin: 0; }
+.catalog-sub { color: #64748b; margin: 6px 0 0; }
+
+.catalog-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ================================
+   Controles / Filtros (una línea)
+==================================*/
+.controls {
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 14px 16px;                  /* más compacto */
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.08);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;                           /* se redujo el gap */
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.control label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* Fila de filtros a la derecha del “ordenar” */
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;                           /* menos espacio */
+  flex: 1;
+  min-width: 360px;
+  justify-content: flex-end;
+}
+
+/* Selects */
+select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+select:focus {
+  border-color: #0e5135;
+  box-shadow: 0 0 0 3px rgba(14, 81, 53, .15);
+}
+
+/* Precio máx */
+.price-filter {
+  display: grid;
+  gap: 6px;
+  min-width: 280px;
+}
+.price-filter label {
+  font-size: 14px;
+  color: #334155;
+  white-space: nowrap;
+}
+
+/* Slider con progreso usando --pct */
+.price-filter input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  outline: none;
+  background:
+    linear-gradient(#0e5135, #0e5135) 0/ var(--pct, 0%) 100% no-repeat,
+    #e5e7eb;                           /* track restante */
+}
+
+/* Track (compat) */
+.price-filter input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 999px; background: transparent;
+}
+.price-filter input[type="range"]::-moz-range-track {
+  height: 6px; border-radius: 999px; background: transparent;
+}
+
+/* Thumb */
+.price-filter input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  margin-top: -6px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #0e5135;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(16,24,40,.2);
+  cursor: pointer;
+}
+.price-filter input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #0e5135;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 12px rgba(16,24,40,.2);
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .controls { align-items: stretch; }
   .filters-row {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+    justify-content: stretch;
+    flex-wrap: wrap;
   }
-  
-  /* Slider precio */
-  .price-filter { display: grid; gap: 6px; }
-  .price-filter label { font-size: 14px; color: #334155; }
-  .price-filter input[type="range"] { width: 100%; }
-  
-  
-  
-  /* Vacío */
-  .empty {
-    margin-top: 24px;
-    padding: 22px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 12px;
-    color: #475569;
-    text-align: center;
-  }
-  
+  .price-filter { width: 100%; }
+}
 
-/* ===== Catálogo ===== */
-.catalog { margin-top: 40px; }
-
-/* ===== Grilla responsive (mobile-first) ===== */
+/* ================================
+   Grilla de productos
+==================================*/
 .catalog .products-grid{
   display: grid;
-  grid-template-columns: 1fr;         /* 📱 móvil: 1 por fila */
+  grid-template-columns: 1fr;         /* móvil: 1 por fila */
   gap: 16px;
   align-items: start;
   margin-top: 16px;
 }
-
 @media (min-width: 600px){
-  .catalog .products-grid{ grid-template-columns: repeat(2, 1fr); }  /* tablet: 2 */
+  .catalog .products-grid{ grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (min-width: 1024px){
-  .catalog .products-grid{ grid-template-columns: repeat(4, 1fr); }  /* desktop: 4 */
+  .catalog .products-grid{ grid-template-columns: repeat(4, 1fr); }
 }
-
-/* evita que una card ensanche la grilla */
 .catalog .products-grid > *{ min-width: 0; }
 
-/* ===== Card: sólo detalles que afectan al layout en grilla ===== */
+/* ===== Card: detalles de layout ===== */
 .card{
   height: 100%;
   display: flex;
@@ -144,11 +226,21 @@
 }
 .card:hover{ transform: translateY(-3px); }
 
-/* Imagen con proporción fija (mejor contain para camisetas) */
+/* Imagen con proporción fija (no recorta la camiseta) */
 .card .media{ aspect-ratio: 4 / 5; }
 .card .media img{
   width: 100%;
   height: 100%;
-  object-fit: contain;   /* 👈 que no recorte la camiseta */
+  object-fit: contain;
   display: block;
+}
+
+/* Vacío */
+.empty {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  text-align: center;
 }
