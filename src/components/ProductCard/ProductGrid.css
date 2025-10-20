@@ -1,12 +1,30 @@
-.catalog{ padding:16px; }
+/* Grilla mobile-first */
+.products-grid{
+  display: grid;
+  grid-template-columns: 1fr;            /* 📱 móvil: 1 por fila */
+  gap: 16px;
+  align-items: start;
+  margin-top: 16px;
+}
 
-/* 1 col en mobile, 2 en tablet, 4 en desktop */
-.catalog-grid{
-  display:grid; gap:16px; grid-template-columns: 1fr;
+@media (min-width: 600px){
+  .products-grid{ grid-template-columns: repeat(2, 1fr); } /* tablet: 2 */
 }
-@media (min-width:768px){
-  .catalog-grid{ grid-template-columns: repeat(2, 1fr); }
+
+@media (min-width: 1024px){
+  .products-grid{ grid-template-columns: repeat(4, 1fr); } /* desktop: 4 */
 }
-@media (min-width:1024px){
-  .catalog-grid{ grid-template-columns: repeat(4, 1fr); }
+
+/* evita que algo ensanche las cards */
+.products-grid > * { min-width: 0; }
+
+/* (opcional) estilo del estado vacío */
+.empty-state{
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  text-align: center;
 }
+
