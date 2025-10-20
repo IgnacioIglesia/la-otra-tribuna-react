@@ -1,8 +1,9 @@
-import React from 'react';
-import ProductCard from '../ProductCard/ProductCard';
-import './ProductCard.css';
+// src/components/ProductGrid/ProductGrid.jsx
+import React from "react";
+import ProductCard from "../ProductCard/ProductCard";
+import "./ProductGrid.css";                // ✅ CSS correcto de la grilla
 
-function ProductGrid({ products }) {
+export default function ProductGrid({ products = [] }) {
   if (!products || products.length === 0) {
     return (
       <div className="empty-state">
@@ -12,12 +13,10 @@ function ProductGrid({ products }) {
   }
 
   return (
-    <div className="grid" id="grid">
-      {products.map(product => (
-        <ProductCard key={product.id} product={product} />
+    <section className="products-grid">   {/* ✅ nombre de clase consistente */}
+      {products.map((p) => (
+        <ProductCard key={p.id} product={p} />
       ))}
-    </div>
+    </section>
   );
 }
-
-export default ProductGrid;

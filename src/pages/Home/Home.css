@@ -110,61 +110,45 @@
   }
   
 
-/* ===== Catálogo de productos ===== */
-.catalog {
-  margin-top: 40px;
-}
+/* ===== Catálogo ===== */
+.catalog { margin-top: 40px; }
 
-/* Mantiene el mismo ancho de los filtros */
-/* Grilla: 1 en móvil, 2 en tablet, 4 en desktop */
+/* ===== Grilla responsive (mobile-first) ===== */
 .catalog .products-grid{
   display: grid;
-  gap: 18px;
+  grid-template-columns: 1fr;         /* 📱 móvil: 1 por fila */
+  gap: 16px;
   align-items: start;
-  margin-top: 24px;
-  grid-template-columns: 1fr;                 /* 📱 móvil */
+  margin-top: 16px;
 }
 
-@media (min-width: 768px){
-  .catalog .products-grid{ grid-template-columns: repeat(2, 1fr); } /* 🧪 tablet */
+@media (min-width: 600px){
+  .catalog .products-grid{ grid-template-columns: repeat(2, 1fr); }  /* tablet: 2 */
 }
 
 @media (min-width: 1024px){
-  .catalog .products-grid{ grid-template-columns: repeat(4, 1fr); } /* 🖥️ desktop */
+  .catalog .products-grid{ grid-template-columns: repeat(4, 1fr); }  /* desktop: 4 */
 }
 
+/* evita que una card ensanche la grilla */
+.catalog .products-grid > *{ min-width: 0; }
 
-
-/* Ajusta los márgenes laterales para alinear con los filtros */
-.catalog .products-grid {
-  margin-top: 24px;
-  margin-left: 0;
-  margin-right: 0;
-}
-
-/* Tarjeta consistente */
-.card {
+/* ===== Card: sólo detalles que afectan al layout en grilla ===== */
+.card{
   height: 100%;
   display: flex;
   flex-direction: column;
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.2s ease;
+  transition: transform .2s ease;
 }
+.card:hover{ transform: translateY(-3px); }
 
-.card:hover {
-  transform: translateY(-3px);
-}
-
-/* Imagen con proporción fija */
-.card .media img {
+/* Imagen con proporción fija (mejor contain para camisetas) */
+.card .media{ aspect-ratio: 4 / 5; }
+.card .media img{
   width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;   /* 👈 que no recorte la camiseta */
   display: block;
-}
-
-/* Asegura que todas las cards se alineen correctamente */
-.products-grid > * {
-  min-width: 0; /* evita que se rompa el grid */
 }
