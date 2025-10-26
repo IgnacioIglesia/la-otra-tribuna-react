@@ -1,0 +1,139 @@
+/* ============================================
+   TOAST NOTIFICATION CUSTOM - Versión compacta
+   ============================================ */
+
+   .lot-toast-container {
+    position: fixed !important;
+    top: 80px !important;
+    right: 20px !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    pointer-events: none !important;
+  }
+  
+  .lot-toast {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 280px !important;
+    max-width: 350px !important;
+    padding: 12px 14px !important;
+    background: white !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    pointer-events: auto !important;
+    animation: lot-toast-slide-in 0.3s ease-out !important;
+    border-left: 4px solid !important;
+  }
+  
+  @keyframes lot-toast-slide-in {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  .lot-toast-icon {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .lot-toast-message {
+    flex: 1 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #111827 !important;
+    line-height: 1.4 !important;
+  }
+  
+  .lot-toast-close {
+    background: none !important;
+    border: none !important;
+    color: #9ca3af !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .lot-toast-close:hover {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+  }
+  
+  /* Success - Verde */
+  .lot-toast-success {
+    border-left-color: #10b981 !important;
+  }
+  
+  .lot-toast-success .lot-toast-icon {
+    background: #d1fae5 !important;
+    color: #059669 !important;
+  }
+  
+  /* Error - Rojo */
+  .lot-toast-error {
+    border-left-color: #ef4444 !important;
+  }
+  
+  .lot-toast-error .lot-toast-icon {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+  }
+  
+  /* Warning - Amarillo */
+  .lot-toast-warning {
+    border-left-color: #f59e0b !important;
+  }
+  
+  .lot-toast-warning .lot-toast-icon {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+  }
+  
+  /* Info - Azul */
+  .lot-toast-info {
+    border-left-color: #3b82f6 !important;
+  }
+  
+  .lot-toast-info .lot-toast-icon {
+    background: #dbeafe !important;
+    color: #2563eb !important;
+  }
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .lot-toast-container {
+      top: 70px !important;
+      right: 12px !important;
+      left: 12px !important;
+      align-items: stretch !important;
+    }
+  
+    .lot-toast {
+      min-width: auto !important;
+      max-width: none !important;
+      width: 100% !important;
+    }
+  }

@@ -5,43 +5,153 @@ import "./Login.css";
 import HeaderSimplif from "../../components/HeaderSimplif/HeaderSimplif";
 
 /** Toast bonito y reusable dentro del mismo archivo */
-function Toast({ type = "success", message, duration = 2000, onClose }) {
-  // autocierre
-  useEffect(() => {
-    const id = setTimeout(() => onClose?.(), duration);
-    return () => clearTimeout(id);
+function Toast({ type = "success", message, duration = 3500, onClose }) {
+  const ref = React.useRef(null);
+  const startX = React.useRef(0);
+  const currentX = React.useRef(0);
+  const swiping = React.useRef(false);
+  const timeoutId = React.useRef(null);
+
+  // Auto-cierre
+  React.useEffect(() => {
+    timeoutId.current = setTimeout(() => onClose?.(), duration);
+    return () => clearTimeout(timeoutId.current);
   }, [duration, onClose]);
 
+  // Pausar al hover/focus
+  const pause = () => {
+    if (!ref.current) return;
+    ref.current.style.setProperty("--paused", 1);
+    clearTimeout(timeoutId.current);
+  };
+  const resume = () => {
+    if (!ref.current) return;
+    ref.current.style.setProperty("--paused", 0);
+    timeoutId.current = setTimeout(() => onClose?.(), duration);
+  };
+
+  // Escape para cerrar
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // Swipe para cerrar (mobile)
+  const onTouchStart = (e) => {
+    startX.current = e.touches[0].clientX;
+    currentX.current = startX.current;
+    swiping.current = true;
+    pause();
+  };
+  const onTouchMove = (e) => {
+    if (!swiping.current || !ref.current) return;
+    currentX.current = e.touches[0].clientX;
+    const delta = currentX.current - startX.current;
+    ref.current.style.transform = `translateX(${delta}px)`;
+    ref.current.style.opacity = `${Math.max(0.4, 1 - Math.abs(delta) / 200)}`;
+  };
+  const onTouchEnd = () => {
+    if (!swiping.current || !ref.current) return;
+    const delta = currentX.current - startX.current;
+    swiping.current = false;
+    if (Math.abs(delta) > 100) {
+      // Dismiss
+      ref.current.style.transform = `translateX(${delta > 0 ? 500 : -500}px)`;
+      ref.current.style.opacity = "0";
+      setTimeout(() => onClose?.(), 150);
+    } else {
+      // Volver a lugar y reanudar
+      ref.current.style.transform = "";
+      ref.current.style.opacity = "";
+      resume();
+    }
+  };
+
+  const titles = {
+    success: "Acceso correcto",
+    error: "No pudimos iniciar sesión",
+    info: "Información",
+    warning: "Atención",
+  };
+
   return (
-    <div className="toast-container" aria-live="polite" aria-atomic="true">
-      <div className={`toast-card ${type}`} role="status">
-        <div className="toast-icon" aria-hidden="true">
-          {type === "success" ? (
+    <div className="toast-container-pro" aria-live="polite" aria-atomic="true">
+      <div
+        ref={ref}
+        className={`toast-card-pro ${type}`}
+        role="status"
+        onMouseEnter={pause}
+        onMouseLeave={resume}
+        onFocus={pause}
+        onBlur={resume}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        style={{ "--duration": `${duration}ms` }}
+      >
+        <div className="toast-side-accent" aria-hidden="true" />
+        <div className="toast-icon-pro" aria-hidden="true">
+          {type === "success" && (
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-              <circle cx="12" cy="12" r="11" stroke="#16a34a" strokeWidth="1.5" fill="#22c55e33" />
-              <path d="M7 12.5l3.2 3.2L17 9" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M7 12.5l3 3L17 9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          ) : (
+          )}
+          {type === "error" && (
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-              <circle cx="12" cy="12" r="11" stroke="#dc2626" strokeWidth="1.5" fill="#fecaca66" />
-              <path d="M8 8l8 8M16 8l-8 8" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          )}
+          {type === "info" && (
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M12 7.5v.5M12 10v6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          )}
+          {type === "warning" && (
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M12 3l9 16H3l9-16z" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M12 9v4M12 16.5v.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
             </svg>
           )}
         </div>
 
-        <div className="toast-content">
-          <div className="toast-title">
-            {type === "success" ? "Acceso correcto" : "No pudimos iniciar sesión"}
-          </div>
-          <div className="toast-message">{message}</div>
+        <div className="toast-content-pro">
+          <div className="toast-title-pro">{titles[type] || titles.info}</div>
+          <div className="toast-message-pro">{message}</div>
         </div>
 
-        <button className="toast-close" onClick={onClose} aria-label="Cerrar">×</button>
+        <button className="toast-close-pro" onClick={onClose} aria-label="Cerrar">×</button>
 
-        {/* Barra de progreso */}
-        <div className="toast-progress">
+        <div className="toast-progress-pro" aria-hidden="true">
           <span className="bar" />
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Modal de confirmación de ingreso */
+function SuccessModal({ onClose, userName }) {
+  useEffect(() => {
+    const timer = setTimeout(() => onClose(), 2000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="success-modal-backdrop" onClick={onClose}>
+      <div className="success-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="success-icon">
+          <svg viewBox="0 0 52 52" width="52" height="52">
+            <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" strokeWidth="2"/>
+            <path fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" 
+                  d="M14 27l7.695 7.695L38 18"/>
+          </svg>
+        </div>
+        <h3 className="success-title">¡Bienvenido{userName ? `, ${userName}` : ''}!</h3>
+        <p className="success-message">Has ingresado correctamente</p>
       </div>
     </div>
   );
@@ -51,19 +161,18 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail]       = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // estado del toast (null ó {type, message})
   const [toast, setToast] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [userName, setUserName] = useState("");
 
-  // Forgot password modal
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSending, setForgotSending] = useState(false);
 
-  // Recovery flow (si el usuario viene del link del email)
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [newPwd1, setNewPwd1] = useState("");
   const [newPwd2, setNewPwd2] = useState("");
@@ -73,7 +182,6 @@ export default function Login() {
     setToast({ message, type });
   };
 
-  // Manejo de login normal
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -86,18 +194,44 @@ export default function Login() {
       return;
     }
 
+    // Obtener nombre del usuario
+    try {
+      const { data: userData } = await supabase
+        .from("usuario")
+        .select("nombre")
+        .eq("email", email)
+        .maybeSingle();
+      
+      if (userData?.nombre) {
+        setUserName(userData.nombre);
+      }
+    } catch (err) {
+      console.error("Error obteniendo nombre:", err);
+    }
+
     localStorage.setItem("user", JSON.stringify(data.user));
-    showToast("Sesión iniciada correctamente");
-    // damos tiempo a ver el toast y redirigimos
+    
+    // ✅ Mostrar solo el modal de éxito
+    setShowSuccessModal(true);
+    
+    // ✅ Agregar SOLO notificación al dropdown (sin toast visual)
+    window.dispatchEvent(new CustomEvent("new-notification", {
+      detail: {
+        tipo: "info",
+        titulo: "Inicio de sesión exitoso",
+        mensaje: "Has ingresado correctamente a tu cuenta",
+      }
+    }));
+
     setTimeout(() => {
       const params = new URLSearchParams(location.search);
       const back = params.get("return");
       navigate(back || "/", { replace: true });
-    }, 1100);
+    }, 2200);
+    
     setLoading(false);
   };
 
-  // Enviar email de recuperación
   const sendRecovery = async (e) => {
     e.preventDefault();
     if (!forgotEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
@@ -105,7 +239,7 @@ export default function Login() {
     }
     setForgotSending(true);
     try {
-      const redirectTo = window.location.origin + "/login"; // volvemos al login para completar el cambio
+      const redirectTo = window.location.origin + "/login";
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
         redirectTo,
       });
@@ -121,7 +255,6 @@ export default function Login() {
     }
   };
 
-  // Si volvemos del correo con "PASSWORD_RECOVERY", abrimos modal para setear nueva contraseña
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
@@ -208,7 +341,6 @@ export default function Login() {
         </form>
       </main>
 
-      {/* Modal Forgot Password */}
       {forgotOpen && (
         <div className="addr-modal-backdrop" onClick={() => setForgotOpen(false)}>
           <form
@@ -244,7 +376,6 @@ export default function Login() {
         </div>
       )}
 
-      {/* Modal Recovery (llegando desde el link del mail) */}
       {recoveryOpen && (
         <div className="addr-modal-backdrop" onClick={() => setRecoveryOpen(false)}>
           <form
@@ -287,6 +418,13 @@ export default function Login() {
             </div>
           </form>
         </div>
+      )}
+
+      {showSuccessModal && (
+        <SuccessModal 
+          onClose={() => setShowSuccessModal(false)} 
+          userName={userName}
+        />
       )}
 
       {toast && (

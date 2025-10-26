@@ -23,8 +23,13 @@ import Checkout from "./pages/Checkout/Checkout"
 import ForgotPassword from "./pages/Auth/ForgetPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import SearchPage from "./components/SearchBar/SearchPage";
+import SellerPublications from "./pages/SellerPublications/SellerPublications";
+import AdminPanel from "./pages/Admin/AdminPanel";
+import AdminRoute from "./pages/Admin/AdminRoute";
+import MisVentas from "./pages/MySeller/mis-ventas";
+import MisPedidos from "./pages/MyOrders/mis-pedidos";
 
-// Drawers (SOLO componentes, sin Providers acá)
+// Drawers
 import FavoritesDrawer from "./components/Favorites/FavoritesDrawer";
 import CartDrawer from "./components/Cart/CartDrawer";
 
@@ -36,7 +41,7 @@ import "./styles/user-widget.css";
 export default function App() {
   return (
     <>
-      {/* Montados una sola vez. Usan los Providers declarados en index.js */}
+      {/* Drawers montados una sola vez */}
       <FavoritesDrawer />
       <CartDrawer />
 
@@ -55,6 +60,9 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/seller/:id" element={<SellerPublications />} />
+        <Route path="/my-sales" element={<MisVentas />} />
+        <Route path="/my-orders" element={<MisPedidos />} />
 
         {/* Rutas protegidas */}
         <Route element={<ProtectedRoute />}>
@@ -63,6 +71,10 @@ export default function App() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/help" element={<Help />} />
           <Route path='/checkout' element={<Checkout />} />
+        </Route>
+
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminPanel />} />
         </Route>
       </Routes>
     </>

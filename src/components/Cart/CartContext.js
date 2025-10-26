@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useToast } from "../ToastNotification/ToastNotification"; // ✅ Importar useToast
 
 const CartContext = createContext(null);
 const LS_KEY = "lot_cart_v1";
 
 export function CartProvider({ children }) {
-  // Drawer único
+  const { showToast } = useToast(); // ✅ Usar toast
   const [isOpen, setIsOpen] = useState(false);
 
-  // Items: { id, nombre, precio, img, club, categoria, qty }
   const [items, setItems] = useState(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -17,17 +17,23 @@ export function CartProvider({ children }) {
     }
   });
 
-  // Persistencia
   useEffect(() => {
     try { localStorage.setItem(LS_KEY, JSON.stringify(items)); } catch {}
   }, [items]);
 
-  // Helpers
   const findIndex = (id) => items.findIndex((it) => it.id === id);
   const isInCart = (id) => items.some((it) => it.id === id);
+  
+  const getQty = (id) => {
+    const item = items.find((it) => it.id === id);
+    return item ? item.qty : 0;
+  };
 
   const add = (product, qty = 1) => {
     if (!product?.id) return;
+    
+    const wasInCart = items.some((p) => p.id === product.id);
+    
     setItems((prev) => {
       const idx = prev.findIndex((p) => p.id === product.id);
       if (idx >= 0) {
@@ -37,6 +43,25 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, qty }];
     });
+    
+    // ✅ Toast visual
+    if (wasInCart) {
+      showToast(`Se agregó otra unidad de "${product.nombre}"`, "success");
+    } else {
+      showToast(`"${product.nombre}" fue agregado al carrito`, "success");
+    }
+    
+    // Notificación del dropdown (solo la primera vez)
+    if (!wasInCart) {
+      window.dispatchEvent(new CustomEvent("new-notification", {
+        detail: {
+          tipo: "carrito",
+          titulo: "Producto agregado al carrito",
+          mensaje: `"${product.nombre}"`,
+          id_publicacion: product.id,
+        }
+      }));
+    }
   };
 
   const remove = (id) => setItems((prev) => prev.filter((p) => p.id !== id));
@@ -81,17 +106,13 @@ export function CartProvider({ children }) {
   const count = items.reduce((acc, it) => acc + it.qty, 0);
   const total = items.reduce((acc, it) => acc + (Number(it.precio) || 0) * it.qty, 0);
 
-  // Drawer controls
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
 
   const value = useMemo(() => ({
-    // drawer
     isOpen, openCart, closeCart,
-    // data
     items, count, total,
-    // ops
-    add, remove, setQty, inc, dec, clear, isInCart
+    add, remove, setQty, inc, dec, clear, isInCart, getQty
   }), [isOpen, items]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

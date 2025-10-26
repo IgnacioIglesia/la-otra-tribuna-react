@@ -4,7 +4,7 @@ import ProductCard from "../../components/ProductCard/ProductCard";
 import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
 
-/* ===== Util ===== */
+/* ===== Utils ===== */
 function daysFrom(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return Infinity;
@@ -18,14 +18,7 @@ function mapCategoria(cat) {
 }
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
-
-/* Imágenes del hero (en /public/assets/) */
-const HERO_IMGS = [
-  "/assets/fondo1.png",
-  "/assets/fondo2.png",
-  "/assets/fondo3.png",
-  "/assets/fondo4.png",
-];
+const HERO_IMGS = ["/assets/fondo1.png", "/assets/fondo2.png", "/assets/fondo3.png", "/assets/fondo4.png"];
 
 export default function Home() {
   /* ===== Hero rotativo ===== */
@@ -38,7 +31,7 @@ export default function Home() {
       i.src = src;
     });
   }, []);
-
+  
   useEffect(() => {
     const id = setInterval(() => {
       setFading(true);
@@ -48,6 +41,15 @@ export default function Home() {
       }, 250);
     }, 7000);
     return () => clearInterval(id);
+  }, []);
+
+  /* ===== Session (para detectar dueños) ===== */
+  const [currentUserId, setCurrentUserId] = useState(null);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      setCurrentUserId(data?.user?.id ?? null);
+    })();
   }, []);
 
   /* ===== Data ===== */
@@ -63,13 +65,28 @@ export default function Home() {
       try {
         const { data, error } = await supabase
           .from("publicacion")
-          .select("*, foto (url, orden_foto)")
-          .eq("estado", "Activa")
-          .order("id_publicacion", { ascending: false });
+          .select(`
+            id_publicacion,
+            id_usuario,
+            titulo,
+            precio,
+            categoria,
+            coleccion,
+            estado,
+            permiso_oferta,
+            fecha_publicacion,
+            club,
+            stock,
+            foto ( url, orden_foto )
+          `)
+          .eq("estado", "Activa")      // ✅ Solo publicaciones activas
+          .gt("stock", 0)               // ✅ Solo con stock disponible
+          .order("id_publicacion", { ascending: false })
+          .order("orden_foto", { foreignTable: "foto", ascending: true });
 
         if (error) throw error;
 
-        // Excluir ofertas viejas
+        // Filtrar según tu regla de oferta
         const filtered = (data || []).filter((pub) => {
           const enOferta =
             pub.permiso_oferta === true &&
@@ -77,25 +94,27 @@ export default function Home() {
           return !enOferta;
         });
 
-        // Mapear a formato para el card
+        // Mapear a modelo de tarjeta
         const mapped = filtered.map((pub) => {
           const primeraFoto =
-            pub.foto && pub.foto.length ? pub.foto[0].url : null;
-
+            Array.isArray(pub.foto) && pub.foto.length ? pub.foto[0].url : null;
           return {
             id: pub.id_publicacion,
+            ownerId: pub.id_usuario,
+            isOwn: !!currentUserId && pub.id_usuario === currentUserId,
             nombre: pub.titulo,
             precio: Number(pub.precio) || 0,
             club: pub.club || "",
             categoria: mapCategoria(pub.categoria),
+            coleccion: pub.coleccion || "Actual",
+            stock: Number(pub.stock) || 0,
             img: primeraFoto || PLACEHOLDER,
           };
         });
 
         if (alive) setRows(mapped);
       } catch (e) {
-        if (alive)
-          setError(e.message || "No se pudieron cargar las publicaciones.");
+        if (alive) setError(e.message || "No se pudieron cargar las publicaciones.");
       } finally {
         if (alive) setLoading(false);
       }
@@ -103,54 +122,64 @@ export default function Home() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [currentUserId]);
 
-  /* ===== Filtros + orden ===== */
+  /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
+
+  const [coleccion, setColeccion] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [equipo, setEquipo] = useState("Todos");
-  const [maxPrecio, setMaxPrecio] = useState(0);
 
-  // Máximo absoluto para slider
+  useEffect(() => {
+    if (!coleccion || coleccion === "Todas") {
+      setCategoria("Todas");
+      setEquipo("Todos");
+    }
+  }, [coleccion]);
+
+  const hasColeccion = !!coleccion && coleccion !== "Todas";
+  const hasCategoria = hasColeccion && categoria !== "Todas";
+
+  const categorias = useMemo(() => {
+    const base = hasColeccion ? rows.filter(p => p.coleccion === coleccion) : rows;
+    const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
+    const allowed = ["Club", "Selección"];
+    const filtered = unique.filter((c) => allowed.includes(c));
+    return ["Todas", ...filtered];
+  }, [rows, hasColeccion, coleccion]);
+
+  const equipos = useMemo(() => {
+    const baseColeccion = hasColeccion ? rows.filter(p => p.coleccion === coleccion) : rows;
+    if (categoria === "Todas") {
+      const list = Array.from(new Set(baseColeccion.map((p) => p.club).filter(Boolean)));
+      return ["Todos", ...list];
+    }
+    const base = baseColeccion.filter((p) => p.categoria === categoria);
+    const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
+    return ["Todos", ...list];
+  }, [rows, hasColeccion, coleccion, categoria]);
+
+  // Precio máximo
+  const [maxPrecio, setMaxPrecio] = useState(0);
   const maxPrecioAbsoluto = useMemo(() => {
     if (!rows.length) return 0;
     return Math.max(...rows.map((p) => Number(p.precio) || 0));
   }, [rows]);
 
-  // Inicializa slider cuando llegan datos
   useEffect(() => {
     if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto);
   }, [maxPrecioAbsoluto]);
 
-  // Categorías disponibles
-  const categorias = useMemo(
-    () => [
-      "Todas",
-      ...Array.from(new Set(rows.map((p) => p.categoria).filter(Boolean))),
-    ],
-    [rows]
-  );
+  const pct = maxPrecioAbsoluto
+    ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
+    : 0;
 
-  // Equipos según categoría elegida
-  const equipos = useMemo(() => {
-    const base =
-      categoria === "Todas"
-        ? []
-        : rows.filter((p) => p.categoria === categoria);
-    const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
-    return ["Todos", ...list];
-  }, [rows, categoria]);
-
-  // Reset equipo si cambia categoría
-  useEffect(() => {
-    if (!equipos.includes(equipo)) setEquipo("Todos");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoria, equipos.join("|")]);
-
-  // Filtrado de productos
+  // Filtrado principal
   const productos = useMemo(() => {
     let list = rows.filter(
       (p) =>
+        (coleccion === "" || coleccion === "Todas" || p.coleccion === coleccion) &&
         (categoria === "Todas" || p.categoria === categoria) &&
         (equipo === "Todos" || p.club === equipo) &&
         (Number(p.precio) || 0) <= (Number(maxPrecio) || 0)
@@ -170,19 +199,14 @@ export default function Home() {
         break;
     }
     return list;
-  }, [rows, categoria, equipo, maxPrecio, sort]);
-
-  // % del slider para el relleno verde
-  const pct = maxPrecioAbsoluto
-    ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
-    : 0;
+  }, [rows, coleccion, categoria, equipo, maxPrecio, sort]);
 
   /* ===== Render ===== */
   return (
     <>
       <Header />
 
-      {/* ===== HERO ===== */}
+      {/* HERO */}
       <section className="hero">
         <div
           className={`hero-bg ${fading ? "is-fading" : ""}`}
@@ -197,7 +221,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== CATÁLOGO ===== */}
+      {/* CATÁLOGO */}
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Catálogo</h2>
@@ -206,63 +230,83 @@ export default function Home() {
           )}
         </div>
 
-        {/* ===== CONTROLES ===== */}
-        <div className="controls">
-          <div className="control">
-            <label htmlFor="orden">Ordenar por:</label>
-            <select
-              id="orden"
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-            >
-              <option value="default">Por defecto</option>
-              <option value="price-asc">Precio: menor a mayor</option>
-              <option value="price-desc">Precio: mayor a menor</option>
-              <option value="name">Nombre (A–Z)</option>
-            </select>
-          </div>
+        {/* TOOLBAR */}
+        <div className="filters-toolbar">
+          <div className="ft-left">
+            {/* Ordenar */}
+            <div className="ft-field">
+              <span className="ft-icon" aria-hidden>↕︎</span>
+              <select
+                aria-label="Ordenar"
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+              >
+                <option value="default">Por defecto</option>
+                <option value="price-asc">Precio: menor a mayor</option>
+                <option value="price-desc">Precio: mayor a menor</option>
+                <option value="name">Nombre (A–Z)</option>
+              </select>
+            </div>
 
-          <div className="filters-row">
+            {/* Colección */}
+            <div className="ft-field">
+              <span className="ft-icon" aria-hidden>🗂️</span>
+              <select
+                aria-label="Colección"
+                value={coleccion}
+                onChange={(e) => setColeccion(e.target.value)}
+                required
+              >
+                <option value="" disabled hidden>Elegí colección</option>
+                <option value="Todas">Todas</option>
+                <option value="Actual">Actual</option>
+                <option value="Retro">Retro</option>
+              </select>
+            </div>
+
             {/* Categoría */}
-            <select
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              aria-label="Filtrar por categoría"
-            >
-              {categorias.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === "Todas" ? "Todas las categorías" : cat}
-                </option>
-              ))}
-            </select>
+            <div className="ft-field">
+              <span className="ft-icon" aria-hidden>🏷️</span>
+              <select
+                aria-label="Categoría"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                disabled={!hasColeccion}
+              >
+                {["Todas", ...categorias.filter((c) => c !== "Todas")].map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
 
-            {/* Equipo / Club / Selección (bloqueado si no hay categoría) */}
-            <select
-              value={categoria === "Todas" ? "" : equipo}
-              onChange={(e) => setEquipo(e.target.value)}
-              aria-label="Filtrar por equipo"
-              disabled={categoria === "Todas"}
-            >
-              {categoria === "Todas" ? (
-                <option value="" disabled>
-                  Elegí una categoría primero
-                </option>
-              ) : (
-                equipos.map((eq) => (
-                  <option key={eq} value={eq}>
-                    {eq === "Todos" ? "Todos los equipos" : eq}
-                  </option>
-                ))
-              )}
-            </select>
+            {/* Equipo */}
+            <div className="ft-field">
+              <span className="ft-icon" aria-hidden>⚽️</span>
+              <select
+                aria-label="Equipo"
+                value={hasCategoria ? equipo : ""}
+                onChange={(e) => setEquipo(e.target.value)}
+                disabled={!hasCategoria}
+              >
+                {!hasCategoria ? (
+                  <option value="" disabled>Elegí categoría</option>
+                ) : (
+                  equipos.map((eq) => (
+                    <option key={eq} value={eq}>
+                      {eq === "Todos" ? "Todos" : eq}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
 
-            {/* Precio máx con barra funcional */}
-            <div className="price-filter">
-              <label htmlFor="precio">
-                Precio máx.: ${Number(maxPrecio || 0).toLocaleString("es-UY")}
-              </label>
+            {/* Precio */}
+            <div className="ft-price">
+              <span className="ft-price-label">Precio máx.:</span>
+              <span className="ft-price-value">
+                ${Number(maxPrecio || 0).toLocaleString("es-UY")}
+              </span>
               <input
-                id="precio"
                 type="range"
                 min="0"
                 max={maxPrecioAbsoluto || 0}
@@ -270,34 +314,44 @@ export default function Home() {
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
                 style={{ "--pct": `${pct}%` }}
+                aria-label="Precio máximo"
               />
             </div>
+
+            {/* Reset */}
+            <button
+              className="ft-reset"
+              type="button"
+              onClick={() => {
+                setSort("default");
+                setColeccion("");
+                setCategoria("Todas");
+                setEquipo("Todos");
+                setMaxPrecio(maxPrecioAbsoluto || 0);
+              }}
+              title="Restablecer filtros"
+              disabled={loading || !!error}
+            >
+              Restablecer
+            </button>
           </div>
         </div>
 
-        {/* ===== ESTADOS ===== */}
+        {/* ESTADOS */}
         {loading && <div className="empty">Cargando publicaciones…</div>}
-        {error && !loading && (
-          <div className="empty" role="alert">
-            {error}
-          </div>
-        )}
+        {error && !loading && <div className="empty" role="alert">{error}</div>}
 
-        {/* ===== GRILLA ===== */}
+        {/* GRILLA */}
         {!loading && !error && (
-          <>
-            {productos.length === 0 ? (
-              <div className="empty">
-                No hay productos que coincidan con tus filtros.
-              </div>
-            ) : (
-              <section className="products-grid">
-                {productos.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </section>
-            )}
-          </>
+          productos.length === 0 ? (
+            <div className="empty">No hay productos que coincidan con tus filtros.</div>
+          ) : (
+            <section className="products-grid">
+              {productos.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </section>
+          )
         )}
       </main>
     </>

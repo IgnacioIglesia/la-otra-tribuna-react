@@ -1,95 +1,140 @@
-// src/components/ProductCard/ProductCard.js
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useFavorites } from "../Favorites/FavoritesContext";
+import { Link } from "react-router-dom";
 import { useCart } from "../Cart/CartContext";
+import { useFavorites } from "../Favorites/FavoritesContext";
 import "./ProductCard.css";
 
-const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
-const money = (n)=> new Intl.NumberFormat("es-UY",{style:"currency",currency:"UYU",maximumFractionDigits:0}).format(n||0);
+function money(n) {
+  return new Intl.NumberFormat("es-UY", {
+    style: "currency",
+    currency: "UYU",
+    maximumFractionDigits: 0,
+  }).format(Number(n) || 0);
+}
 
 export default function ProductCard({ product }) {
-  const navigate = useNavigate();
-  const { add: addToCart, isInCart } = useCart();
-  const { items: favItems, toggle: toggleFav } = useFavorites();
+  const { add, getQty } = useCart();
+  const { isFavorite, toggle } = useFavorites(); // ✅ Cambié toggleFavorite por toggle
 
-  const isFav  = favItems.some(p => p.id === product.id);
-  const inCart = isInCart(product.id);
+  const {
+    id,
+    nombre,
+    precio,
+    img,
+    club,
+    categoria,
+    stock = 0,
+    isOwn = false,
+  } = product;
 
-  const isOffer   = product.isOffer === true;
-  const priceOld  = isOffer ? (product.precioAnterior ?? product.precio ?? null) : null;
-  const priceNew  = isOffer ? (product.precio_oferta ?? product.precio ?? 0)   : (product.precio ?? 0);
+  const qtyInCart = getQty(id);
+  const canAdd = !isOwn && stock > 0;
+  const atMax = stock > 0 && qtyInCart >= stock;
+  const isFav = isFavorite(id);
 
-  const normalized = {
-    id: product.id,
-    nombre: product.nombre,
-    precio: priceNew,
-    img: product.img || PLACEHOLDER,
-    club: product.club,
-    categoria: product.categoria,
+  const onAdd = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!canAdd) return;
+    add(product, 1);
   };
 
-  const goDetail = () => navigate(`/publication/${product.id}`);
-  const onKeyGo = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      goDetail();
-    }
+  const onAddMore = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (atMax) return;
+    add(product, 1);
   };
+
+  const onToggleFavorite = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    toggle(product); // ✅ Usar toggle en lugar de toggleFavorite
+  };
+
+  const detailsHref = `/publication/${id}`;
 
   return (
     <article className="card">
-      {/* CLIC EN IMAGEN -> DETALLE */}
-      <div className="media" onClick={goDetail} role="button" tabIndex={0} onKeyDown={onKeyGo}>
-        <img
-          src={product.img || PLACEHOLDER}
-          alt={product.nombre}
-          loading="lazy"
-          onError={(e)=>{ e.currentTarget.src = PLACEHOLDER; }}
-        />
-        {/* Favorito NO navega */}
-        <button
-          className={`fav-toggle ${isFav ? "active" : ""}`}
-          type="button"
-          onClick={(e)=>{ e.stopPropagation(); toggleFav(normalized); }}
-          aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-          title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+      {/* Botón de favoritos */}
+      <button
+        className={`fav-btn ${isFav ? "is-fav" : ""}`}
+        onClick={onToggleFavorite}
+        aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+        title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill={isFav ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          {isFav ? "❤️" : "🤍"}
-        </button>
-        {isOffer && <span className="badge-offer">-10%</span>}
-      </div>
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+      </button>
 
-      {/* CLIC EN TÍTULO/META -> DETALLE */}
+      {/* Imagen clickeable */}
+      <Link to={detailsHref} className="card-click" aria-label={nombre}>
+        <div className="media">
+          <img src={img} alt={nombre} loading="lazy" />
+        </div>
+      </Link>
+
+      {/* Cuerpo */}
       <div className="body">
-        <div className="meta" onClick={goDetail} role="button" tabIndex={0}>
+        {/* Meta + precio */}
+        <div className="meta">
           <div>
-            <div className="title-2lines">{product.nombre}</div>
-            <div className="muted subtitle-1line">
-              {(product.club || "—")} • {product.categoria}
+            <Link to={detailsHref} className="card-title-link">
+              <h3 className="card-title" title={nombre}>
+                {nombre}
+              </h3>
+            </Link>
+            <div className="card-subtitle">
+              {(club || "—")} • {categoria}
             </div>
           </div>
-          <div className="price" style={{textAlign:"right"}}>
-            {isOffer ? (
-              <>
-                <div className="price-old">{money(priceOld)}</div>
-                <div className="price-new">{money(priceNew)}</div>
-              </>
-            ) : (
-              <div style={{fontWeight:700}}>{money(priceNew)}</div>
-            )}
+
+          <div className="price">
+            <div className="price-new">{money(precio)}</div>
+            <div className={`pc-stock-mini ${stock <= 0 ? "is-out" : ""}`}>
+              {stock <= 0 ? "Sin stock" : `Stock: ${stock}`}
+            </div>
           </div>
         </div>
 
-        {/* Botón carrito NO navega */}
-        <button
-          className="btn primary"
-          type="button"
-          onClick={(e)=>{ e.stopPropagation(); addToCart(normalized, 1); }}
-          aria-label={inCart ? "Agregar otra unidad" : "Agregar al carrito"}
-        >
-          {inCart ? "Agregar otro" : "Agregar al carrito"}
-        </button>
+        {/* Acciones */}
+        {isOwn ? (
+          <div className="pc-own-msg" role="note">
+            No podés agregar al carrito publicaciones tuyas.
+          </div>
+        ) : (
+          <>
+            <button
+              className="btn primary"
+              onClick={onAdd}
+              disabled={!canAdd}
+              title={stock <= 0 ? "Sin stock" : "Agregar al carrito"}
+            >
+              Agregar al carrito
+            </button>
+
+            {stock > 1 && qtyInCart > 0 && (
+              <button
+                className="btn secondary"
+                onClick={onAddMore}
+                disabled={atMax}
+                title={atMax ? "Alcanzaste el stock disponible" : "Agregar una más"}
+              >
+                Agregar una más {atMax ? "(máx.)" : ""}
+              </button>
+            )}
+          </>
+        )}
       </div>
     </article>
   );

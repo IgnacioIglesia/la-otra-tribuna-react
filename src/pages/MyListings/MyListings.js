@@ -76,7 +76,15 @@ export default function MyListings() {
         .order("id_publicacion", { ascending: false });
 
       if (error) throw error;
-      setItems(data || []);
+      
+      // Ordenar: primero las activas, luego las vendidas
+      const sorted = (data || []).sort((a, b) => {
+        if (a.estado === "Vendida" && b.estado !== "Vendida") return 1;
+        if (a.estado !== "Vendida" && b.estado === "Vendida") return -1;
+        return 0;
+      });
+      
+      setItems(sorted);
     } catch (e) {
       console.error("fetchListings error:", e);
       alert("No se pudieron cargar tus publicaciones.");
@@ -97,6 +105,12 @@ export default function MyListings() {
   );
 
   const openEdit = (pub) => {
+    // No permitir editar publicaciones vendidas
+    if (pub.estado === "Vendida") {
+      alert("No se pueden editar publicaciones vendidas.");
+      return;
+    }
+    
     setEditing(pub);
     setNewImageFile(null);
     setForm({
@@ -120,8 +134,15 @@ export default function MyListings() {
   };
 
   // ===== eliminar =====
-  const handleDelete = async (id_publicacion) => {
+  const handleDelete = async (id_publicacion, estado) => {
     if (!userRow?.id_usuario) return;
+    
+    // No permitir eliminar publicaciones vendidas
+    if (estado === "Vendida") {
+      alert("No se pueden eliminar publicaciones vendidas.");
+      return;
+    }
+    
     if (!window.confirm("¿Seguro que querés borrar esta publicación?")) return;
 
     try {
@@ -265,9 +286,18 @@ export default function MyListings() {
                 p.foto?.find((f) => f.orden_foto === 1)?.url ||
                 p.foto?.[0]?.url ||
                 PLACEHOLDER;
+              
+              const isVendida = p.estado === "Vendida";
 
               return (
-                <article className="listing-card" key={p.id_publicacion}>
+                <article 
+                  className={`listing-card ${isVendida ? 'listing-card--sold' : ''}`} 
+                  key={p.id_publicacion}
+                >
+                  {isVendida && (
+                    <div className="sold-badge">VENDIDA</div>
+                  )}
+                  
                   <div className="listing-media">
                     <img
                       className="listing-img"
@@ -290,12 +320,19 @@ export default function MyListings() {
                   </div>
 
                   <div className="listing-actions">
-                    <button className="btn-edit" onClick={() => openEdit(p)}>
+                    <button 
+                      className="btn-edit" 
+                      onClick={() => openEdit(p)}
+                      disabled={isVendida}
+                      style={isVendida ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
                       Editar
                     </button>
                     <button
                       className="btn-delete"
-                      onClick={() => handleDelete(p.id_publicacion)}
+                      onClick={() => handleDelete(p.id_publicacion, p.estado)}
+                      disabled={isVendida}
+                      style={isVendida ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
                       Borrar
                     </button>

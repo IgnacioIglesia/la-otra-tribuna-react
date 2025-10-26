@@ -1,109 +1,164 @@
 .mylistings {
-    padding: 32px 16px;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .subtitle { color: #6b7280; margin-bottom: 20px; }
-  
-  .empty-box {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 28px;
-    text-align: center;
-    color: #6b7280;
-  }
-  
-  .listings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 20px;
-  }
-  
-  .listing-card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 2px 6px rgba(0,0,0,.05);
-  }
-  
-  .listing-img {
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-  }
-  
-  .listing-body { padding: 12px; flex: 1; }
-  .listing-title { margin: 0 0 4px; font-size: 16px; }
-  .listing-meta { color: #6b7280; font-size: 14px; }
-  .listing-price { font-weight: 700; margin-top: 6px; }
-  
-  .listing-actions {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 12px 14px;
-  }
-  
-  .btn-edit, .btn-delete {
-    border: 1px solid;
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 14px;
-    background: #fff;
-    cursor: pointer;
-  }
-  
-  .btn-edit { border-color: #d1d5db; color: #111; }
-  .btn-delete { border-color: #ef4444; color: #ef4444; }
-  .btn-delete:hover { background: #fee2e2; }
-  
-  /* ===== Modal ===== */
-  .edit-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,.45);
-    display: flex; align-items: center; justify-content: center;
-  }
-  
-  .edit-modal {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    width: 92%; max-width: 640px;
-    padding: 22px;
-    display: flex; flex-direction: column; gap: 12px;
-    box-shadow: 0 18px 40px rgba(0,0,0,.18);
-  }
-  
-  .label { font-weight: 600; font-size: 14px; color:#374151; }
-  .edit-modal input, .edit-modal textarea, .edit-modal select {
-    border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; font-size: 14px;
-  }
-  
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  @media (max-width: 720px){
-    .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  }
-  
-  .upload-box {
-    border: 1px dashed #cbd5e1;
-    border-radius: 10px;
-    min-height: 84px;
-    display: grid; place-items: center;
-    color: #6b7280; cursor: pointer;
-  }
-  .preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; }
-  
-  .checkbox { display: flex; gap: 10px; align-items: flex-start; }
-  .checkbox > span { color: #4b5563; }
-  .checkbox small { display: block; color: #6b7280; }
-  
-  .modal-actions {
-    display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;
-  }
-  .btn-cancel { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 14px; }
-  .btn-save { background: #14532d; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; }
+  padding: 32px 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.subtitle { color: #6b7280; margin-bottom: 20px; }
+
+.empty-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 28px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.listings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 20px;
+}
+
+.listing-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Estilos para publicaciones vendidas */
+.listing-card--sold {
+  opacity: 0.75;
+}
+
+.listing-card--sold .listing-img {
+  filter: grayscale(100%);
+  opacity: 0.7;
+}
+
+.sold-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: #dc2626;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.listing-card--sold .listing-title,
+.listing-card--sold .listing-meta,
+.listing-card--sold .listing-price {
+  opacity: 0.6;
+}
+
+.listing-img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.listing-body { padding: 12px; flex: 1; }
+.listing-title { margin: 0 0 4px; font-size: 16px; }
+.listing-meta { color: #6b7280; font-size: 14px; }
+.listing-price { font-weight: 700; margin-top: 6px; }
+
+.listing-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px 14px;
+}
+
+.btn-edit, .btn-delete {
+  border: 1px solid;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-edit { border-color: #d1d5db; color: #111; }
+.btn-edit:hover:not(:disabled) { background: #f9fafb; }
+
+.btn-delete { border-color: #ef4444; color: #ef4444; }
+.btn-delete:hover:not(:disabled) { background: #fee2e2; }
+
+.btn-edit:disabled,
+.btn-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Modal ===== */
+.edit-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.edit-modal {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  width: 92%; max-width: 640px;
+  padding: 22px;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.18);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.label { font-weight: 600; font-size: 14px; color:#374151; }
+.edit-modal input, .edit-modal textarea, .edit-modal select {
+  border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; font-size: 14px;
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 720px){
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+
+.upload-box {
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  min-height: 84px;
+  display: grid; place-items: center;
+  color: #6b7280; cursor: pointer;
+}
+.preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 8px; }
+
+.checkbox { display: flex; gap: 10px; align-items: flex-start; }
+.checkbox > span { color: #4b5563; }
+.checkbox small { display: block; color: #6b7280; }
+
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;
+}
+.btn-cancel { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.btn-save { background: #14532d; color: #fff; border: none; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+
+.btn-cancel:hover:not(:disabled) { background: #e5e7eb; }
+.btn-save:hover:not(:disabled) { background: #166534; }
+
+.btn-cancel:disabled,
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

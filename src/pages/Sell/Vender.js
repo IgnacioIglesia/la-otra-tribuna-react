@@ -7,6 +7,7 @@ import "./Vender.css";
 
 const BUCKET = "publicaciones";
 
+/* Mappers */
 const mapCategoriaPublicacion = (v) => (v === "Selección" ? "Seleccion" : v);
 const mapAutenticidad = (v) =>
   v === "Réplica" || v === "Replica" ? "Réplica" : "Original";
@@ -21,6 +22,14 @@ export default function Vender() {
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [sessionEmail, setSessionEmail] = useState("");
+  
+  // 🔒 Estados de verificación
+  const [userStatus, setUserStatus] = useState({
+    verified: false,
+    banned: false,
+    banReason: "",
+    canPublish: false,
+  });
 
   const [form, setForm] = useState({
     equipo: "",
@@ -32,6 +41,7 @@ export default function Vender() {
     autenticidad: "Original",
     talle: "M",
     tipo: "Club",
+    coleccion: "Actual",
     estado: "Activa",
     ofertas: false,
     imagen: null,
@@ -41,33 +51,87 @@ export default function Vender() {
   const [submitting, setSubmitting] = useState(false);
   const [preview, setPreview] = useState("");
 
-  // ===== Modal de éxito =====
   const [successOpen, setSuccessOpen] = useState(false);
   const [successTitle, setSuccessTitle] = useState("¡Publicación creada!");
   const [successText, setSuccessText] = useState(
     "Tu publicación se guardó correctamente."
   );
 
-  // ====== Verificar sesión ======
+  // ====== Verificar sesión y estado del usuario ======
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      const sess = data?.session;
-      if (!sess) {
-        const returnTo = encodeURIComponent(
-          location.pathname + location.search
-        );
-        navigate(`/login?return=${returnTo}`, { replace: true });
-        return;
+      try {
+        // 1. Verificar sesión
+        const { data } = await supabase.auth.getSession();
+        const sess = data?.session;
+        if (!sess) {
+          const returnTo = encodeURIComponent(
+            location.pathname + location.search
+          );
+          navigate(`/login?return=${returnTo}`, { replace: true });
+          return;
+        }
+
+        const email = sess.user?.email || "";
+        setSessionEmail(email);
+
+        // 2. Obtener usuario y su estado
+        const { data: usuario, error: userErr } = await supabase
+          .from("usuario")
+          .select("id_usuario, id_auth, esta_baneado, razon_baneo")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (userErr) throw userErr;
+        if (!usuario) {
+          alert("No se encontró tu usuario.");
+          navigate("/", { replace: true });
+          return;
+        }
+
+        // 3. Verificar si está baneado
+        if (usuario.esta_baneado) {
+          setUserStatus({
+            verified: false,
+            banned: true,
+            banReason: usuario.razon_baneo || "Tu cuenta ha sido suspendida.",
+            canPublish: false,
+          });
+          setCheckingAuth(false);
+          return;
+        }
+
+        // 4. Verificar si tiene verificación aceptada
+        const { data: verificacion, error: verErr } = await supabase
+          .from("verificacion_identidad")
+          .select("estado")
+          .eq("id_usuario", usuario.id_usuario)
+          .eq("estado", "aceptado")
+          .maybeSingle();
+
+        if (verErr && verErr.code !== "PGRST116") throw verErr;
+
+        const isVerified = !!verificacion;
+
+        setUserStatus({
+          verified: isVerified,
+          banned: false,
+          banReason: "",
+          canPublish: isVerified,
+        });
+
+        setCheckingAuth(false);
+      } catch (err) {
+        console.error("Error verificando estado:", err);
+        alert("Ocurrió un error al verificar tu cuenta.");
+        navigate("/", { replace: true });
       }
-      setSessionEmail(sess.user?.email || "");
-      setCheckingAuth(false);
     })();
   }, [navigate, location]);
 
   const update = (field) => (e) => {
     const value =
-      e.target.type === "checkbox" ? e.target.checked : e.target.value;
+      e.target?.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -80,6 +144,13 @@ export default function Vender() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Doble verificación antes de publicar
+    if (!userStatus.canPublish) {
+      alert("No tienes permisos para publicar.");
+      return;
+    }
+
     if (submitting) return;
 
     try {
@@ -95,6 +166,7 @@ export default function Vender() {
         autenticidad,
         talle,
         tipo,
+        coleccion,
         estado,
         ofertas,
         imagen,
@@ -163,6 +235,7 @@ export default function Vender() {
         condicion,
         autenticidad: mapAutenticidad(autenticidad),
         categoria: mapCategoriaPublicacion(tipo),
+        coleccion,
         talle,
         stock: Number(stock || 1),
         estado,
@@ -187,7 +260,7 @@ export default function Vender() {
       ]);
       if (fotoErr) throw fotoErr;
 
-      // ✅ 6) ÉXITO: mostrar overlay y redirigir después
+      // ✅ 6) ÉXITO
       const msg = ofertas
         ? "Tu publicación se guardó correctamente. Si no se vende en 30 días, entrará automáticamente en ofertas (10% OFF)."
         : "Tu publicación se guardó correctamente.";
@@ -196,7 +269,6 @@ export default function Vender() {
       setSuccessText(msg);
       setSuccessOpen(true);
 
-      // doble frame para asegurar que se pinte antes de navegar
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setTimeout(() => {
@@ -241,6 +313,108 @@ export default function Vender() {
     );
   }
 
+  // 🚫 USUARIO BANEADO
+  if (userStatus.banned) {
+    return (
+      <>
+        <HeaderSimplif />
+        <div className="sell-wrap" style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center",
+          minHeight: "80vh",
+          padding: "2rem"
+        }}>
+          <div style={{
+            background: "white",
+            padding: "2rem",
+            borderRadius: "0.75rem",
+            maxWidth: "500px",
+            textAlign: "center",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🚫</div>
+            <h2 style={{ margin: "0 0 1rem", color: "#dc2626" }}>
+              Cuenta suspendida
+            </h2>
+            <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
+              {userStatus.banReason}
+            </p>
+            <p style={{ fontSize: "0.875rem", color: "#9ca3af" }}>
+              Si crees que esto es un error, por favor contacta al soporte.
+            </p>
+            <button
+              onClick={() => navigate("/")}
+              style={{
+                marginTop: "1.5rem",
+                padding: "0.75rem 1.5rem",
+                background: "#3b82f6",
+                color: "white",
+                border: "none",
+                borderRadius: "0.5rem",
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ⚠️ NO VERIFICADO
+  if (!userStatus.verified) {
+    return (
+      <>
+        <HeaderSimplif />
+        <div className="sell-wrap" style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center",
+          minHeight: "80vh",
+          padding: "2rem"
+        }}>
+          <div style={{
+            background: "white",
+            padding: "2rem",
+            borderRadius: "0.75rem",
+            maxWidth: "500px",
+            textAlign: "center",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+          }}>
+            <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🔒</div>
+            <h2 style={{ margin: "0 0 1rem", color: "#f59e0b" }}>
+              Verificación requerida
+            </h2>
+            <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
+              Para publicar productos, primero debes verificar tu identidad subiendo una foto de tu cédula.
+            </p>
+            <p style={{ fontSize: "0.875rem", color: "#9ca3af", marginBottom: "1.5rem" }}>
+              Una vez aprobada tu verificación, podrás publicar sin límites.
+            </p>
+            <button
+              onClick={() => navigate("/perfil")}
+              style={{
+                padding: "0.75rem 1.5rem",
+                background: "#16a34a",
+                color: "white",
+                border: "none",
+                borderRadius: "0.5rem",
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Ir a verificar mi identidad
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ✅ PUEDE PUBLICAR
   return (
     <>
       <HeaderSimplif />
@@ -287,6 +461,7 @@ export default function Vender() {
             <p className="helper muted">Solo una imagen por ahora.</p>
           </div>
 
+          {/* Equipo */}
           <div className="field">
             <label>Equipo</label>
             <input
@@ -298,6 +473,7 @@ export default function Vender() {
             />
           </div>
 
+          {/* Título */}
           <div className="field">
             <label>Título</label>
             <input
@@ -309,6 +485,7 @@ export default function Vender() {
             />
           </div>
 
+          {/* Descripción */}
           <div className="field">
             <label>Descripción</label>
             <textarea
@@ -318,6 +495,7 @@ export default function Vender() {
             />
           </div>
 
+          {/* Precio */}
           <div className="field">
             <label>Precio</label>
             <input
@@ -331,6 +509,7 @@ export default function Vender() {
             />
           </div>
 
+          {/* Moneda */}
           <div className="field">
             <label>Moneda</label>
             <select value={form.moneda} onChange={update("moneda")}>
@@ -339,6 +518,7 @@ export default function Vender() {
             </select>
           </div>
 
+          {/* Condición */}
           <div className="field">
             <label>Condición</label>
             <select value={form.condicion} onChange={update("condicion")}>
@@ -347,6 +527,7 @@ export default function Vender() {
             </select>
           </div>
 
+          {/* Autenticidad */}
           <div className="field">
             <label>Autenticidad</label>
             <select
@@ -358,6 +539,7 @@ export default function Vender() {
             </select>
           </div>
 
+          {/* Talle */}
           <div className="field">
             <label>Talle</label>
             <select value={form.talle} onChange={update("talle")}>
@@ -371,6 +553,7 @@ export default function Vender() {
             </select>
           </div>
 
+          {/* Stock */}
           <div className="field">
             <label>Stock</label>
             <input
@@ -384,8 +567,9 @@ export default function Vender() {
             />
           </div>
 
+          {/* Categoría (Club / Selección) */}
           <div className="field">
-            <label>Categoría de la publicación</label>
+            <label>Categoría</label>
             <div className="category-options">
               <button
                 type="button"
@@ -401,16 +585,31 @@ export default function Vender() {
               >
                 Selección
               </button>
+            </div>
+          </div>
+
+          {/* Colección (Actual / Retro) */}
+          <div className="field">
+            <label>Colección</label>
+            <div className="category-options">
               <button
                 type="button"
-                className={form.tipo === "Retro" ? "active" : ""}
-                onClick={() => setForm((p) => ({ ...p, tipo: "Retro" }))}
+                className={form.coleccion === "Actual" ? "active" : ""}
+                onClick={() => setForm((p) => ({ ...p, coleccion: "Actual" }))}
+              >
+                Actual
+              </button>
+              <button
+                type="button"
+                className={form.coleccion === "Retro" ? "active" : ""}
+                onClick={() => setForm((p) => ({ ...p, coleccion: "Retro" }))}
               >
                 Retro
               </button>
             </div>
           </div>
 
+          {/* Ofertas automáticas */}
           <label className="checkbox">
             <input
               type="checkbox"
@@ -431,7 +630,7 @@ export default function Vender() {
         </form>
       </section>
 
-      {/* ✅ Overlay de éxito (portal, visible 1.5 s antes de redirigir) */}
+      {/* Overlay de éxito */}
       {successOpen &&
         createPortal(
           <div className="success-overlay" role="status" aria-live="polite">

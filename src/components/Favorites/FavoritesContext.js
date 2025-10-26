@@ -1,14 +1,13 @@
-// src/components/Favorites/FavoritesContext.js
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useToast } from "../ToastNotification/ToastNotification"; // ✅ Importar useToast
 
 const FavoritesContext = createContext(null);
 const LS_KEY = "lot_favorites_v1";
 
 export function FavoritesProvider({ children }) {
-  // Drawer (único en toda la app)
+  const { showToast } = useToast(); // ✅ Usar toast
   const [isOpen, setIsOpen] = useState(false);
 
-  // Items de favoritos
   const [items, setItems] = useState(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -18,20 +17,32 @@ export function FavoritesProvider({ children }) {
     }
   });
 
-  // Persistencia
   useEffect(() => {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(items));
     } catch {}
   }, [items]);
 
-  // Helpers
   const isFavorite = (id) => items.some((it) => it.id === id);
 
   const add = (product) => {
     if (!product?.id) return;
     setItems((prev) => {
-      if (prev.some((p) => p.id === product.id)) return prev; // ya estaba
+      if (prev.some((p) => p.id === product.id)) return prev;
+      
+      // ✅ Toast en lugar de notificación
+      showToast(`"${product.nombre}" fue agregado a favoritos`, "success");
+      
+      // Mantener la notificación del dropdown también
+      window.dispatchEvent(new CustomEvent("new-notification", {
+        detail: {
+          tipo: "favorito",
+          titulo: "Producto agregado a favoritos",
+          mensaje: `"${product.nombre}"`,
+          id_publicacion: product.id,
+        }
+      }));
+      
       return [...prev, product];
     });
   };
@@ -42,33 +53,46 @@ export function FavoritesProvider({ children }) {
 
   const toggle = (product) => {
     if (!product?.id) return;
+    
+    const wasInFavorites = items.some((p) => p.id === product.id);
+    
     setItems((prev) =>
       prev.some((p) => p.id === product.id)
         ? prev.filter((p) => p.id !== product.id)
         : [...prev, product]
     );
+    
+    if (!wasInFavorites) {
+      // ✅ Toast visual
+      showToast(`"${product.nombre}" fue agregado a favoritos`, "success");
+      
+      // Notificación del dropdown
+      window.dispatchEvent(new CustomEvent("new-notification", {
+        detail: {
+          tipo: "favorito",
+          titulo: "Producto agregado a favoritos",
+          mensaje: `"${product.nombre}"`,
+          id_publicacion: product.id,
+        }
+      }));
+    }
   };
 
-  // 🔧 El que te faltaba / no actualizaba:
   const clear = () => {
-    setItems([]);                 // vacía estado
-    try { localStorage.setItem(LS_KEY, JSON.stringify([])); } catch {} // y storage
+    setItems([]);
+    try { localStorage.setItem(LS_KEY, JSON.stringify([])); } catch {}
   };
 
-  // Drawer controls
   const openFavorites = () => setIsOpen(true);
   const closeFavorites = () => setIsOpen(false);
 
   const value = useMemo(
     () => ({
-      // drawer
       isOpen,
       openFavorites,
       closeFavorites,
-      // data
       items,
       count: items.length,
-      // ops
       add,
       remove,
       toggle,

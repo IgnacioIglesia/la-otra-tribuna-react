@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import "../Header/Header.css";
+import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 
 function getInitials(user) {
     if (!user) return "U";
@@ -156,10 +157,21 @@ export default function HeaderSimplif() {
 
                 {menuOpen && (
                   <div className="user-dropdown" role="menu">
-                    <button className="user-item" onClick={() => goAndClose("/perfil")}>Mi perfil</button>
-                    <button className="user-item" onClick={() => goAndClose("/my-listings")}>Mis publicaciones</button>
-                    <button className="user-item" onClick={() => goAndClose("/pedidos")}>Mis pedidos</button>
-                    <button className="user-item danger" onClick={handleLogout}>Cerrar sesión</button>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/perfil")}>
+                      Mi perfil
+                    </button>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-listings")}>
+                      Mis publicaciones
+                    </button>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-orders")}>
+                      Mis pedidos
+                    </button>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-sales")}>
+                      Mis ventas
+                    </button>
+                    <button className="user-item danger" role="menuitem" onClick={handleLogout}>
+                      Cerrar sesión
+                    </button>
                   </div>
                 )}
               </div>
@@ -174,9 +186,7 @@ export default function HeaderSimplif() {
             <span className="pill pill--placeholder" aria-hidden="true" />
 
             {/* Notificaciones visibles (si querés, también podés reemplazar por placeholder) */}
-            <button className="pill" type="button" aria-label="Notificaciones">
-              🔔<span>1</span>
-            </button>
+            <NotificationDropdown />
           </div>
         </div>
       </div>

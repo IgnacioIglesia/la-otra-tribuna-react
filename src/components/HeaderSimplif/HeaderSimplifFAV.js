@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import { useCart } from "../Cart/CartContext";
 import "../Header/Header.css";
+import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 
 function getInitials(user) {
   if (!user) return "U";
@@ -148,8 +149,11 @@ export default function HeaderSimplifFAV() {
                     <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-listings")}>
                       Mis publicaciones
                     </button>
-                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/pedidos")}>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-orders")}>
                       Mis pedidos
+                    </button>
+                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-sales")}>
+                      Mis ventas
                     </button>
                     <button className="user-item danger" role="menuitem" onClick={handleLogout}>
                       Cerrar sesión
@@ -182,9 +186,7 @@ export default function HeaderSimplifFAV() {
             </button>
 
             {/* Notificaciones */}
-            <button className="pill" type="button" aria-label="Notificaciones">
-              🔔<span>1</span>
-            </button>
+            <NotificationDropdown />
           </div>
         </div>
       </div>

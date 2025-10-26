@@ -1,3 +1,4 @@
+// src/pages/Publication/Publication.js
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header/Header";
@@ -17,8 +18,7 @@ function money(n, curr = "UYU") {
 }
 
 function initialsFrom(nombre = "", apellido = "", email = "") {
-  const ini =
-    (nombre?.trim()?.[0] || "") + (apellido?.trim()?.[0] || "");
+  const ini = (nombre?.trim()?.[0] || "") + (apellido?.trim()?.[0] || "");
   return (ini || email?.[0] || "?").toUpperCase();
 }
 
@@ -31,6 +31,7 @@ export default function Publication() {
   const [loading, setLoading] = useState(true);
   const [pub, setPub] = useState(null);
   const [seller, setSeller] = useState(null);
+  const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState("");
 
   const isFav = useMemo(
@@ -59,20 +60,35 @@ export default function Publication() {
           return;
         }
 
-        // 2) Vendedor (permití SELECT público con RLS o usá una vista pública)
+        // 2) Vendedor
         let sellerData = null;
+        let verified = false;
+        
         if (data.id_usuario) {
           const { data: u } = await supabase
-            .from("usuario") // si creaste la vista: 'v_usuario_publico'
+            .from("usuario")
             .select("id_usuario, nombre, apellido, email")
             .eq("id_usuario", data.id_usuario)
             .maybeSingle();
           sellerData = u || null;
+
+          // 3) Verificar si el vendedor está verificado
+          if (u?.id_usuario) {
+            const { data: verif } = await supabase
+              .from("verificacion_identidad")
+              .select("estado")
+              .eq("id_usuario", u.id_usuario)
+              .eq("estado", "aceptado")
+              .maybeSingle();
+            
+            verified = !!verif;
+          }
         }
 
         if (alive) {
           setPub(data);
           setSeller(sellerData);
+          setIsVerified(verified);
         }
       } catch (err) {
         if (alive) setError(err.message || "Error cargando publicación.");
@@ -81,7 +97,9 @@ export default function Publication() {
       }
     })();
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   if (loading) {
@@ -107,7 +125,9 @@ export default function Publication() {
   }
 
   // Normalización
-  const fotos = (pub.foto || []).sort((a, b) => (a.orden_foto || 0) - (b.orden_foto || 0));
+  const fotos = (pub.foto || []).sort(
+    (a, b) => (a.orden_foto || 0) - (b.orden_foto || 0)
+  );
   const img = fotos.length ? fotos[0].url : PLACEHOLDER;
 
   const normalized = {
@@ -116,7 +136,8 @@ export default function Publication() {
     precio: Number(pub.precio || 0),
     img,
     club: pub.club || "",
-    categoria: pub.categoria === "Seleccion" ? "Selección" : (pub.categoria || "Club"),
+    categoria:
+      pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
   };
 
   return (
@@ -131,7 +152,9 @@ export default function Publication() {
               <img
                 src={img}
                 alt={pub.titulo}
-                onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
+                onError={(e) => {
+                  e.currentTarget.src = PLACEHOLDER;
+                }}
               />
               <button
                 className={`fav-chip ${isFav ? "is-active" : ""}`}
@@ -145,12 +168,15 @@ export default function Publication() {
 
             {/* ===== INFO ===== */}
             <div className="pub-info">
-              <button className="back" onClick={() => navigate(-1)}>← Volver</button>
+              <button className="back" onClick={() => navigate(-1)}>
+                ← Volver
+              </button>
 
               <h1 className="pub-title">{pub.titulo}</h1>
 
               <div className="pub-submeta">
-                {pub.club || "—"} • {normalized.categoria} • Talle {pub.talle || "—"} • {pub.condicion || "—"}
+                {pub.club || "—"} • {normalized.categoria} • Talle{" "}
+                {pub.talle || "—"} • {pub.condicion || "—"}
               </div>
 
               <div className="pub-price">
@@ -196,25 +222,66 @@ export default function Publication() {
               {/* Descripción (si hay) */}
               {pub.descripcion && (
                 <div style={{ marginTop: 18 }}>
-                  <h3 style={{ margin: "0 0 6px", fontWeight: 700 }}>Descripción</h3>
-                  <p style={{ whiteSpace: "pre-wrap", color: "#374151" }}>{pub.descripcion}</p>
+                  <h3 style={{ margin: "0 0 6px", fontWeight: 700 }}>
+                    Descripción
+                  </h3>
+                  <p style={{ whiteSpace: "pre-wrap", color: "#374151" }}>
+                    {pub.descripcion}
+                  </p>
                 </div>
               )}
 
-              {/* SELLER – SIEMPRE visible con fallback */}
+              {/* SELLER: nombre clickeable => /seller/:id con check de verificación */}
               <section className="seller-card">
                 <div className="seller-left">
                   <div className="avatar">
-                    {initialsFrom(seller?.nombre, seller?.apellido, seller?.email)}
+                    {initialsFrom(
+                      seller?.nombre,
+                      seller?.apellido,
+                      seller?.email
+                    )}
                   </div>
                   <div>
-                    <div className="seller-name">
-                      {seller?.nombre || seller?.email?.split("@")[0] || "Usuario"}
-                      {seller?.apellido ? ` ${seller.apellido}` : ""}
-                    </div>
-                    <div className="seller-sub">
+                    <button
+                      className="seller-link"
+                      onClick={() => navigate(`/seller/${seller?.id_usuario}`)}
+                      aria-label={`Ver publicaciones de ${
+                        seller?.nombre || ""
+                      }`}
+                    >
+                      <div className="seller-name">
+                        {seller?.nombre ||
+                          seller?.email?.split("@")[0] ||
+                          "Usuario"}
+                        {seller?.apellido ? ` ${seller.apellido}` : ""}
+                        {isVerified && (
+                          <svg 
+                            className="verified-badge"
+                            width="16" 
+                            height="16" 
+                            viewBox="0 0 24 24" 
+                            fill="none"
+                            style={{ 
+                              display: "inline-block", 
+                              marginLeft: "6px",
+                              verticalAlign: "middle"
+                            }}
+                          >
+                            <path 
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                              stroke="#3b82f6" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                              fill="#dbeafe"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="seller-sub">
                         {seller?.email || "Email no disponible"}
-                    </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </section>
