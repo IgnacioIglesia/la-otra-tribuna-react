@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import ProductCard from "../../components/ProductCard/ProductCard";
 import { supabase } from "../../lib/supabaseClient";
-import "./SellerPublications.css"; // opcional, abajo te doy estilos sugeridos
+import "./SellerPublications.css";
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 
@@ -56,6 +56,7 @@ export default function SellerPublications() {
             pais: "Uruguay",
             categoria: mapCategoria(pub.categoria),
             img: primeraFoto || PLACEHOLDER,
+            stock: pub.stock || 0, // ← AGREGAR ESTA LÍNEA
           };
         });
 

@@ -20,7 +20,7 @@ export default function HowItWorks() {
             <h3>1) Publicá</h3>
             <ul>
               <li>
-                Entrá a <a href="/vender">Vender</a> y completá título, fotos, categoría
+                Entrá a <a href="/sell">Vender</a> y completá título, fotos, categoría
                 (Club / Selección / Retro), talle, estado y precio.
               </li>
               <li>
@@ -35,7 +35,7 @@ export default function HowItWorks() {
             <ul>
               <li>Filtrá por club, país, categoría y precio.</li>
               <li>
-                Agregá a <a href="/favoritos">Favoritos</a> para seguir un producto y
+                Agregá a <a href="/favorites">Favoritos</a> para seguir un producto y
                 recibir actualizaciones.
               </li>
               <li>
@@ -49,7 +49,7 @@ export default function HowItWorks() {
             <ul>
               <li>Revisá costos/tiempos según tu ubicación.</li>
               <li>
-                Seguimiento desde <a href="/rastrear">Rastrear Pedido</a>.
+                Seguimiento desde <a href="/track-order">Rastrear Pedido</a>.
               </li>
             </ul>
           </section>
