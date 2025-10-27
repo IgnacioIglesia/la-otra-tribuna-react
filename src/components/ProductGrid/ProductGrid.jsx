@@ -1,7 +1,6 @@
-// src/components/ProductGrid/ProductGrid.jsx
 import React from "react";
 import ProductCard from "../ProductCard/ProductCard";
-import "./ProductGrid.css";                // ✅ CSS correcto de la grilla
+import "./ProductGrid.css";   // ✅ Importa el CSS del grid
 
 export default function ProductGrid({ products = [] }) {
   if (!products || products.length === 0) {
@@ -13,10 +12,11 @@ export default function ProductGrid({ products = [] }) {
   }
 
   return (
-    <section className="products-grid">   {/* ✅ nombre de clase consistente */}
+    <section className="products-grid">   {/* ✅ nombre coherente */}
       {products.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}
     </section>
   );
 }
+

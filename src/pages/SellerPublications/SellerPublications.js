@@ -1,8 +1,8 @@
 // src/pages/SellerPublications/SellerPublications.js
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
-import ProductCard from "../../components/ProductCard/ProductCard";
+import ProductGrid from "../../components/ProductGrid/ProductGrid"; // ✅ usamos el grid centralizado
 import { supabase } from "../../lib/supabaseClient";
 import "./SellerPublications.css";
 
@@ -47,16 +47,16 @@ export default function SellerPublications() {
         if (error) throw error;
 
         const mapped = (data || []).map((pub) => {
-          const primeraFoto = pub.foto && pub.foto.length ? pub.foto[0].url : null;
+          const primeraFoto = pub.foto?.[0]?.url || null;
           return {
             id: pub.id_publicacion,
             nombre: pub.titulo,
             precio: Number(pub.precio) || 0,
             club: pub.club || "",
-            pais: "Uruguay",
             categoria: mapCategoria(pub.categoria),
+            coleccion: pub.coleccion || "Actual",
             img: primeraFoto || PLACEHOLDER,
-            stock: pub.stock || 0, // ← AGREGAR ESTA LÍNEA
+            stock: Number(pub.stock) || 0,
           };
         });
 
@@ -70,7 +70,9 @@ export default function SellerPublications() {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [id]);
 
   return (
@@ -80,9 +82,13 @@ export default function SellerPublications() {
         <div className="seller-header" style={{ marginBottom: 12 }}>
           <button className="back" onClick={() => navigate(-1)}>← Volver</button>
           <h2 style={{ display: "inline-block", marginLeft: 12 }}>
-            {seller ? `Publicaciones de ${seller.nombre || ""} ${seller.apellido || ""}` : "Publicaciones"}
+            {seller
+              ? `Publicaciones de ${seller.nombre || ""} ${seller.apellido || ""}`
+              : "Publicaciones"}
           </h2>
-          {seller?.email && <div className="muted" style={{ marginLeft: 12 }}>{seller.email}</div>}
+          {seller?.email && (
+            <div className="muted" style={{ marginLeft: 12 }}>{seller.email}</div>
+          )}
         </div>
 
         {loading ? (
@@ -92,11 +98,7 @@ export default function SellerPublications() {
         ) : rows.length === 0 ? (
           <div className="empty">Este usuario no tiene publicaciones activas.</div>
         ) : (
-          <section className="products-grid">
-            {rows.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </section>
+          <ProductGrid products={rows} />  
         )}
       </main>
     </>

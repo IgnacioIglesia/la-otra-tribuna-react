@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header/Header";
-import ProductCard from "../../components/ProductCard/ProductCard";
+import ProductGrid from "../../components/ProductGrid/ProductGrid"; // ✅ usa el grid centralizado
 import { supabase } from "../../lib/supabaseClient";
 import "./Offers.css";
 
@@ -78,7 +78,7 @@ export default function Offers() {
             coleccion: pub.coleccion || "Actual",
             img: foto,
             stock: Number(pub.stock) || 0,
-            // flags para ProductCard
+            // flags/campos que usa ProductCard
             isOffer: true,
             precio: basePrice,
             precioAnterior: basePrice,
@@ -104,7 +104,7 @@ export default function Offers() {
 
   // Categorías disponibles según colección
   const categorias = useMemo(() => {
-    const base = hasColeccion ? all.filter(p => p.coleccion === coleccion) : all;
+    const base = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
     const allowed = ["Club", "Selección"];
     const filtered = unique.filter((c) => allowed.includes(c));
@@ -113,7 +113,7 @@ export default function Offers() {
 
   // Equipos disponibles según colección y categoría
   const equipos = useMemo(() => {
-    const baseColeccion = hasColeccion ? all.filter(p => p.coleccion === coleccion) : all;
+    const baseColeccion = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
     if (categoria === "Todas") {
       const list = Array.from(new Set(baseColeccion.map((p) => p.club).filter(Boolean)));
       return ["Todos", ...list];
@@ -187,22 +187,16 @@ export default function Offers() {
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Ofertas disponibles</h2>
-          {!loading && (
-            <p className="catalog-sub">Resultados: {productos.length}</p>
-          )}
+          {!loading && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* TOOLBAR - Mismo estilo que Home */}
+        {/* TOOLBAR - igual que Home */}
         <div className="filters-toolbar">
           <div className="ft-left">
             {/* Ordenar */}
             <div className="ft-field">
               <span className="ft-icon" aria-hidden>↕︎</span>
-              <select
-                aria-label="Ordenar"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
+              <select aria-label="Ordenar" value={sort} onChange={(e) => setSort(e.target.value)}>
                 <option value="default">Por defecto</option>
                 <option value="price-asc">Precio: menor a mayor</option>
                 <option value="price-desc">Precio: mayor a menor</option>
@@ -254,9 +248,7 @@ export default function Offers() {
                   <option value="" disabled>Elegí categoría</option>
                 ) : (
                   equipos.map((eq) => (
-                    <option key={eq} value={eq}>
-                      {eq === "Todos" ? "Todos" : eq}
-                    </option>
+                    <option key={eq} value={eq}>{eq === "Todos" ? "Todos" : eq}</option>
                   ))
                 )}
               </select>
@@ -307,11 +299,7 @@ export default function Offers() {
           productos.length === 0 ? (
             <div className="empty">No hay productos en oferta que coincidan con tus filtros.</div>
           ) : (
-            <section className="products-grid">
-              {productos.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </section>
+            <ProductGrid products={productos} />  
           )
         )}
       </main>

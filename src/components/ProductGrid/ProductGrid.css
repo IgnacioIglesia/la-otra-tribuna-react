@@ -1,0 +1,57 @@
+/* ================================
+   GRID CENTRALIZADO DE PRODUCTOS
+   Se usa en todas las páginas
+==================================*/
+
+.products-grid,
+.catalog .products-grid,
+section.products-grid {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  justify-content: center;
+  width: 100%;
+  margin-top: 16px;
+}
+
+/* 📱 MÓVIL */
+@media (max-width: 639px) {
+  .products-grid,
+  .catalog .products-grid,
+  section.products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 💻 TABLET */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .products-grid,
+  .catalog .products-grid,
+  section.products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 🖥️ DESKTOP */
+@media (min-width: 1024px) {
+  .products-grid,
+  .catalog .products-grid,
+  section.products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Seguridad para evitar roturas del grid */
+.products-grid > * {
+  min-width: 0;
+}
+
+/* Estado vacío */
+.empty-state {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  text-align: center;
+}

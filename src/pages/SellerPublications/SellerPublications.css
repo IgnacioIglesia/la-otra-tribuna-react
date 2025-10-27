@@ -1,11 +1,32 @@
 /* SellerPublications.css */
-.seller-pubs { padding: 32px 0 64px; }
-.seller-header .back { border: 0; background: none; cursor: pointer; color: #0f766e; font-weight:700; }
-.empty { padding: 20px; border: 1px dashed #cbd5e1; border-radius: 8px; text-align:center; color:#475569; }
+.seller-pubs {
+  padding: 32px 0 64px;
+}
+
+.seller-header .back {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.empty {
+  padding: 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+  color: #475569;
+}
+
+/* Grilla de productos del vendedor
+   👉 las columnas (1/2/4) las maneja ProductGrid.css */
 .products-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(1, 1fr);
+  margin-top: 16px;
 }
-@media(min-width:600px){ .products-grid { grid-template-columns: repeat(2,1fr); } }
-@media(min-width:1024px){ .products-grid { grid-template-columns: repeat(4,1fr); } }
+
+.products-grid > * {
+  min-width: 0;
+}

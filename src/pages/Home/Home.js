@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header/Header";
-import ProductCard from "../../components/ProductCard/ProductCard";
+import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
 
@@ -26,12 +26,13 @@ export default function Home() {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
+    // precarga imágenes
     HERO_IMGS.forEach((src) => {
       const i = new Image();
       i.src = src;
     });
   }, []);
-  
+
   useEffect(() => {
     const id = setInterval(() => {
       setFading(true);
@@ -43,7 +44,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  /* ===== Session (para detectar dueños) ===== */
+  /* ===== Session ===== */
   const [currentUserId, setCurrentUserId] = useState(null);
   useEffect(() => {
     (async () => {
@@ -59,6 +60,7 @@ export default function Home() {
 
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setLoading(true);
       setError("");
@@ -79,25 +81,20 @@ export default function Home() {
             stock,
             foto ( url, orden_foto )
           `)
-          .eq("estado", "Activa")      // ✅ Solo publicaciones activas
-          .gt("stock", 0)               // ✅ Solo con stock disponible
+          .eq("estado", "Activa")
+          .gt("stock", 0)
           .order("id_publicacion", { ascending: false })
           .order("orden_foto", { foreignTable: "foto", ascending: true });
 
         if (error) throw error;
 
-        // Filtrar según tu regla de oferta
         const filtered = (data || []).filter((pub) => {
-          const enOferta =
-            pub.permiso_oferta === true &&
-            daysFrom(pub.fecha_publicacion) >= 30;
+          const enOferta = pub.permiso_oferta === true && daysFrom(pub.fecha_publicacion) >= 30;
           return !enOferta;
         });
 
-        // Mapear a modelo de tarjeta
         const mapped = filtered.map((pub) => {
-          const primeraFoto =
-            Array.isArray(pub.foto) && pub.foto.length ? pub.foto[0].url : null;
+          const primeraFoto = Array.isArray(pub.foto) && pub.foto.length ? pub.foto[0].url : null;
           return {
             id: pub.id_publicacion,
             ownerId: pub.id_usuario,
@@ -119,6 +116,7 @@ export default function Home() {
         if (alive) setLoading(false);
       }
     })();
+
     return () => {
       alive = false;
     };
@@ -126,7 +124,6 @@ export default function Home() {
 
   /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
-
   const [coleccion, setColeccion] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [equipo, setEquipo] = useState("Todos");
@@ -142,7 +139,7 @@ export default function Home() {
   const hasCategoria = hasColeccion && categoria !== "Todas";
 
   const categorias = useMemo(() => {
-    const base = hasColeccion ? rows.filter(p => p.coleccion === coleccion) : rows;
+    const base = hasColeccion ? rows.filter((p) => p.coleccion === coleccion) : rows;
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
     const allowed = ["Club", "Selección"];
     const filtered = unique.filter((c) => allowed.includes(c));
@@ -150,7 +147,7 @@ export default function Home() {
   }, [rows, hasColeccion, coleccion]);
 
   const equipos = useMemo(() => {
-    const baseColeccion = hasColeccion ? rows.filter(p => p.coleccion === coleccion) : rows;
+    const baseColeccion = hasColeccion ? rows.filter((p) => p.coleccion === coleccion) : rows;
     if (categoria === "Todas") {
       const list = Array.from(new Set(baseColeccion.map((p) => p.club).filter(Boolean)));
       return ["Todos", ...list];
@@ -160,7 +157,7 @@ export default function Home() {
     return ["Todos", ...list];
   }, [rows, hasColeccion, coleccion, categoria]);
 
-  // Precio máximo
+  // Precio
   const [maxPrecio, setMaxPrecio] = useState(0);
   const maxPrecioAbsoluto = useMemo(() => {
     if (!rows.length) return 0;
@@ -175,7 +172,6 @@ export default function Home() {
     ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
     : 0;
 
-  // Filtrado principal
   const productos = useMemo(() => {
     let list = rows.filter(
       (p) =>
@@ -215,9 +211,7 @@ export default function Home() {
         <div className="hero-overlay" />
         <div className="container hero-content">
           <h1 className="hero-title">El mercado de las camisetas</h1>
-          <p className="hero-subtitle">
-            Publicá, comprá y vendé entre hinchas de verdad.
-          </p>
+          <p className="hero-subtitle">Publicá, comprá y vendé entre hinchas de verdad.</p>
         </div>
       </section>
 
@@ -225,9 +219,9 @@ export default function Home() {
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Catálogo</h2>
-          {!loading && !error && (
-            <p className="catalog-sub">Resultados: {productos.length}</p>
-          )}
+            {!loading && !error && (
+              <p className="catalog-sub">Resultados: {productos.length}</p>
+            )}
         </div>
 
         {/* TOOLBAR */}
@@ -346,11 +340,7 @@ export default function Home() {
           productos.length === 0 ? (
             <div className="empty">No hay productos que coincidan con tus filtros.</div>
           ) : (
-            <section className="products-grid">
-              {productos.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </section>
+            <ProductGrid products={productos} />
           )
         )}
       </main>
