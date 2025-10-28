@@ -406,3 +406,104 @@
   z-index: 1;
 }
 
+/* --- Fix: que el slider no quede debajo del botón Restablecer --- */
+.filters-toolbar { position: relative; }
+
+/* El contenedor del slider queda por encima de otros elementos */
+.ft-price {
+  position: relative;
+  z-index: 5;
+  flex: 1 1 420px;      /* le damos aire para que no se meta debajo */
+  min-width: 340px;     /* evita que se achique demasiado en desktop */
+}
+
+.ft-price input[type="range"] {
+  width: 100%;          /* ocupa el ancho disponible del contenedor */
+}
+
+/* El botón queda con menor prioridad en el stacking */
+.ft-reset {
+  position: relative;
+  z-index: 1;
+  margin-left: 12px;    /* separa visualmente del slider */
+}
+
+/* En pantallas medianas/angostas, preferí que rompa línea antes de solaparse */
+@media (max-width: 980px) {
+  .filters-toolbar {
+    flex-wrap: wrap;      /* permite bajar el botón si no hay espacio */
+    row-gap: 10px;
+  }
+  .ft-price {
+    flex: 1 1 100%;
+    min-width: 260px;
+  }
+  .ft-reset {
+    margin-left: 0;
+  }
+}
+
+/* ===== Toolbar siempre visible, sin scroll horizontal ===== */
+
+/* 1) La fila de filtros ocupa todo el ancho */
+.filters-toolbar {
+  position: relative;
+  overflow: visible;          /* sin scroll horizontal */
+  padding: 12px 14px;
+}
+
+/* 2) Cambiamos .ft-left a GRID para controlar bien columnas */
+.ft-left {
+  display: grid;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+  /* Orden: Ordenar | Colección | Categoría 1 | Categoría 2 | Slider | Botón */
+  grid-template-columns:
+    max-content               /* ordenar */
+    max-content               /* colección */
+    max-content               /* categoría 1 */
+    max-content               /* categoría 2 */
+    minmax(220px, 1fr)        /* slider, crece/achica */
+    max-content;              /* restablecer */
+}
+
+/* 3) El slider es flexible y capta clics por encima */
+.ft-price {
+  min-width: 0;               /* permite encogerse sin romper */
+  position: relative;
+  z-index: 5;                 /* por encima de lo demás */
+}
+.ft-price input[type="range"] { width: 100%; }
+
+/* 4) Botón normal, sin superponerse */
+.ft-reset {
+  position: relative;
+  z-index: 1;
+  margin-left: 4px;
+}
+
+/* 5) Afinamos un poco los "pills" para que entren mejor */
+.ft-field { padding: 6px 10px; }
+.ft-icon { font-size: 13px; }
+
+/* ===== Responsivo: en pantallas medianas/chicas, dos filas limpias ===== */
+@media (max-width: 1100px) {
+  .ft-left {
+    grid-template-columns: repeat(3, max-content) 1fr; /* 4 columnas */
+    grid-auto-rows: auto;
+  }
+  /* Slider a lo ancho de la fila */
+  .ft-price { grid-column: 1 / -1; }
+  /* Botón a la derecha en la segunda fila */
+  .ft-reset { grid-column: 1 / -1; justify-self: end; }
+}
+
+@media (max-width: 560px) {
+  .ft-left {
+    grid-template-columns: 1fr 1fr;  /* dos columnas */
+    gap: 10px;
+  }
+  .ft-price { grid-column: 1 / -1; }
+  .ft-reset { grid-column: 1 / -1; justify-self: end; }
+}
