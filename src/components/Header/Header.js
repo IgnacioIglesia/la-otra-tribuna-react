@@ -1,6 +1,6 @@
 // src/components/Header/Header.js
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import { useFavorites } from "../Favorites/FavoritesContext";
@@ -22,16 +22,28 @@ function getInitials(user) {
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Navega o scrollea según dónde estés
+  const goToCatalog = () => {
+    if (location.pathname === "/") {
+      // Ya estoy en Home → scrolleo directo con hash
+      window.location.hash = "#catalogo";
+    } else {
+      // Vengo de otra página → navego con state
+      navigate("/", { state: { scrollTo: "catalogo" } });
+    }
+  };
 
   // ===== Sesión =====
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);  // << NUEVO
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Ítems del menú móvil (las mismas opciones de tu barra, SIN "Iniciar sesión")
+  // Ítems del menú móvil
   const MOBILE_MENU = [
-    { label: "Categorías", href: "/categorias" },
+    { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
     { label: "Ofertas", href: "/offers" },
     { label: "Vender", href: "/sell" },
     { label: "Rastrear Pedido", href: "/track-order" },
@@ -79,11 +91,6 @@ export default function Header() {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const displayName =
-    user?.user_metadata?.nombre ||
-    user?.user_metadata?.full_name ||
-    (user?.email ? user.email.split("@")[0] : "");
-
   const handleLoginClick = () => navigate("/login");
   const handleLogout = async () => {
     try { await supabase.auth.signOut(); }
@@ -114,8 +121,8 @@ export default function Header() {
     if (!selectedLocation) return "Enviar a ubicación";
     const { departamento, ciudad } = selectedLocation;
     return `Enviar a ${ciudad}, ${departamento}`;
-    };
-  
+  };
+
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 1024) setDrawerOpen(false);
@@ -123,9 +130,6 @@ export default function Header() {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-
-  // ===== Categorías dropdown (mock) =====
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
 
   // ===== Contextos globales =====
   const { count: favCount, openFavorites } = useFavorites();
@@ -136,16 +140,17 @@ export default function Header() {
       {/* ===== TOP BAR ===== */}
       <div className="top">
         <div className="container top-inner">
-            {/* Hamburguesa (móvil) */}
-            <button
-              className="lot-burger lg-hidden"
-              aria-label="Abrir menú"
-              onClick={() => setDrawerOpen(true)}
-            >
-              <span className="burger-line" />
-              <span className="burger-line" />
-              <span className="burger-line" />
-            </button>
+          {/* Hamburguesa (móvil) */}
+          <button
+            className="lot-burger lg-hidden"
+            aria-label="Abrir menú"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="burger-line" />
+            <span className="burger-line" />
+            <span className="burger-line" />
+          </button>
+
           <div className="brand-wrap">
             <a href="/" className="logo-link" aria-label="Ir al inicio">
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
@@ -175,7 +180,7 @@ export default function Header() {
                         ? `${user.user_metadata.nombre} ${user.user_metadata.apellido}`
                         : user?.user_metadata?.nombre ||
                           user?.user_metadata?.full_name ||
-                          (user?.email ? user.email.split("@")[0] : "Usuario")}
+                          (user?.email ? user.email.split("@")?.[0] : "Usuario")}
                     </strong>
                   </span>
                   <span className="chev">▾</span>
@@ -208,21 +213,11 @@ export default function Header() {
             )}
 
             {/* Pills */}
-            <button
-              className="pill"
-              type="button"
-              aria-label="Favoritos"
-              onClick={openFavorites}  // ❤️ abre drawer de favoritos (contexto)
-            >
+            <button className="pill" type="button" aria-label="Favoritos" onClick={openFavorites}>
               ❤️<span>{favCount}</span>
             </button>
 
-            <button
-              className="pill"
-              type="button"
-              aria-label="Carrito"
-              onClick={openCart}       // 🛒 abre drawer de carrito (contexto)
-            >
+            <button className="pill" type="button" aria-label="Carrito" onClick={openCart}>
               🛒<span>{cartCount}</span>
             </button>
 
@@ -245,27 +240,10 @@ export default function Header() {
             <span>{getLocationText()}</span>
           </button>
 
-          <div
-            className="dropdown"
-            onMouseEnter={() => setIsCategoriesOpen(true)}
-            onMouseLeave={() => setIsCategoriesOpen(false)}
-          >
-            <button
-              className="subnav-link"
-              onClick={() => setIsCategoriesOpen((v) => !v)}
-              aria-haspopup="true"
-              aria-expanded={isCategoriesOpen}
-            >
-              Categorías <span className="chev">▾</span>
-            </button>
-            {isCategoriesOpen && (
-              <div className="dropdown-menu">
-                <button>Club</button>
-                <button>Selección</button>
-                <button>Retro</button>
-              </div>
-            )}
-          </div>
+          {/* CATÁLOGO */}
+          <button className="subnav-link" onClick={goToCatalog}>
+            Catálogo
+          </button>
 
           <button className="subnav-link" onClick={() => navigate("/offers")}>
             Ofertas
@@ -279,7 +257,6 @@ export default function Header() {
             Rastrear Pedido
           </button>
 
-          {/* En la subnav, "Favoritos" navega a la página /favorites */}
           <button className="subnav-link" onClick={() => navigate("/favorites")}>
             Favoritos
           </button>

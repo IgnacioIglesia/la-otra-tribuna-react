@@ -57,18 +57,28 @@
   margin:0;
   padding:8px 0 16px;
 }
-.drawer-list a{
+
+/* Estilo para los links (ahora son <button> en lugar de <a>) */
+.drawer-link{
   display:block;
   padding:12px 16px;
   color:#111;
   text-decoration:none;
   border-radius:8px;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
 }
-.drawer-list a:hover{ background:#f6f6f7; }
+
+.drawer-link:hover{ 
+  background:#f6f6f7; 
+}
 
 /* Reduce motion para accesibilidad */
 @media (prefers-reduced-motion: reduce){
   .drawer-backdrop,
   .drawer-panel{ transition: none; }
 }
-

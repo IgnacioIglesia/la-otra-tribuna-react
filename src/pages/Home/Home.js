@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import { supabase } from "../../lib/supabaseClient";
@@ -21,28 +22,23 @@ const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 const HERO_IMGS = ["/assets/fondo1.png", "/assets/fondo2.png", "/assets/fondo3.png", "/assets/fondo4.png"];
 
 export default function Home() {
-  /* ===== Hero rotativo ===== */
-  const [idx, setIdx] = useState(0);
-  const [fading, setFading] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    // precarga imágenes
-    HERO_IMGS.forEach((src) => {
-      const i = new Image();
-      i.src = src;
-    });
-  }, []);
+  // CLAVE: Usar useRef para recordar si se pidió catálogo al montar
+  const wantedCatalogOnMount = useRef(
+    location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"
+  );
 
+  // Detectar cambios en el hash cuando ya estás en Home
   useEffect(() => {
-    const id = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setIdx((i) => (i + 1) % HERO_IMGS.length);
-        setFading(false);
-      }, 250);
-    }, 7000);
-    return () => clearInterval(id);
-  }, []);
+    if (location.hash === "#catalogo") {
+      wantedCatalogOnMount.current = true;
+    }
+  }, [location.hash]);
+
+  // Si se pidió catálogo al inicio, mantener esa decisión aunque cambie el location
+  const showHero = !wantedCatalogOnMount.current;
 
   /* ===== Session ===== */
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -121,6 +117,82 @@ export default function Home() {
       alive = false;
     };
   }, [currentUserId]);
+
+  /* ===== Scroll suave al catálogo ===== */
+  useEffect(() => {
+    const wantsCatalog = location.hash === "#catalogo" || location.state?.scrollTo === "catalogo";
+    
+    // Solo scrollear cuando se pide catálogo Y los datos ya cargaron
+    if (!wantsCatalog || loading) return;
+
+    // Función para hacer el scroll
+    const scrollToCatalog = () => {
+      const el = document.getElementById("catalogo");
+      if (!el) return false;
+
+      const header = document.getElementById("siteHeader");
+      const headerHeight = header?.getBoundingClientRect().height || 0;
+      const EXTRA_OFFSET = 20;
+      const totalOffset = headerHeight + EXTRA_OFFSET;
+
+      const y = el.getBoundingClientRect().top + window.pageYOffset - totalOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+      return true;
+    };
+
+    // Limpiar el state después de procesar (pero mantener el ref)
+    if (location.state?.scrollTo) {
+      navigate(location.pathname + location.hash, { replace: true, state: {} });
+    }
+
+    // Esperar a que el render complete
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const success = scrollToCatalog();
+          
+          // Si falló, reintentar
+          if (!success) {
+            let attempts = 0;
+            const maxAttempts = 30;
+            const intervalId = setInterval(() => {
+              attempts++;
+              if (scrollToCatalog() || attempts >= maxAttempts) {
+                clearInterval(intervalId);
+              }
+            }, 100);
+          }
+        });
+      });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [loading, location.state, location.hash, location.pathname, navigate]);
+
+  /* ===== Hero rotativo ===== */
+  const [idx, setIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    // precarga imágenes
+    HERO_IMGS.forEach((src) => {
+      const i = new Image();
+      i.src = src;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showHero) return; // No rotar si el hero está oculto
+    
+    const id = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setIdx((i) => (i + 1) % HERO_IMGS.length);
+        setFading(false);
+      }, 250);
+    }, 7000);
+    return () => clearInterval(id);
+  }, [showHero]);
 
   /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
@@ -202,26 +274,28 @@ export default function Home() {
     <>
       <Header />
 
-      {/* HERO */}
-      <section className="hero">
-        <div
-          className={`hero-bg ${fading ? "is-fading" : ""}`}
-          style={{ backgroundImage: `url(${HERO_IMGS[idx]})` }}
-        />
-        <div className="hero-overlay" />
-        <div className="container hero-content">
-          <h1 className="hero-title">El mercado de las camisetas</h1>
-          <p className="hero-subtitle">Publicá, comprá y vendé entre hinchas de verdad.</p>
-        </div>
-      </section>
+      {/* HERO - Solo se muestra si NO se pidió catálogo al montar */}
+      {showHero && (
+        <section className="hero">
+          <div
+            className={`hero-bg ${fading ? "is-fading" : ""}`}
+            style={{ backgroundImage: `url(${HERO_IMGS[idx]})` }}
+          />
+          <div className="hero-overlay" />
+          <div className="container hero-content">
+            <h1 className="hero-title">El mercado de las camisetas</h1>
+            <p className="hero-subtitle">Publicá, comprá y vendé entre hinchas de verdad.</p>
+          </div>
+        </section>
+      )}
 
       {/* CATÁLOGO */}
-      <main className="container catalog">
+      <main id="catalogo" className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Catálogo</h2>
-            {!loading && !error && (
-              <p className="catalog-sub">Resultados: {productos.length}</p>
-            )}
+          {!loading && !error && (
+            <p className="catalog-sub">Resultados: {productos.length}</p>
+          )}
         </div>
 
         {/* TOOLBAR */}

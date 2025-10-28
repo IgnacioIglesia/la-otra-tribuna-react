@@ -1,3 +1,4 @@
+// ===== ProductCard.js =====
 import React from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../Cart/CartContext";
@@ -14,7 +15,7 @@ function money(n) {
 
 export default function ProductCard({ product }) {
   const { add, getQty } = useCart();
-  const { isFavorite, toggle } = useFavorites(); // ✅ Cambié toggleFavorite por toggle
+  const { isFavorite, toggle } = useFavorites();
 
   const {
     id,
@@ -25,12 +26,20 @@ export default function ProductCard({ product }) {
     categoria,
     stock = 0,
     isOwn = false,
+    // ✅ Campos para manejar ofertas
+    isOffer = false,
+    precioAnterior,
+    precio_oferta,
   } = product;
 
   const qtyInCart = getQty(id);
   const canAdd = !isOwn && stock > 0;
   const atMax = stock > 0 && qtyInCart >= stock;
   const isFav = isFavorite(id);
+
+  // ✅ Determinar qué precio mostrar
+  const precioFinal = isOffer && precio_oferta ? precio_oferta : precio;
+  const mostrarDescuento = isOffer && precioAnterior && precioAnterior > precioFinal;
 
   const onAdd = (e) => {
     e.stopPropagation();
@@ -49,14 +58,21 @@ export default function ProductCard({ product }) {
   const onToggleFavorite = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    toggle(product); // ✅ Usar toggle en lugar de toggleFavorite
+    toggle(product);
   };
 
   const detailsHref = `/publication/${id}`;
 
   return (
     <article className="card">
-      {/* Botón de favoritos */}
+      {/* ✅ Badge de descuento - ARRIBA A LA IZQUIERDA */}
+      {mostrarDescuento && (
+        <span className="badge-offer">
+          -{Math.round(((precioAnterior - precioFinal) / precioAnterior) * 100)}%
+        </span>
+      )}
+
+      {/* Botón de favoritos - ARRIBA A LA DERECHA */}
       <button
         className={`fav-btn ${isFav ? "is-fav" : ""}`}
         onClick={onToggleFavorite}
@@ -100,7 +116,12 @@ export default function ProductCard({ product }) {
           </div>
 
           <div className="price">
-            <div className="price-new">{money(precio)}</div>
+            {/* ✅ Mostrar precio anterior tachado si hay descuento */}
+            {mostrarDescuento && (
+              <div className="price-old">{money(precioAnterior)}</div>
+            )}
+            {/* ✅ Precio final (con o sin descuento) */}
+            <div className="price-new">{money(precioFinal)}</div>
             <div className={`pc-stock-mini ${stock <= 0 ? "is-out" : ""}`}>
               {stock <= 0 ? "Sin stock" : `Stock: ${stock}`}
             </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import "../Header/Header.css";
@@ -26,6 +26,37 @@ function getInitials(user) {
 
 export default function HeaderSimplif() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Navega o scrollea según dónde estés - SIEMPRE con scroll suave
+  const goToCatalog = (e) => {
+    e?.preventDefault();
+    
+    console.log("📍 goToCatalog desde:", location.pathname);
+    
+    if (location.pathname === "/") {
+      console.log("✅ Ya en Home, scrolleando...");
+      setTimeout(() => scrollToCatalog(), 50);
+    } else {
+      console.log("🚀 Navegando a Home con state...");
+      navigate("/", { state: { scrollTo: "catalogo" }, replace: false });
+    }
+  };
+
+  // Función auxiliar para hacer el scroll suave con offset correcto
+  const scrollToCatalog = () => {
+    const el = document.getElementById("catalogo");
+    if (!el) return false;
+    
+    const header = document.getElementById("siteHeader");
+    const headerHeight = header?.getBoundingClientRect().height || 0;
+    const EXTRA_OFFSET = 20;
+    const totalOffset = headerHeight + EXTRA_OFFSET;
+    
+    const y = el.getBoundingClientRect().top + window.pageYOffset - totalOffset;
+    window.scrollTo({ top: y, behavior: "smooth" });
+    return true;
+  };
 
   /** ===== Sesión ===== */
   const [user, setUser] = useState(null);
@@ -109,9 +140,6 @@ export default function HeaderSimplif() {
     const { departamento, ciudad } = selectedLocation;
     return `Enviar a ${ciudad}, ${departamento}`;
   };
-
-  /** ===== Categorías dropdown (mock) ===== */
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
 
   return (
     <header id="siteHeader">
@@ -205,27 +233,10 @@ export default function HeaderSimplif() {
             <span>{getLocationText()}</span>
           </button>
 
-          <div
-            className="dropdown"
-            onMouseEnter={() => setIsCategoriesOpen(true)}
-            onMouseLeave={() => setIsCategoriesOpen(false)}
-          >
-            <button
-              className="subnav-link"
-              onClick={() => setIsCategoriesOpen((v) => !v)}
-              aria-haspopup="true"
-              aria-expanded={isCategoriesOpen}
-            >
-              Categorías <span className="chev">▾</span>
-            </button>
-            {isCategoriesOpen && (
-              <div className="dropdown-menu">
-                <button>Club</button>
-                <button>Selección</button>
-                <button>Retro</button>
-              </div>
-            )}
-          </div>
+          {/* CATÁLOGO - ahora sin dropdown, solo botón simple */}
+          <button className="subnav-link" onClick={goToCatalog}>
+            Catálogo
+          </button>
 
           <button className="subnav-link" onClick={() => navigate("/offers")}>Ofertas</button>
           <button className="subnav-link" onClick={() => navigate("/sell")}>Vender</button>

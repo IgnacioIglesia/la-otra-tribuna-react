@@ -1,9 +1,6 @@
-/* ===== GRID ===== */
-/* (tu grid existente) */
-
 /* ===== CARD ===== */
 .card {
-  position: relative; /* ✅ Para posicionar el botón de favoritos */
+  position: relative; /* ✅ Para posicionar badges y botones */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -21,7 +18,24 @@
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
-/* ===== Botón de favoritos ===== */
+/* ===== Badge de descuento (ARRIBA A LA IZQUIERDA) ===== */
+.badge-offer {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 10;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+  letter-spacing: 0.02em;
+}
+
+/* ===== Botón de favoritos (ARRIBA A LA DERECHA) ===== */
 .fav-btn {
   position: absolute;
   top: 12px;
@@ -66,14 +80,15 @@
 }
 
 /* ===== Imagen ===== */
-.card .media{
+.card .media {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;     /* ✅ alto típico para camisetas */
+  aspect-ratio: 4 / 5;
   background: #f5f7f9;
   overflow: hidden;
 }
-.card .media img{
+
+.card .media img {
   position: absolute;
   inset: 0;
   margin: auto;
@@ -81,8 +96,14 @@
   max-height: 100%;
   width: auto;
   height: auto;
-  object-fit: contain;     /* ✅ no recorta ni deforma */
+  object-fit: contain;
   display: block;
+}
+
+/* ===== Link clickeable en imagen ===== */
+.card-click {
+  display: block;
+  text-decoration: none;
 }
 
 /* ===== Cuerpo ===== */
@@ -96,15 +117,16 @@
   min-height: 140px;
 }
 
-/* ===== Texto ===== */
+/* ===== Meta (texto + precio) ===== */
 .card .meta {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 10px; /* leve ajuste mejor alineado */
+  gap: 10px;
   flex: 1;
 }
 
+/* ===== Título ===== */
 .card .card-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -112,7 +134,6 @@
   line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
-
   font-size: 13px;
   font-weight: 700;
   line-height: 1.15;
@@ -120,6 +141,16 @@
   margin: 0 0 2px 0;
 }
 
+.card-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-title-link:hover .card-title {
+  text-decoration: underline;
+}
+
+/* ===== Subtítulo ===== */
 .card .card-subtitle {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -127,22 +158,26 @@
   line-clamp: 1;
   overflow: hidden;
   text-overflow: ellipsis;
-
   color: #6b7280;
   font-size: 11.5px;
   line-height: 1.1;
 }
 
 /* ===== Precios ===== */
-.price { text-align: right; min-width: 86px; }
-.price .old,
+.price {
+  text-align: right;
+  min-width: 86px;
+}
+
+.price .price-old,
 .price-old {
   text-decoration: line-through;
   color: #888;
   font-size: 11.5px;
   margin-bottom: 2px;
 }
-.price .new,
+
+.price .price-new,
 .price-new {
   font-weight: 700;
   color: #064e3b;
@@ -155,8 +190,9 @@
   color: #64748b;
   margin-top: 2px;
 }
+
 .pc-stock-mini.is-out {
-  color: #ef4444; /* rojo suave para "Sin stock" */
+  color: #ef4444;
   font-weight: 600;
 }
 
@@ -178,10 +214,17 @@
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
   line-height: 1;
-  padding: 0;
 }
-.card .btn.primary:hover { background: #046c4e; transform: scale(1.02); }
-.card .btn.primary:disabled { opacity: .55; cursor: not-allowed; }
+
+.card .btn.primary:hover {
+  background: #046c4e;
+  transform: scale(1.02);
+}
+
+.card .btn.primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 /* Botón secundario (fantasma) para "Agregar una más" */
 .card .btn.secondary {
@@ -194,43 +237,19 @@
   color: #064e3b;
   border: 1px solid rgba(6, 78, 59, 0.25);
   cursor: pointer;
-  transition: background .2s ease, border-color .2s ease;
-}
-.card .btn.secondary:hover { border-color: rgba(6, 78, 59, 0.5); }
-.card .btn.secondary:disabled { opacity: .55; cursor: not-allowed; }
-
-/* ===== Corazón / favoritos (viejo estilo, mantener por compatibilidad) ===== */
-.fav-toggle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  padding: 4px 8px;
-  line-height: 1;
-  cursor: pointer;
-  font-size: 15px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
-  transition: transform 0.15s ease, color 0.15s ease;
-}
-.fav-toggle:hover { transform: scale(1.08); }
-.fav-toggle.active { color: #e11; }
-
-/* ===== Badge oferta (si lo usás) ===== */
-.badge-offer {
-  position: absolute;
-  left: 8px;
-  top: 8px;
-  background: #d92d20;
-  color: #fff;
-  border-radius: 999px;
-  padding: 3px 7px;
-  font-size: 11px;
-  font-weight: 700;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-/* Mensaje cuando es propia (reemplaza los botones) */
+.card .btn.secondary:hover {
+  border-color: rgba(6, 78, 59, 0.5);
+}
+
+.card .btn.secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ===== Mensaje cuando es propia ===== */
 .pc-own-msg {
   background: #fff7f7;
   color: #b91c1c;
@@ -241,8 +260,11 @@
   font-weight: 600;
 }
 
-/* Ajustes finos */
-.products-grid .card .meta div:first-child .title-2lines { font-weight: 700 !important; }
+/* ===== Compatibilidad con otras clases ===== */
+.products-grid .card .meta div:first-child .title-2lines {
+  font-weight: 700 !important;
+}
+
 .products-grid .card .meta div:first-child {
   font-weight: 700;
   font-size: 15px;
@@ -254,6 +276,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .products-grid .card .meta .muted {
   color: #6b7280;
   font-size: 13px;
@@ -265,14 +288,3 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* Mantener proporciones de imagen (compat) */
-.card .media { aspect-ratio: 4 / 5; }
-.card .media img { object-fit: contain; max-width: 100%; max-height: 100%; }
-
-/* Hacer clickeable la imagen manteniendo el layout */
-.card-click { display: block; }
-
-/* El título es link pero hereda color y sin subrayado */
-.card-title-link { color: inherit; text-decoration: none; }
-.card-title-link:hover .card-title { text-decoration: underline; }
