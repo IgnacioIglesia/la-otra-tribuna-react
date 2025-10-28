@@ -1,5 +1,5 @@
 /* ================================
-   HERO con rotación y fade
+   HERO cross-fade + blur + Ken Burns alterno
 ==================================*/
 .hero {
   position: relative;
@@ -8,38 +8,76 @@
   min-height: 560px;
   overflow: hidden;
   margin-bottom: 60px;
+  background: #000;
+  isolation: isolate; /* asegura stacking propio */
 }
 
+/* Capas de imagen */
 .hero-bg {
   position: absolute;
   inset: 0;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
-  transition: opacity 0.25s ease;
-  opacity: 1;
-}
-.hero-bg.is-fading {
   opacity: 0;
+  transition: opacity 900ms ease-in-out, filter 900ms ease-in-out;
+  will-change: opacity, transform, filter;
+  z-index: 0; /* fondo */
 }
 
+/* La que entra */
+.hero-bg.active {
+  opacity: 1;
+  filter: blur(0px);
+}
+
+/* La que sale (se apaga con leve blur) */
+.hero-bg.prev {
+  opacity: 1;
+  filter: blur(2px);
+}
+
+/* Ken Burns: alterno izquierda/derecha para dinamismo */
+.hero-bg.active.dir-left  { animation: kb-left 12s ease-in-out forwards; }
+.hero-bg.active.dir-right { animation: kb-right 12s ease-in-out forwards; }
+
+@keyframes kb-left {
+  0%   { transform: scale(1.04) translate(1%, 0); }
+  100% { transform: scale(1.12) translate(-2%, -1%); }
+}
+@keyframes kb-right {
+  0%   { transform: scale(1.04) translate(-1%, 0); }
+  100% { transform: scale(1.12) translate(2%, -1%); }
+}
+
+/* Overlay SIEMPRE debajo del texto */
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(0, 0, 0, 0.68), rgba(0, 0, 0, 0.68));
+  z-index: 1;
+  background: linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68));
+  pointer-events: none;
 }
 
+/* Contenido */
 .hero-content {
   position: absolute;
   inset: 0;
+  z-index: 2; /* arriba del overlay */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #fff;
   gap: 8px;
   padding: 0 16px;
+}
+
+/* Texto blanco y nítido */
+.hero-title,
+.hero-subtitle {
+  color: #fff !important;
+  mix-blend-mode: normal;
 }
 
 .hero-title {
@@ -48,14 +86,17 @@
   line-height: 1.05;
   font-weight: 800;
   letter-spacing: -0.02em;
+  text-shadow: 0 4px 18px rgba(0,0,0,.55);
 }
 
 .hero-subtitle {
   margin: 0;
   font-size: 16px;
-  opacity: 0.95;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  opacity: .98;
+  text-shadow: 0 3px 12px rgba(0,0,0,.5);
 }
+
+
 
 /* ================================
    Catálogo
@@ -326,3 +367,42 @@
 .align-right {
   justify-self: end;
 }
+
+/* --- FIX de stacking para dropdowns en la toolbar --- */
+.filters-toolbar { position: relative; z-index: 5; }
+.dd { position: relative; z-index: 6; }
+.dd-menu { z-index: 1000; }
+
+/* Si algún navegador recorta por overflow-x, cuando haya un menú abierto liberamos el overflow */
+.filters-toolbar.dd-open { overflow: visible; }
+
+/* --- FIX: asegurar que los dropdowns sean clickeables y estén por encima --- */
+.filters-toolbar {
+  position: relative;
+  z-index: 20; /* antes 5 */
+}
+
+.dd {
+  position: relative;
+  z-index: 30; /* cada dropdown en su propio stacking */
+}
+
+.dd-menu {
+  position: absolute;
+  z-index: 9999; /* siempre arriba de las cards */
+  pointer-events: auto;
+}
+
+/* Si el contenedor .catalog estaba bloqueando eventos, lo liberamos */
+.catalog {
+  position: relative;
+  z-index: 1;
+  overflow: visible; /* para que no recorte el menú */
+}
+
+/* Fix para las cards, aseguramos que no bloqueen los clics de la toolbar */
+.catalog .products-grid {
+  position: relative;
+  z-index: 1;
+}
+

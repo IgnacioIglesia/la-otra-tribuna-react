@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import ProductGrid from "../../components/ProductGrid/ProductGrid";
+import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
 
@@ -25,19 +26,17 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // CLAVE: Usar useRef para recordar si se pidió catálogo al montar
+  // Recordar si se pidió catálogo al montar
   const wantedCatalogOnMount = useRef(
     location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"
   );
 
-  // Detectar cambios en el hash cuando ya estás en Home
   useEffect(() => {
     if (location.hash === "#catalogo") {
       wantedCatalogOnMount.current = true;
     }
   }, [location.hash]);
 
-  // Si se pidió catálogo al inicio, mantener esa decisión aunque cambie el location
   const showHero = !wantedCatalogOnMount.current;
 
   /* ===== Session ===== */
@@ -121,45 +120,33 @@ export default function Home() {
   /* ===== Scroll suave al catálogo ===== */
   useEffect(() => {
     const wantsCatalog = location.hash === "#catalogo" || location.state?.scrollTo === "catalogo";
-    
-    // Solo scrollear cuando se pide catálogo Y los datos ya cargaron
     if (!wantsCatalog || loading) return;
 
-    // Función para hacer el scroll
     const scrollToCatalog = () => {
       const el = document.getElementById("catalogo");
       if (!el) return false;
-
       const header = document.getElementById("siteHeader");
       const headerHeight = header?.getBoundingClientRect().height || 0;
       const EXTRA_OFFSET = 20;
       const totalOffset = headerHeight + EXTRA_OFFSET;
-
       const y = el.getBoundingClientRect().top + window.pageYOffset - totalOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
       return true;
     };
 
-    // Limpiar el state después de procesar (pero mantener el ref)
     if (location.state?.scrollTo) {
       navigate(location.pathname + location.hash, { replace: true, state: {} });
     }
 
-    // Esperar a que el render complete
     const timeoutId = setTimeout(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const success = scrollToCatalog();
-          
-          // Si falló, reintentar
-          if (!success) {
+          const ok = scrollToCatalog();
+          if (!ok) {
             let attempts = 0;
-            const maxAttempts = 30;
-            const intervalId = setInterval(() => {
+            const id = setInterval(() => {
               attempts++;
-              if (scrollToCatalog() || attempts >= maxAttempts) {
-                clearInterval(intervalId);
-              }
+              if (scrollToCatalog() || attempts >= 30) clearInterval(id);
             }, 100);
           }
         });
@@ -171,28 +158,22 @@ export default function Home() {
 
   /* ===== Hero rotativo ===== */
   const [idx, setIdx] = useState(0);
-  const [fading, setFading] = useState(false);
+  const [prevIdx, setPrevIdx] = useState(null);
 
   useEffect(() => {
-    // precarga imágenes
-    HERO_IMGS.forEach((src) => {
-      const i = new Image();
-      i.src = src;
-    });
+    HERO_IMGS.forEach((src) => { const img = new Image(); img.src = src; });
   }, []);
 
   useEffect(() => {
-    if (!showHero) return; // No rotar si el hero está oculto
-    
+    if (!showHero) return;
     const id = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setIdx((i) => (i + 1) % HERO_IMGS.length);
-        setFading(false);
-      }, 250);
-    }, 7000);
+      setPrevIdx(idx);
+      setIdx((i) => (i + 1) % HERO_IMGS.length);
+    }, 8000);
     return () => clearInterval(id);
-  }, [showHero]);
+  }, [idx, showHero]);
+
+  const dirClass = (idx % 2 === 0) ? "dir-left" : "dir-right";
 
   /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
@@ -269,22 +250,34 @@ export default function Home() {
     return list;
   }, [rows, coleccion, categoria, equipo, maxPrecio, sort]);
 
+  /* ===== Dropdown abierto en toolbar (para evitar recortes) ===== */
+  const [anyDdOpen, setAnyDdOpen] = useState(false);
+
   /* ===== Render ===== */
   return (
     <>
       <Header />
 
-      {/* HERO - Solo se muestra si NO se pidió catálogo al montar */}
+      {/* HERO */}
       {showHero && (
         <section className="hero">
+          {prevIdx !== null && (
+            <div
+              className="hero-bg prev"
+              style={{ backgroundImage: `url(${HERO_IMGS[prevIdx]})` }}
+            />
+          )}
           <div
-            className={`hero-bg ${fading ? "is-fading" : ""}`}
+            className={`hero-bg active ${dirClass}`}
+            key={idx}
             style={{ backgroundImage: `url(${HERO_IMGS[idx]})` }}
           />
           <div className="hero-overlay" />
           <div className="container hero-content">
             <h1 className="hero-title">El mercado de las camisetas</h1>
-            <p className="hero-subtitle">Publicá, comprá y vendé entre hinchas de verdad.</p>
+            <p className="hero-subtitle">
+              Publicá, comprá y vendé entre hinchas de verdad.
+            </p>
           </div>
         </section>
       )}
@@ -299,74 +292,68 @@ export default function Home() {
         </div>
 
         {/* TOOLBAR */}
-        <div className="filters-toolbar">
+        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
           <div className="ft-left">
             {/* Ordenar */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>↕︎</span>
-              <select
-                aria-label="Ordenar"
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-              >
-                <option value="default">Por defecto</option>
-                <option value="price-asc">Precio: menor a mayor</option>
-                <option value="price-desc">Precio: mayor a menor</option>
-                <option value="name">Nombre (A–Z)</option>
-              </select>
-            </div>
+            <Dropdown
+              icon="↕︎"
+              value={sort}
+              onChange={setSort}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "default",    label: "Por defecto" },
+                { value: "price-asc",  label: "Precio: menor a mayor" },
+                { value: "price-desc", label: "Precio: mayor a menor" },
+                { value: "name",       label: "Nombre (A–Z)" },
+              ]}
+            />
 
             {/* Colección */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>🗂️</span>
-              <select
-                aria-label="Colección"
-                value={coleccion}
-                onChange={(e) => setColeccion(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>Elegí colección</option>
-                <option value="Todas">Todas</option>
-                <option value="Actual">Actual</option>
-                <option value="Retro">Retro</option>
-              </select>
-            </div>
+            <Dropdown
+              icon="🗂️"
+              placeholder="Elegí colección"
+              value={coleccion || ""}
+              onChange={setColeccion}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "",        label: "Elegí colección" },
+                { value: "Todas",   label: "Todas" },
+                { value: "Actual",  label: "Actual" },
+                { value: "Retro",   label: "Retro" },
+              ]}
+            />
 
             {/* Categoría */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>🏷️</span>
-              <select
-                aria-label="Categoría"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                disabled={!hasColeccion}
-              >
-                {["Todas", ...categorias.filter((c) => c !== "Todas")].map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
+            <Dropdown
+              icon="🏷️"
+              placeholder="Elegí categoría"
+              value={hasColeccion ? categoria : ""}
+              onChange={setCategoria}
+              onOpenChange={setAnyDdOpen}
+              disabled={!hasColeccion}
+              options={[
+                { value: "Todas", label: "Todas" },
+                ...categorias.filter(c => c !== "Todas").map(c => ({ value: c, label: c })),
+              ]}
+            />
 
             {/* Equipo */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>⚽️</span>
-              <select
-                aria-label="Equipo"
-                value={hasCategoria ? equipo : ""}
-                onChange={(e) => setEquipo(e.target.value)}
-                disabled={!hasCategoria}
-              >
-                {!hasCategoria ? (
-                  <option value="" disabled>Elegí categoría</option>
-                ) : (
-                  equipos.map((eq) => (
-                    <option key={eq} value={eq}>
-                      {eq === "Todos" ? "Todos" : eq}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
+            <Dropdown
+              icon="⚽️"
+              placeholder="Elegí equipo"
+              value={hasCategoria ? equipo : ""}
+              onChange={setEquipo}
+              onOpenChange={setAnyDdOpen}
+              disabled={!hasCategoria}
+              options={
+                (hasCategoria ? equipos : ["Elegí categoría"]).map(eq =>
+                  eq === "Elegí categoría"
+                    ? { value: "", label: "Elegí categoría" }
+                    : { value: eq, label: eq === "Todos" ? "Todos" : eq }
+                )
+              }
+              align="right"
+            />
 
             {/* Precio */}
             <div className="ft-price">
@@ -378,7 +365,7 @@ export default function Home() {
                 type="range"
                 min="0"
                 max={maxPrecioAbsoluto || 0}
-                step="50"
+                step="1"
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
                 style={{ "--pct": `${pct}%` }}
@@ -396,6 +383,7 @@ export default function Home() {
                 setCategoria("Todas");
                 setEquipo("Todos");
                 setMaxPrecio(maxPrecioAbsoluto || 0);
+                setAnyDdOpen(false);
               }}
               title="Restablecer filtros"
               disabled={loading || !!error}

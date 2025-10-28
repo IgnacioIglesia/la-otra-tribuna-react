@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header/Header";
-import ProductGrid from "../../components/ProductGrid/ProductGrid"; // ✅ usa el grid centralizado
+import ProductGrid from "../../components/ProductGrid/ProductGrid";
+import Dropdown from "../../components/Dropdown/Dropdown"; // ✅ nuevo
 import { supabase } from "../../lib/supabaseClient";
 import "./Offers.css";
 
@@ -28,6 +29,9 @@ export default function Offers() {
   const [categoria, setCategoria] = useState("Todas");
   const [equipo, setEquipo] = useState("Todos");
   const [maxPrecio, setMaxPrecio] = useState(0);
+
+  /* ===== Control del dropdown abierto (para z-index del toolbar) ===== */
+  const [anyDdOpen, setAnyDdOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -61,7 +65,7 @@ export default function Offers() {
       }
 
       const mapped = (data || [])
-        .filter((p) => daysFrom(p.fecha_publicacion) >= 30) // 30 días
+        .filter((p) => daysFrom(p.fecha_publicacion) >= 30)
         .map((pub) => {
           const foto = pub.foto?.[0]?.url || PLACEHOLDER;
           const basePrice = Number(pub.precio);
@@ -78,7 +82,6 @@ export default function Offers() {
             coleccion: pub.coleccion || "Actual",
             img: foto,
             stock: Number(pub.stock) || 0,
-            // flags/campos que usa ProductCard
             isOffer: true,
             precio: basePrice,
             precioAnterior: basePrice,
@@ -91,7 +94,6 @@ export default function Offers() {
     })();
   }, []);
 
-  // Reset filtros dependientes cuando cambia colección
   useEffect(() => {
     if (!coleccion || coleccion === "Todas") {
       setCategoria("Todas");
@@ -102,7 +104,6 @@ export default function Offers() {
   const hasColeccion = !!coleccion && coleccion !== "Todas";
   const hasCategoria = hasColeccion && categoria !== "Todas";
 
-  // Categorías disponibles según colección
   const categorias = useMemo(() => {
     const base = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
@@ -111,7 +112,6 @@ export default function Offers() {
     return ["Todas", ...filtered];
   }, [all, hasColeccion, coleccion]);
 
-  // Equipos disponibles según colección y categoría
   const equipos = useMemo(() => {
     const baseColeccion = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
     if (categoria === "Todas") {
@@ -123,7 +123,6 @@ export default function Offers() {
     return ["Todos", ...list];
   }, [all, hasColeccion, coleccion, categoria]);
 
-  // Precio máximo absoluto
   const maxPrecioAbsoluto = useMemo(() => {
     if (!all.length) return 0;
     return Math.max(...all.map((p) => Number(p.precioAnterior || p.precio) || 0));
@@ -137,7 +136,6 @@ export default function Offers() {
     ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
     : 0;
 
-  // Filtrado y ordenamiento
   const productos = useMemo(() => {
     let list = all.filter(
       (p) =>
@@ -168,6 +166,7 @@ export default function Offers() {
     <>
       <Header />
 
+      {/* HERO */}
       <section
         className="hero hero-offers"
         style={{
@@ -184,75 +183,76 @@ export default function Offers() {
         </div>
       </section>
 
+      {/* CATÁLOGO */}
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Ofertas disponibles</h2>
           {!loading && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* TOOLBAR - igual que Home */}
-        <div className="filters-toolbar">
+        {/* TOOLBAR con Dropdowns */}
+        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
           <div className="ft-left">
             {/* Ordenar */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>↕︎</span>
-              <select aria-label="Ordenar" value={sort} onChange={(e) => setSort(e.target.value)}>
-                <option value="default">Por defecto</option>
-                <option value="price-asc">Precio: menor a mayor</option>
-                <option value="price-desc">Precio: mayor a menor</option>
-                <option value="name">Nombre (A–Z)</option>
-              </select>
-            </div>
+            <Dropdown
+              icon="↕︎"
+              value={sort}
+              onChange={setSort}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "default", label: "Por defecto" },
+                { value: "price-asc", label: "Precio: menor a mayor" },
+                { value: "price-desc", label: "Precio: mayor a menor" },
+                { value: "name", label: "Nombre (A–Z)" },
+              ]}
+            />
 
             {/* Colección */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>🗂️</span>
-              <select
-                aria-label="Colección"
-                value={coleccion}
-                onChange={(e) => setColeccion(e.target.value)}
-                required
-              >
-                <option value="" disabled hidden>Elegí colección</option>
-                <option value="Todas">Todas</option>
-                <option value="Actual">Actual</option>
-                <option value="Retro">Retro</option>
-              </select>
-            </div>
+            <Dropdown
+              icon="🗂️"
+              placeholder="Elegí colección"
+              value={coleccion || ""}
+              onChange={setColeccion}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "", label: "Elegí colección" },
+                { value: "Todas", label: "Todas" },
+                { value: "Actual", label: "Actual" },
+                { value: "Retro", label: "Retro" },
+              ]}
+            />
 
             {/* Categoría */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>🏷️</span>
-              <select
-                aria-label="Categoría"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                disabled={!hasColeccion}
-              >
-                {["Todas", ...categorias.filter((c) => c !== "Todas")].map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
+            <Dropdown
+              icon="🏷️"
+              placeholder="Elegí categoría"
+              value={hasColeccion ? categoria : ""}
+              onChange={setCategoria}
+              onOpenChange={setAnyDdOpen}
+              disabled={!hasColeccion}
+              options={[
+                { value: "Todas", label: "Todas" },
+                ...categorias.filter((c) => c !== "Todas").map((c) => ({ value: c, label: c })),
+              ]}
+            />
 
             {/* Equipo */}
-            <div className="ft-field">
-              <span className="ft-icon" aria-hidden>⚽️</span>
-              <select
-                aria-label="Equipo"
-                value={hasCategoria ? equipo : ""}
-                onChange={(e) => setEquipo(e.target.value)}
-                disabled={!hasCategoria}
-              >
-                {!hasCategoria ? (
-                  <option value="" disabled>Elegí categoría</option>
-                ) : (
-                  equipos.map((eq) => (
-                    <option key={eq} value={eq}>{eq === "Todos" ? "Todos" : eq}</option>
-                  ))
-                )}
-              </select>
-            </div>
+            <Dropdown
+              icon="⚽️"
+              placeholder="Elegí equipo"
+              value={hasCategoria ? equipo : ""}
+              onChange={setEquipo}
+              onOpenChange={setAnyDdOpen}
+              disabled={!hasCategoria}
+              align="right"
+              options={
+                (hasCategoria ? equipos : ["Elegí categoría"]).map((eq) =>
+                  eq === "Elegí categoría"
+                    ? { value: "", label: "Elegí categoría" }
+                    : { value: eq, label: eq === "Todos" ? "Todos" : eq }
+                )
+              }
+            />
 
             {/* Precio */}
             <div className="ft-price">
@@ -264,7 +264,7 @@ export default function Offers() {
                 type="range"
                 min="0"
                 max={maxPrecioAbsoluto || 0}
-                step="50"
+                step="1"
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
                 style={{ "--pct": `${pct}%` }}
@@ -282,6 +282,7 @@ export default function Offers() {
                 setCategoria("Todas");
                 setEquipo("Todos");
                 setMaxPrecio(maxPrecioAbsoluto || 0);
+                setAnyDdOpen(false);
               }}
               title="Restablecer filtros"
               disabled={loading}
@@ -293,13 +294,11 @@ export default function Offers() {
 
         {/* ESTADOS */}
         {loading && <div className="empty">Cargando ofertas…</div>}
-
-        {/* GRILLA */}
         {!loading && (
           productos.length === 0 ? (
             <div className="empty">No hay productos en oferta que coincidan con tus filtros.</div>
           ) : (
-            <ProductGrid products={productos} />  
+            <ProductGrid products={productos} />
           )
         )}
       </main>

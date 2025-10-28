@@ -80,3 +80,10 @@
 .products-grid > * {
   min-width: 0; /* evita que se rompa el grid */
 }
+
+/* --- FIX: dropdowns encima de las cards --- */
+.filters-toolbar { position: relative; z-index: 20; }
+.dd { position: relative; z-index: 30; }
+.dd-menu { position: fixed; z-index: 10000; pointer-events: auto; }
+.filters-toolbar.dd-open { overflow: visible; }
+.catalog .products-grid { position: relative; z-index: 1; }
