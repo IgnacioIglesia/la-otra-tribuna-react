@@ -74,6 +74,7 @@ export default function Home() {
             fecha_publicacion,
             club,
             stock,
+            talle,
             foto ( url, orden_foto )
           `)
           .eq("estado", "Activa")
@@ -101,6 +102,7 @@ export default function Home() {
             coleccion: pub.coleccion || "Actual",
             stock: Number(pub.stock) || 0,
             img: primeraFoto || PLACEHOLDER,
+            talle: pub.talle || "", 
           };
         });
 

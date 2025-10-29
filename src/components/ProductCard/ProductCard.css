@@ -288,3 +288,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ===== Talle (idéntico a Stock) ===== */
+.pc-talle {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+
+

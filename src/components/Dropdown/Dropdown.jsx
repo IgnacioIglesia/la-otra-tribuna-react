@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "./Dropdown.css";
 
 /**
@@ -27,23 +28,26 @@ export default function Dropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [menuPos, setMenuPos] = useState({ left: 0, top: 0, width: 220 });
+  const [openUp, setOpenUp] = useState(false);
   const wrapRef = useRef(null);
   const btnRef = useRef(null);
+  const menuRef = useRef(null);
 
-  // click outside
+  // click outside (no cerrar si se hace click dentro del menú)
   useEffect(() => {
     const handler = (e) => {
-      // si el click fue fuera del contenedor, cerrar
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+      const insideButton = wrapRef.current?.contains(e.target);
+      const insideMenu = menuRef.current?.contains(e.target);
+      if (!insideButton && !insideMenu) {
         setOpen(false);
         onOpenChange?.(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
   }, [onOpenChange]);
 
-  // recálculo de posición al abrir / on resize / on scroll
+  // recalcular posición y dirección (abre arriba o abajo)
   useEffect(() => {
     const recalc = () => {
       if (!btnRef.current) return;
@@ -51,15 +55,24 @@ export default function Dropdown({
       const GAP = 8;
       let left = r.left;
       if (align === "right") {
-        // Alinear el borde derecho del menú con el botón
         left = r.right - Math.max(r.width, 220);
       }
+
+      const estimatedMenuH = 260;
+      const spaceBelow = window.innerHeight - r.bottom - GAP;
+      const spaceAbove = r.top - GAP;
+      const shouldOpenUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+      setOpenUp(shouldOpenUp);
+
       setMenuPos({
         left: Math.max(8, left),
-        top: r.bottom + GAP,
+        top: shouldOpenUp
+          ? Math.max(8, r.top - estimatedMenuH - GAP)
+          : r.bottom + GAP,
         width: Math.max(220, r.width),
       });
     };
+
     if (open) {
       recalc();
       window.addEventListener("resize", recalc);
@@ -90,7 +103,10 @@ export default function Dropdown({
   };
 
   return (
-    <div className={`dd ${disabled ? "is-disabled" : ""} ${className}`} ref={wrapRef}>
+    <div
+      className={`dd ${disabled ? "is-disabled" : ""} ${className}`}
+      ref={wrapRef}
+    >
       <button
         type="button"
         className="dd-btn"
@@ -105,34 +121,42 @@ export default function Dropdown({
         <span className="dd-caret" aria-hidden>▾</span>
       </button>
 
-      {open && (
-        <ul
-          className="dd-menu"
-          role="listbox"
-          // usamos FIXED para evitar que lo tapen las cards, y z-index bien alto
-          style={{
-            position: "fixed",
-            left: `${menuPos.left}px`,
-            top: `${menuPos.top}px`,
-            width: `${menuPos.width}px`,
-            zIndex: 10000,
-            pointerEvents: "auto",
-          }}
-        >
-          {options.map((opt) => (
-            <li
-              key={opt.value}
-              role="option"
-              aria-selected={opt.value === value}
-              className={`dd-item ${opt.value === value ? "is-active" : ""}`}
-              onClick={() => pick(opt.value)}
-            >
-              <span>{opt.label}</span>
-              {opt.value === value && <span className="dd-check">✓</span>}
-            </li>
-          ))}
-        </ul>
-      )}
+      {open &&
+        createPortal(
+          <ul
+            className={`dd-menu ${openUp ? "dd-up" : ""}`}
+            role="listbox"
+            ref={menuRef}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              left: `${menuPos.left}px`,
+              top: `${menuPos.top}px`,
+              width: `${menuPos.width}px`,
+              zIndex: 10000,
+              pointerEvents: "auto",
+            }}
+          >
+            {options.map((opt) => (
+              <li
+                key={opt.value}
+                role="option"
+                aria-selected={opt.value === value}
+                className={`dd-item ${
+                  opt.value === value ? "is-active" : ""
+                }`}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  pick(opt.value);
+                }}
+              >
+                <span>{opt.label}</span>
+                {opt.value === value && <span className="dd-check">✓</span>}
+              </li>
+            ))}
+          </ul>,
+          document.body
+        )}
     </div>
   );
 }

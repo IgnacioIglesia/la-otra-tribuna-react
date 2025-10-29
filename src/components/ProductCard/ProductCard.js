@@ -26,10 +26,12 @@ export default function ProductCard({ product }) {
     categoria,
     stock = 0,
     isOwn = false,
-    // ✅ Campos para manejar ofertas
+    // ✅ Ofertas
     isOffer = false,
     precioAnterior,
     precio_oferta,
+    // ✅ NUEVO: talle
+    talle,
   } = product;
 
   const qtyInCart = getQty(id);
@@ -37,9 +39,9 @@ export default function ProductCard({ product }) {
   const atMax = stock > 0 && qtyInCart >= stock;
   const isFav = isFavorite(id);
 
-  // ✅ Determinar qué precio mostrar
   const precioFinal = isOffer && precio_oferta ? precio_oferta : precio;
-  const mostrarDescuento = isOffer && precioAnterior && precioAnterior > precioFinal;
+  const mostrarDescuento =
+    isOffer && precioAnterior && precioAnterior > precioFinal;
 
   const onAdd = (e) => {
     e.stopPropagation();
@@ -65,14 +67,14 @@ export default function ProductCard({ product }) {
 
   return (
     <article className="card">
-      {/* ✅ Badge de descuento - ARRIBA A LA IZQUIERDA */}
+      {/* Badge de descuento */}
       {mostrarDescuento && (
         <span className="badge-offer">
           -{Math.round(((precioAnterior - precioFinal) / precioAnterior) * 100)}%
         </span>
       )}
 
-      {/* Botón de favoritos - ARRIBA A LA DERECHA */}
+      {/* Favoritos */}
       <button
         className={`fav-btn ${isFav ? "is-fav" : ""}`}
         onClick={onToggleFavorite}
@@ -93,7 +95,7 @@ export default function ProductCard({ product }) {
         </svg>
       </button>
 
-      {/* Imagen clickeable */}
+      {/* Imagen */}
       <Link to={detailsHref} className="card-click" aria-label={nombre}>
         <div className="media">
           <img src={img} alt={nombre} loading="lazy" />
@@ -102,7 +104,6 @@ export default function ProductCard({ product }) {
 
       {/* Cuerpo */}
       <div className="body">
-        {/* Meta + precio */}
         <div className="meta">
           <div>
             <Link to={detailsHref} className="card-title-link">
@@ -110,21 +111,27 @@ export default function ProductCard({ product }) {
                 {nombre}
               </h3>
             </Link>
+
+            {/* ✅ Subtítulo con talle */}
             <div className="card-subtitle">
               {(club || "—")} • {categoria}
+              {talle ? ` • Talle ${talle}` : ""}
             </div>
           </div>
 
-          <div className="price">
-            {/* ✅ Mostrar precio anterior tachado si hay descuento */}
+        <div className="price">
             {mostrarDescuento && (
               <div className="price-old">{money(precioAnterior)}</div>
             )}
-            {/* ✅ Precio final (con o sin descuento) */}
             <div className="price-new">{money(precioFinal)}</div>
             <div className={`pc-stock-mini ${stock <= 0 ? "is-out" : ""}`}>
               {stock <= 0 ? "Sin stock" : `Stock: ${stock}`}
             </div>
+            {talle && (
+              <div className="pc-talle">
+                Talle: <span>{talle}</span>
+              </div>
+            )}
           </div>
         </div>
 

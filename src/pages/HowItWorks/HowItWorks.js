@@ -20,12 +20,10 @@ export default function HowItWorks() {
             <h3>1) Publicá</h3>
             <ul>
               <li>
-                Entrá a <a href="/sell">Vender</a> y completá título, fotos, categoría
-                (Club / Selección / Retro), talle, estado y precio.
+                Entrá a <a href="/sell">Vender</a> y completá título, fotos, tipo (Club o Selección), categoría (Retro o Actual), talle, estado y precio.
               </li>
               <li>
-                Indicá si es <strong>original</strong> o <strong>réplica</strong> (ver{" "}
-                <a href="/authenticity">Autenticidad</a>).
+                Indicá si la camiseta es <strong>original</strong> o <strong>réplica</strong> para mayor claridad entre usuarios.
               </li>
             </ul>
           </section>
@@ -33,35 +31,26 @@ export default function HowItWorks() {
           <section className="how-section">
             <h3>2) Comprá</h3>
             <ul>
-              <li>Filtrá por club, país, categoría y precio.</li>
+              <li>Usá los filtros para buscar por club, país, tipo, categoría, talle y precio.</li>
               <li>
-                Agregá a <a href="/favorites">Favoritos</a> para seguir un producto y
-                recibir actualizaciones.
+                Podés agregar productos a <a href="/favorites">Favoritos</a> para verlos más tarde.
               </li>
               <li>
-                Pagá con métodos seguros. El pago se libera al vendedor cuando confirmás recepción.
-              </li>
-            </ul>
-          </section>
-
-          <section className="how-section">
-            <h3>3) Envíos & seguimiento</h3>
-            <ul>
-              <li>Revisá costos/tiempos según tu ubicación.</li>
-              <li>
-                Seguimiento desde <a href="/track-order">Rastrear Pedido</a>.
+                Realizá el pago dentro de la plataforma. El dinero queda retenido hasta que recibís la camiseta y confirmás que está todo bien.
               </li>
             </ul>
           </section>
 
           <section className="how-section">
-            <h3>Reputación y preguntas</h3>
+            <h3>3) Envío y confirmación</h3>
             <ul>
+              <li>El vendedor realiza el envío dentro de Uruguay.</li>
               <li>
-                Calificaciones y comentarios ayudan a la confianza de la comunidad.
+                Podés seguir el estado desde <a href="/track-order">Rastrear Pedido</a>.
               </li>
               <li>
-                Usá el chat/preguntas para dudas sobre talle, medidas y estado.
+                Tenés hasta 15 días corridos para reportar cualquier inconveniente.
+                Si confirmás la recepción, o si pasa el plazo sin reclamos, el pago se acredita al vendedor.
               </li>
             </ul>
           </section>
@@ -70,15 +59,15 @@ export default function HowItWorks() {
             <h3>Tarifas</h3>
             <ul>
               <li>
-                Publicar: <strong>gratis</strong>.
+                Publicar es <strong>gratis</strong>.
               </li>
               <li>
-                Comisión por venta (si aplica): se muestra antes de confirmar.
+                Por cada venta realizada, se descuenta una comisión del <strong>7%</strong> al vendedor.
               </li>
             </ul>
           </section>
         </article>
       </main>
-    </>
-  );
+    </>
+  );
 }

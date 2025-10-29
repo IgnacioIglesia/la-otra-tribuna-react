@@ -1,8 +1,7 @@
-// src/pages/SellerPublications/SellerPublications.js
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
-import ProductGrid from "../../components/ProductGrid/ProductGrid"; // ✅ usamos el grid centralizado
+import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import { supabase } from "../../lib/supabaseClient";
 import "./SellerPublications.css";
 
@@ -14,7 +13,7 @@ function mapCategoria(cat) {
 }
 
 export default function SellerPublications() {
-  const { id } = useParams(); // id === id_usuario
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -28,10 +27,10 @@ export default function SellerPublications() {
       setLoading(true);
       setError("");
       try {
-        // 1) Cargar usuario (opcional)
+        // 1) Cargar usuario (sin email)
         const { data: u, error: eU } = await supabase
           .from("usuario")
-          .select("id_usuario,nombre,apellido,email")
+          .select("id_usuario, nombre, apellido")
           .eq("id_usuario", id)
           .maybeSingle();
         if (eU) throw eU;
@@ -57,6 +56,7 @@ export default function SellerPublications() {
             coleccion: pub.coleccion || "Actual",
             img: primeraFoto || PLACEHOLDER,
             stock: Number(pub.stock) || 0,
+            talle: pub.talle || "", 
           };
         });
 
@@ -80,15 +80,15 @@ export default function SellerPublications() {
       <Header />
       <main className="container seller-pubs">
         <div className="seller-header" style={{ marginBottom: 12 }}>
-          <button className="back" onClick={() => navigate(-1)}>← Volver</button>
+          <button className="back" onClick={() => navigate(-1)}>
+            ← Volver
+          </button>
           <h2 style={{ display: "inline-block", marginLeft: 12 }}>
             {seller
               ? `Publicaciones de ${seller.nombre || ""} ${seller.apellido || ""}`
               : "Publicaciones"}
           </h2>
-          {seller?.email && (
-            <div className="muted" style={{ marginLeft: 12 }}>{seller.email}</div>
-          )}
+          {/* Eliminado: email visible */}
         </div>
 
         {loading ? (
@@ -98,7 +98,7 @@ export default function SellerPublications() {
         ) : rows.length === 0 ? (
           <div className="empty">Este usuario no tiene publicaciones activas.</div>
         ) : (
-          <ProductGrid products={rows} />  
+          <ProductGrid products={rows} />
         )}
       </main>
     </>

@@ -1,4 +1,3 @@
-// src/pages/Publication/Publication.js
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header/Header";
@@ -60,16 +59,17 @@ export default function Publication() {
           return;
         }
 
-        // 2) Vendedor
+        // 2) Vendedor (sin email por privacidad)
         let sellerData = null;
         let verified = false;
-        
+
         if (data.id_usuario) {
           const { data: u } = await supabase
             .from("usuario")
-            .select("id_usuario, nombre, apellido, email")
+            .select("id_usuario, nombre, apellido")
             .eq("id_usuario", data.id_usuario)
             .maybeSingle();
+
           sellerData = u || null;
 
           // 3) Verificar si el vendedor está verificado
@@ -80,7 +80,7 @@ export default function Publication() {
               .eq("id_usuario", u.id_usuario)
               .eq("estado", "aceptado")
               .maybeSingle();
-            
+
             verified = !!verif;
           }
         }
@@ -231,14 +231,13 @@ export default function Publication() {
                 </div>
               )}
 
-              {/* SELLER: nombre clickeable => /seller/:id con check de verificación */}
+              {/* SELLER */}
               <section className="seller-card">
                 <div className="seller-left">
                   <div className="avatar">
                     {initialsFrom(
                       seller?.nombre,
-                      seller?.apellido,
-                      seller?.email
+                      seller?.apellido
                     )}
                   </div>
                   <div>
@@ -250,37 +249,33 @@ export default function Publication() {
                       }`}
                     >
                       <div className="seller-name">
-                        {seller?.nombre ||
-                          seller?.email?.split("@")[0] ||
-                          "Usuario"}
+                        {seller?.nombre || "Usuario"}
                         {seller?.apellido ? ` ${seller.apellido}` : ""}
                         {isVerified && (
-                          <svg 
+                          <svg
                             className="verified-badge"
-                            width="16" 
-                            height="16" 
-                            viewBox="0 0 24 24" 
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
                             fill="none"
-                            style={{ 
-                              display: "inline-block", 
+                            style={{
+                              display: "inline-block",
                               marginLeft: "6px",
-                              verticalAlign: "middle"
+                              verticalAlign: "middle",
                             }}
                           >
-                            <path 
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                              stroke="#3b82f6" 
-                              strokeWidth="2" 
-                              strokeLinecap="round" 
+                            <path
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              stroke="#3b82f6"
+                              strokeWidth="2"
+                              strokeLinecap="round"
                               strokeLinejoin="round"
                               fill="#dbeafe"
                             />
                           </svg>
                         )}
                       </div>
-                      <div className="seller-sub">
-                        {seller?.email || "Email no disponible"}
-                      </div>
+                      {/* Eliminado: email visible */}
                     </button>
                   </div>
                 </div>

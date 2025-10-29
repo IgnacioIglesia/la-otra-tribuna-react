@@ -64,3 +64,4 @@
   outline: 1px solid rgba(14,81,53,.35);
 }
 .dd-check { font-weight: 700; }
+.dd-menu.dd-up { transform-origin: bottom center; animation: dd-pop .14s ease-out; }

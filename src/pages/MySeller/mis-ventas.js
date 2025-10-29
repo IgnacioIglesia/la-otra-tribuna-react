@@ -1,9 +1,10 @@
 // src/pages/MisVentas/MisVentas.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import { supabase } from "../../lib/supabaseClient";
 import "./MisVentas.css";
+import Dropdown from "../../components/Dropdown/Dropdown";
 
 const PLACEHOLDER = "https://placehold.co/150x150?text=Producto";
 
@@ -21,6 +22,14 @@ export default function MisVentas() {
   const [ventas, setVentas] = useState([]);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState(null);
+  const estadoOptions = useMemo(
+    () =>
+      Object.entries(ESTADOS_PEDIDO).map(([value, { label }]) => ({
+        value,
+        label,
+      })),
+    []
+  );
 
   useEffect(() => {
     let alive = true;
@@ -254,17 +263,14 @@ export default function MisVentas() {
                   </div>
 
                   <div className="venta-actions">
-                    <select
+                    <Dropdown
+                      icon="↕︎"
                       value={venta.estado}
-                      onChange={(e) => handleEstadoChange(venta.id_pedido, e.target.value)}
-                      className="estado-select"
-                    >
-                      {Object.entries(ESTADOS_PEDIDO).map(([key, { label }]) => (
-                        <option key={key} value={key}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
+                      options={estadoOptions}
+                      onChange={(val) => handleEstadoChange(venta.id_pedido, val)}
+                      align="right"
+                      className="venta-dd"
+                    />
                   </div>
                 </div>
               ))}

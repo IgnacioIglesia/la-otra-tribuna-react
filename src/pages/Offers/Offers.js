@@ -50,6 +50,7 @@ export default function Offers() {
           fecha_publicacion,
           club,
           stock,
+          talle,
           foto ( url, orden_foto )
         `)
         .eq("estado", "Activa")
@@ -82,6 +83,7 @@ export default function Offers() {
             coleccion: pub.coleccion || "Actual",
             img: foto,
             stock: Number(pub.stock) || 0,
+            talle: pub.talle || null,
             isOffer: true,
             precio: basePrice,
             precioAnterior: basePrice,

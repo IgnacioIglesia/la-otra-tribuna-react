@@ -308,3 +308,53 @@
 }
 
 
+/* ===== Actions con dropdown glass ===== */
+.venta-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: rgba(249, 250, 251, 0.8);
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0 0 12px 12px;
+  backdrop-filter: blur(4px);
+}
+
+/* Ajustes visuales del botón glass dentro de Mis Ventas */
+.venta-actions .venta-dd .dd-btn {
+  border-radius: 14px;
+  padding: 10px 14px;
+  min-width: 180px;
+  justify-content: space-between;
+  border-color: rgba(14,81,53,.18);
+}
+
+.venta-actions .venta-dd .dd-btn:hover {
+  box-shadow: 0 10px 28px rgba(14,81,53,.12), inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+@media (max-width: 768px){
+  .venta-actions { justify-content: stretch; }
+  .venta-actions .venta-dd { width: 100%; }
+  .venta-actions .venta-dd .dd-btn { width: 100%; }
+}
+
+
+/* Permitir que el menú del dropdown se vea fuera de la card */
+.venta-card {
+  overflow: visible;              /* antes estaba hidden */
+}
+
+/* Asegura que el contenedor de acciones forme su propio stacking context */
+.venta-actions {
+  position: relative;             /* nuevo */
+  z-index: 5;                     /* nuevo */
+}
+
+/* Refuerzos por si algún CSS global los pisa */
+.venta-actions .dd { position: relative; z-index: 10; }
+.venta-actions .dd-menu {
+  position: fixed !important;     /* ya lo seteás inline, esto lo refuerza */
+  z-index: 10000 !important;
+  pointer-events: auto;
+}
