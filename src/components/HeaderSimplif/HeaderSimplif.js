@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
+import MobileDrawer from "../Drawer/MobileDrawer";
 import "../Header/Header.css";
+import SearchBar from "../SearchBar/SearchBar";
 import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 
 function getInitials(user) {
@@ -61,7 +63,20 @@ export default function HeaderSimplif() {
   /** ===== Sesión ===== */
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Ítems del menú móvil
+  const MOBILE_MENU = [
+    { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
+    { label: "Ofertas", href: "/offers" },
+    { label: "Vender", href: "/sell" },
+    { label: "Rastrear Pedido", href: "/track-order" },
+    { label: "Favoritos", href: "/favorites" },
+    { label: "Cómo funciona", href: "/how-it-works" },
+    { label: "Autenticidad", href: "/authenticity" },
+    { label: "Ayuda", href: "/help" },
+  ];
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
@@ -96,6 +111,15 @@ export default function HeaderSimplif() {
     const onKey = (e) => e.key === "Escape" && setMenuOpen(false);
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Cerrar drawer cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setDrawerOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const fullName =
@@ -146,6 +170,17 @@ export default function HeaderSimplif() {
       {/* ===== TOP BAR ===== */}
       <div className="top">
         <div className="container top-inner">
+          {/* Hamburguesa (móvil) - AGREGADO */}
+          <button
+            className="lot-burger lg-hidden"
+            aria-label="Abrir menú"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="burger-line" />
+            <span className="burger-line" />
+            <span className="burger-line" />
+          </button>
+
           <div className="brand-wrap">
             <a href="/" className="logo-link">
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
@@ -153,11 +188,7 @@ export default function HeaderSimplif() {
           </div>
 
           <div className="search">
-            <input
-              type="search"
-              placeholder="Buscar club o país…"
-              autoComplete="off"
-            />
+            <SearchBar onSelect={(id) => navigate(`/publication/${id}`)} />
           </div>
 
           <div className="header-messages">Publicá, comprá y vendé.</div>
@@ -253,6 +284,13 @@ export default function HeaderSimplif() {
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
         onLocationSelect={handleLocationSelect}
+      />
+
+      {/* Drawer móvil - AGREGADO */}
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        items={MOBILE_MENU}
       />
     </header>
   );

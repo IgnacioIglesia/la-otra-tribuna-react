@@ -9,17 +9,19 @@ const PLACEHOLDER = "/assets/placeholder.png";
 
 export default function MyListings() {
   const [user, setUser] = useState(null);
-  const [userRow, setUserRow] = useState(null); // { id_usuario }
+  const [userRow, setUserRow] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Edición
-  const [editing, setEditing] = useState(null); // publicacion completa
+  const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
   const [newImageFile, setNewImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // ===== sesión + carga =====
+  // Modal de confirmación para eliminar
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, titulo }
+
   useEffect(() => {
     (async () => {
       try {
@@ -33,7 +35,6 @@ export default function MyListings() {
         }
         setUser(session.user);
 
-        // buscar id_usuario por email
         const { data: u, error: uErr } = await supabase
           .from("usuario")
           .select("id_usuario, email, nombre, apellido")
@@ -77,7 +78,6 @@ export default function MyListings() {
 
       if (error) throw error;
       
-      // Ordenar: primero las activas, luego las vendidas
       const sorted = (data || []).sort((a, b) => {
         if (a.estado === "Vendida" && b.estado !== "Vendida") return 1;
         if (a.estado !== "Vendida" && b.estado === "Vendida") return -1;
@@ -93,7 +93,6 @@ export default function MyListings() {
     }
   }
 
-  // ===== helpers =====
   const uyMoney = useMemo(
     () =>
       new Intl.NumberFormat("es-UY", {
@@ -105,7 +104,6 @@ export default function MyListings() {
   );
 
   const openEdit = (pub) => {
-    // No permitir editar publicaciones vendidas
     if (pub.estado === "Vendida") {
       alert("No se pueden editar publicaciones vendidas.");
       return;
@@ -133,38 +131,40 @@ export default function MyListings() {
     setForm((f) => ({ ...f, [key]: value }));
   };
 
-  // ===== eliminar =====
-  const handleDelete = async (id_publicacion, estado) => {
-    if (!userRow?.id_usuario) return;
-    
-    // No permitir eliminar publicaciones vendidas
-    if (estado === "Vendida") {
+  // Abrir modal de confirmación
+  const askDelete = (pub) => {
+    if (pub.estado === "Vendida") {
       alert("No se pueden eliminar publicaciones vendidas.");
       return;
     }
-    
-    if (!window.confirm("¿Seguro que querés borrar esta publicación?")) return;
+    setDeleteConfirm({ id: pub.id_publicacion, titulo: pub.titulo });
+  };
+
+  // Confirmar eliminación
+  const confirmDelete = async () => {
+    if (!deleteConfirm || !userRow?.id_usuario) return;
 
     try {
       const { error } = await supabase
         .from("publicacion")
         .delete()
-        .eq("id_publicacion", id_publicacion)
-        .eq("id_usuario", userRow.id_usuario); // ayuda a policy
+        .eq("id_publicacion", deleteConfirm.id)
+        .eq("id_usuario", userRow.id_usuario);
 
       if (error) {
         console.error("DELETE publicacion error:", error);
         alert("No se pudo borrar la publicación.");
         return;
       }
-      setItems((prev) => prev.filter((p) => p.id_publicacion !== id_publicacion));
+      
+      setItems((prev) => prev.filter((p) => p.id_publicacion !== deleteConfirm.id));
+      setDeleteConfirm(null);
     } catch (e) {
       console.error("handleDelete error:", e);
       alert("Ocurrió un error al borrar.");
     }
   };
 
-  // ===== guardar edición =====
   async function handleSave(e) {
     e.preventDefault();
     if (!editing || !userRow?.id_usuario) return;
@@ -173,9 +173,7 @@ export default function MyListings() {
     try {
       const id_publicacion = editing.id_publicacion;
 
-      // 1) si hay imagen nueva => subir al bucket y actualizar/insertar fila foto (orden 1)
       if (newImageFile) {
-        // subimos al storage
         const safeName = newImageFile.name?.replace(/\s+/g, "-") || "foto.jpg";
         const path = `${userRow.id_usuario}/${Date.now()}-${safeName}`;
 
@@ -194,7 +192,6 @@ export default function MyListings() {
         const { data: pubUrl } = supabase.storage.from(BUCKET).getPublicUrl(path);
         const url = pubUrl.publicUrl;
 
-        // ¿existe la foto orden 1?
         const { data: foto1, error: fSelErr } = await supabase
           .from("foto")
           .select("id_foto, orden_foto, id_publicacion")
@@ -229,7 +226,6 @@ export default function MyListings() {
         }
       }
 
-      // 2) actualizar publicacion (usar defaults seguros)
       const payload = {
         titulo: form.titulo?.trim() || editing.titulo,
         descripcion: form.descripcion ?? "",
@@ -249,14 +245,13 @@ export default function MyListings() {
         .from("publicacion")
         .update(payload)
         .eq("id_publicacion", id_publicacion)
-        .eq("id_usuario", userRow.id_usuario); // MUY IMPORTANTE p/ policy
+        .eq("id_usuario", userRow.id_usuario);
 
       if (updErr) {
         console.error("UPDATE publicacion error:", updErr);
         throw updErr;
       }
 
-      // 3) refrescar lista
       await fetchListings(userRow.id_usuario);
       closeEdit();
     } catch (err) {
@@ -330,7 +325,7 @@ export default function MyListings() {
                     </button>
                     <button
                       className="btn-delete"
-                      onClick={() => handleDelete(p.id_publicacion, p.estado)}
+                      onClick={() => askDelete(p)}
                       disabled={isVendida}
                       style={isVendida ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                     >
@@ -344,7 +339,35 @@ export default function MyListings() {
         )}
       </main>
 
-      {/* ===== Modal de edición ===== */}
+      {/* Modal de confirmación de eliminación */}
+      {deleteConfirm && (
+        <div className="confirm-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-icon">⚠️</div>
+            <h3 className="confirm-title">¿Eliminar publicación?</h3>
+            <p className="confirm-message">
+              ¿Estás seguro que querés eliminar <strong>"{deleteConfirm.titulo}"</strong>?
+              <br />Esta acción no se puede deshacer.
+            </p>
+            <div className="confirm-actions">
+              <button 
+                className="btn-confirm-cancel" 
+                onClick={() => setDeleteConfirm(null)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn-confirm-delete" 
+                onClick={confirmDelete}
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de edición */}
       {editing && (
         <div className="edit-overlay" onClick={closeEdit}>
           <form
@@ -354,7 +377,6 @@ export default function MyListings() {
           >
             <h2>Editar publicación</h2>
 
-            {/* Imagen */}
             <label className="label">Imagen principal</label>
             <label className="upload-box">
               <input

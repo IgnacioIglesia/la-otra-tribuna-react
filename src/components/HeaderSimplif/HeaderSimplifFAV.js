@@ -4,7 +4,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
 import { useCart } from "../Cart/CartContext";
+import MobileDrawer from "../Drawer/MobileDrawer";
 import "../Header/Header.css";
+import SearchBar from "../SearchBar/SearchBar";
 import NotificationDropdown from "../NotificationDropdown/NotificationDropdown";
 
 function getInitials(user) {
@@ -54,7 +56,20 @@ export default function HeaderSimplifFAV() {
   // ===== Sesión =====
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const menuRef = useRef(null);
+
+  // Ítems del menú móvil
+  const MOBILE_MENU = [
+    { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
+    { label: "Ofertas", href: "/offers" },
+    { label: "Vender", href: "/sell" },
+    { label: "Rastrear Pedido", href: "/track-order" },
+    { label: "Favoritos", href: "/favorites" },
+    { label: "Cómo funciona", href: "/how-it-works" },
+    { label: "Autenticidad", href: "/authenticity" },
+    { label: "Ayuda", href: "/help" },
+  ];
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
@@ -92,6 +107,15 @@ export default function HeaderSimplifFAV() {
     const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Cerrar drawer cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setDrawerOpen(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const displayName =
@@ -139,6 +163,17 @@ export default function HeaderSimplifFAV() {
       {/* ===== TOP BAR ===== */}
       <div className="top">
         <div className="container top-inner">
+          {/* Hamburguesa (móvil) - AGREGADO */}
+          <button
+            className="lot-burger lg-hidden"
+            aria-label="Abrir menú"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <span className="burger-line" />
+            <span className="burger-line" />
+            <span className="burger-line" />
+          </button>
+
           <div className="brand-wrap">
             <a href="/" className="logo-link" aria-label="Ir al inicio">
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
@@ -146,7 +181,7 @@ export default function HeaderSimplifFAV() {
           </div>
 
           <div className="search">
-            <input type="search" placeholder="Buscar club o país…" autoComplete="off" />
+            <SearchBar onSelect={(id) => navigate(`/publication/${id}`)} />
           </div>
 
           <div className="header-messages">Publicá, comprá y vendé.</div>
@@ -273,6 +308,13 @@ export default function HeaderSimplifFAV() {
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
         onLocationSelect={handleLocationSelect}
+      />
+
+      {/* Drawer móvil - AGREGADO */}
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        items={MOBILE_MENU}
       />
     </header>
   );

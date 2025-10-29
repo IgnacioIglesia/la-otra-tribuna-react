@@ -31,8 +31,49 @@ export default function SearchPage() {
     orden: "reciente"
   });
 
+  // Estados para opciones dinámicas
+  const [clubes, setClubes] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+
   const searchParams = new URLSearchParams(location.search);
   const query = searchParams.get('q') || '';
+
+  // Cargar clubes y categorías al montar
+  useEffect(() => {
+    cargarOpcionesFiltros();
+  }, []);
+
+  async function cargarOpcionesFiltros() {
+    try {
+      // Obtener clubes únicos
+      const { data: clubesData, error: clubesError } = await supabase
+        .from("publicacion")
+        .select("club")
+        .eq("estado", "Activa")
+        .not("club", "is", null)
+        .order("club");
+
+      if (!clubesError) {
+        const clubesUnicos = [...new Set(clubesData.map(item => item.club))].filter(Boolean);
+        setClubes(clubesUnicos);
+      }
+
+      // Obtener categorías únicas
+      const { data: categoriasData, error: categoriasError } = await supabase
+        .from("publicacion")
+        .select("categoria")
+        .eq("estado", "Activa")
+        .not("categoria", "is", null)
+        .order("categoria");
+
+      if (!categoriasError) {
+        const categoriasUnicas = [...new Set(categoriasData.map(item => item.categoria))].filter(Boolean);
+        setCategorias(categoriasUnicas);
+      }
+    } catch (error) {
+      console.error("Error cargando opciones de filtros:", error);
+    }
+  }
 
   useEffect(() => {
     if (query) {
@@ -71,10 +112,10 @@ export default function SearchPage() {
 
         // Aplicar filtros manualmente
         if (filters.club) {
-          queryBuilder = queryBuilder.ilike('club', `%${filters.club}%`);
+          queryBuilder = queryBuilder.eq('club', filters.club);
         }
         if (filters.categoria) {
-          queryBuilder = queryBuilder.ilike('categoria', `%${filters.categoria}%`);
+          queryBuilder = queryBuilder.eq('categoria', filters.categoria);
         }
         if (filters.precioMax) {
           queryBuilder = queryBuilder.lte('precio', Number(filters.precioMax));
@@ -207,22 +248,32 @@ export default function SearchPage() {
 
             <div className="filter-group">
               <label>Club:</label>
-              <input
-                type="text"
-                placeholder="Filtrar por club"
+              <select
                 value={filters.club}
                 onChange={(e) => handleFilterChange('club', e.target.value)}
-              />
+              >
+                <option value="">Todos los clubes</option>
+                {clubes.map((club) => (
+                  <option key={club} value={club}>
+                    {club}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="filter-group">
               <label>Categoría:</label>
-              <input
-                type="text"
-                placeholder="Filtrar por categoría"
+              <select
                 value={filters.categoria}
                 onChange={(e) => handleFilterChange('categoria', e.target.value)}
-              />
+              >
+                <option value="">Todas las categorías</option>
+                {categorias.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {mapCategoria(cat)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
