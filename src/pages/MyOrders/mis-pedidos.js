@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import { supabase } from "../../lib/supabaseClient";
 import "./MisPedidos.css";
+import Dropdown from "../../components/Dropdown/Dropdown";
+import { useMemo } from "react";
 
 const PLACEHOLDER = "https://placehold.co/150x150?text=Producto";
 
@@ -33,6 +35,16 @@ export default function MisPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [error, setError] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("todos");
+  const estadoOptions = useMemo(
+    () => [
+      { value: "todos", label: "Todos" },
+      ...Object.entries(ESTADOS_PEDIDO).map(([value, { label }]) => ({
+        value,
+        label,
+      })),
+    ],
+    []
+  );
 
   useEffect(() => {
     let alive = true;
@@ -231,21 +243,15 @@ export default function MisPedidos() {
               </div>
             </div>
 
-            <div className="filtros">
-              <label htmlFor="filtro-estado">Filtrar por estado:</label>
-              <select
-                id="filtro-estado"
-                value={filtroEstado}
-                onChange={(e) => setFiltroEstado(e.target.value)}
-                className="filtro-select"
-              >
-                <option value="todos">Todos</option>
-                {Object.entries(ESTADOS_PEDIDO).map(([key, { label }]) => (
-                  <option key={key} value={key}>
-                    {label}
-                  </option>
-                ))}
-              </select>
+            <div className="mp-filters-toolbar">
+              <div className="mp-ft-left">
+                <Dropdown
+                  icon="↕︎"
+                  value={filtroEstado}
+                  onChange={setFiltroEstado}
+                  options={estadoOptions}
+                />
+              </div>
             </div>
 
             <div className="pedidos-list">

@@ -71,7 +71,7 @@ function Filters({ products, onFilter }) {
           type="range" 
           min="1500" 
           max="4000" 
-          step="50" 
+          step="1" 
           value={filters.maxPrice}
           onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
           className="range"

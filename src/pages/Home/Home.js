@@ -310,7 +310,7 @@ export default function Home() {
 
             {/* Colección */}
             <Dropdown
-              icon="🗂️"
+              icon="↕︎"
               placeholder="Elegí colección"
               value={coleccion || ""}
               onChange={setColeccion}
@@ -325,7 +325,7 @@ export default function Home() {
 
             {/* Categoría */}
             <Dropdown
-              icon="🏷️"
+              icon="↕︎"
               placeholder="Elegí categoría"
               value={hasColeccion ? categoria : ""}
               onChange={setCategoria}
@@ -339,7 +339,7 @@ export default function Home() {
 
             {/* Equipo */}
             <Dropdown
-              icon="⚽️"
+              icon="↕︎"
               placeholder="Elegí equipo"
               value={hasCategoria ? equipo : ""}
               onChange={setEquipo}

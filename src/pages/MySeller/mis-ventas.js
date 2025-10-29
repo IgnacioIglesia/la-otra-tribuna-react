@@ -15,6 +15,7 @@ const ESTADOS_PEDIDO = {
   cancelado: { label: "Cancelado", color: "#ef4444" },
 };
 
+
 export default function MisVentas() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);

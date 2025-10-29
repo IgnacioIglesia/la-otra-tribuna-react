@@ -209,7 +209,7 @@ export default function Offers() {
 
             {/* Colección */}
             <Dropdown
-              icon="🗂️"
+              icon="↕︎"
               placeholder="Elegí colección"
               value={coleccion || ""}
               onChange={setColeccion}
@@ -224,7 +224,7 @@ export default function Offers() {
 
             {/* Categoría */}
             <Dropdown
-              icon="🏷️"
+              icon="↕︎"
               placeholder="Elegí categoría"
               value={hasColeccion ? categoria : ""}
               onChange={setCategoria}
@@ -238,7 +238,7 @@ export default function Offers() {
 
             {/* Equipo */}
             <Dropdown
-              icon="⚽️"
+              icon="↕︎"
               placeholder="Elegí equipo"
               value={hasCategoria ? equipo : ""}
               onChange={setEquipo}
