@@ -39,14 +39,14 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // recordar si se pidió catálogo
-  const wantedCatalogOnMount = useRef(
-    location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"
+  // Al montar, si venís con #catalogo o state, ocultá hero; si no, mostralo
+  const [showHero, setShowHero] = useState(
+    !(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo")
   );
+  // Cada vez que cambia el hash/state, recalculá
   useEffect(() => {
-    if (location.hash === "#catalogo") wantedCatalogOnMount.current = true;
-  }, [location.hash]);
-  const showHero = !wantedCatalogOnMount.current;
+   setShowHero(!(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"));
+  }, [location.hash, location.state]);
 
   /* ===== Session ===== */
   const [currentUserId, setCurrentUserId] = useState(null);

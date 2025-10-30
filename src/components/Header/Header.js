@@ -35,6 +35,18 @@ export default function Header() {
     }
   };
 
+  const goToHome = () => {
+    if (location.pathname !== "/") {
+      navigate("/");                // venías de otra ruta → ir a Home
+      return;
+    }
+    // ya estás en Home → limpiar hash y subir
+    if (location.hash) {
+      navigate("/", { replace: true, state: {} }); // quita #catalogo sin recargar
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // ===== Sesión =====
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -152,15 +164,10 @@ export default function Header() {
           </button>
 
           <div className="brand-wrap">
-            <button
-              type="button"
-              className="logo-link"
-              onClick={goToCatalog}
-              aria-label="Ir al catálogo"
-            >
-              <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
-            </button>
-          </div>
+          <button type="button" className="logo-link" onClick={goToHome} aria-label="Ir al inicio">
+            <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
+          </button>
+        </div>
 
           <div className="search">
             <SearchBar onSelect={(id) => navigate(`/publication/${id}`)} />

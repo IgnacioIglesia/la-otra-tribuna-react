@@ -38,6 +38,16 @@ export default function HeaderSimplifFAV() {
     }
   };
 
+    // Navega al inicio (Home) sin scroll ni hash
+  const goToHome = () => {
+    if (location.pathname !== "/") {
+      navigate("/"); // 🔹 Lleva al home
+    } else {
+      // Ya estás en Home → si querés, podés hacer un scroll top suave
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // Función auxiliar para hacer el scroll suave con offset correcto
   const scrollToCatalog = () => {
     const el = document.getElementById("catalogo");
@@ -178,8 +188,8 @@ export default function HeaderSimplifFAV() {
             <button
               type="button"
               className="logo-link"
-              onClick={goToCatalog}
-              aria-label="Ir al catálogo"
+              onClick={goToHome}
+              aria-label="Ir al inicio"
             >
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
             </button>
