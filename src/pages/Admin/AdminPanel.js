@@ -113,9 +113,9 @@ export default function AdminPanel() {
   async function loadUsers() {
     const { data, error } = await supabase
       .from("usuario")
-      .select("id_usuario, nombre, apellido, email, rol, esta_baneado, razon_baneo, baneado_at, created_at")
-      .order("created_at", { ascending: false });
-
+      .select("id_usuario, nombre, apellido, email, rol, esta_baneado, razon_baneo, baneado_at, fecha_alta")
+      .order("fecha_alta", { ascending: false });
+  
     if (error) {
       console.error("Error cargando usuarios:", error);
       return;

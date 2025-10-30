@@ -9,17 +9,30 @@ import "./Checkout.css";
 /* =========================
    Utilidades y helpers
    ========================= */
-const money = (n) =>
-  new Intl.NumberFormat("es-UY", {
+// ✅ Función mejorada que acepta la moneda
+const money = (n, currency = "USD") => {
+  const amount = Number(n) || 0;
+  
+  if (currency === "USD") {
+    const formatted = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+    return formatted.replace("US$", "U$D");
+  }
+  
+  return new Intl.NumberFormat("es-UY", {
     style: "currency",
-    currency: "UYU",
+    currency: currency,
     maximumFractionDigits: 0,
-  }).format(n || 0);
+  }).format(amount);
+};
 
 const onlyDigits = (s) => (s || "").replace(/\D+/g, "");
 
 const formatCardNumber = (v) => {
-  const digits = onlyDigits(v).slice(0, 12);
+  const digits = onlyDigits(v).slice(0, 16);
   return digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 };
 
@@ -30,11 +43,11 @@ const formatExp = (v) => {
 };
 
 const validateCard = (card) => {
-  if (!card.name.trim()) return "Completá el nombre del titular.";
+  if (!card.name.trim()) return "Completá el nombre y apellido del titular.";
 
   const digits = onlyDigits(card.number);
-  if (digits.length !== 12) {
-    return "El número de tarjeta debe tener exactamente 12 dígitos.";
+  if (digits.length !== 16) {
+    return "El número de tarjeta debe tener exactamente 16 dígitos.";
   }
 
   if (!/^\d{2}\/\d{2}$/.test(card.exp)) return "Vencimiento inválido (MM/AA).";
@@ -128,7 +141,7 @@ function CenteredModal({ open, type = "info", title, children, onClose, primaryA
    ========================= */
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, total, clear } = useCart();
+  const { items, total, clear, selectedCurrency, convertPrice } = useCart(); // ✅ Agregar selectedCurrency y convertPrice
 
   const [email, setEmail] = useState("");
   const [usuario, setUsuario] = useState(null);
@@ -325,6 +338,11 @@ export default function Checkout() {
       const pedidosCreados = [];
 
       for (const item of items) {
+        // ✅ Calcular precio convertido a la moneda seleccionada
+        const precioOriginal = Number(item.precio) || 0;
+        const precioConvertido = convertPrice(precioOriginal, item.moneda);
+        const totalItem = precioConvertido * item.qty;
+
         // Crear el pedido
         const { data: pedido, error: pedidoError } = await supabase
           .from("pedido")
@@ -332,8 +350,8 @@ export default function Checkout() {
             id_usuario: usuario.id_usuario,
             id_publicacion: item.id,
             cantidad: item.qty,
-            precio_unitario: item.precio,
-            total: item.precio * item.qty,
+            precio_unitario: precioConvertido, // ✅ Precio convertido
+            total: totalItem, // ✅ Total convertido
             estado: "pendiente",
             id_direccion: selected.id_direccion,
             metodo_pago: method,
@@ -552,7 +570,7 @@ export default function Checkout() {
                   {method === "card" && (
                     <div className="pay-body">
                       <div className="ck-field">
-                        <label htmlFor="cc-name">Nombre del titular</label>
+                        <label htmlFor="cc-name">Nombre y apellido del titular</label>
                         <input
                           id="cc-name"
                           type="text"
@@ -564,15 +582,15 @@ export default function Checkout() {
                       </div>
 
                       <div className="ck-field">
-                        <label htmlFor="cc-number">Número de tarjeta (12 dígitos)</label>
+                        <label htmlFor="cc-number">Número de tarjeta (16 dígitos)</label>
                         <input
                           id="cc-number"
                           type="text"
-                          placeholder="1234 5678 9012"
+                          placeholder="1234 1234 1234 1234"
                           value={card.number}
                           onChange={onChangeCard("number")}
                           inputMode="numeric"
-                          maxLength={14}
+                          maxLength={19}
                           required
                         />
                       </div>
@@ -649,27 +667,59 @@ export default function Checkout() {
           <aside className="ck-aside">
             <div className="ck-card">
               <h2 className="ck-h3">Resumen</h2>
+              {/* ✅ Indicador de moneda seleccionada */}
+              <div style={{ 
+                padding: "0.5rem 0.75rem", 
+                background: "#f0f9ff", 
+                borderRadius: "6px", 
+                marginBottom: "1rem",
+                fontSize: "0.85rem",
+                color: "#0369a1",
+                fontWeight: 600
+              }}>
+                💱 Pagando en {selectedCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
+              </div>
+
               <ul className="mini-cart">
-                {items.map((it) => (
-                  <li key={it.id} className="mini-item">
-                    <img src={it.img} alt={it.nombre} />
-                    <div className="mi-info">
-                      <div className="mi-name" title={it.nombre}>
-                        {it.nombre}
+                {items.map((it) => {
+                  // ✅ Convertir precio a moneda seleccionada
+                  const precioOriginal = Number(it.precio) || 0;
+                  const precioConvertido = convertPrice(precioOriginal, it.moneda);
+                  const mostrarConversion = it.moneda !== selectedCurrency;
+
+                  return (
+                    <li key={it.id} className="mini-item">
+                      <img src={it.img} alt={it.nombre} />
+                      <div className="mi-info">
+                        <div className="mi-name" title={it.nombre}>
+                          {it.nombre}
+                        </div>
+                        <div className="mi-sub">
+                          x{it.qty} · {it.categoria}
+                        </div>
+                        {/* ✅ Mostrar conversión si aplica */}
+                        {mostrarConversion && (
+                          <div style={{ 
+                            fontSize: "0.7rem", 
+                            color: "#6b7280",
+                            marginTop: "0.2rem" 
+                          }}>
+                            {money(precioOriginal, it.moneda)} → {money(precioConvertido, selectedCurrency)}
+                          </div>
+                        )}
                       </div>
-                      <div className="mi-sub">
-                        x{it.qty} · {it.categoria}
+                      <div className="mi-price">
+                        {money(precioConvertido * it.qty, selectedCurrency)}
                       </div>
-                    </div>
-                    <div className="mi-price">{money(it.precio * it.qty)}</div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="ck-totals">
                 <div>
                   <span>Total</span>
-                  <strong>{money(totalFinal)}</strong>
+                  <strong>{money(totalFinal, selectedCurrency)}</strong>
                 </div>
               </div>
 

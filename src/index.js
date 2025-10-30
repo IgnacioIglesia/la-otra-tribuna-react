@@ -5,17 +5,20 @@ import App from "./App";
 import { FavoritesProvider } from "./components/Favorites/FavoritesContext";
 import { CartProvider } from "./components/Cart/CartContext";
 import { ToastProvider } from "./components/ToastNotification/ToastNotification";
+import { FiltersProvider } from "./context/FiltersContext"; 
 
 const root = createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ToastProvider>
       <BrowserRouter>
-        <FavoritesProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
-        </FavoritesProvider>
+        <FiltersProvider> 
+          <FavoritesProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </FavoritesProvider>
+        </FiltersProvider>
       </BrowserRouter>
     </ToastProvider>
   </React.StrictMode>

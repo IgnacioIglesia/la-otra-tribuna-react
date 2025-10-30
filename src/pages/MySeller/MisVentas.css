@@ -358,3 +358,24 @@
   z-index: 10000 !important;
   pointer-events: auto;
 }
+
+/* ===== Tarjeta especial para USD (igual a la de pesos) ===== */
+.stat-card-usd {
+    /* Anula el estilo azul anterior y usa el mismo look de .stat-card */
+    background: #fff;
+    border: none;
+    border-left: 4px solid var(--brand-green);
+    box-shadow:
+      0 0 0 2px rgba(14,81,53,0.12) inset,
+      0 1px 3px rgba(0,0,0,0.1);
+    /* .stat-card ya define padding, radios y layout */
+  }
+  
+  .stat-card-usd .stat-label {
+    color: #6b7280;       /* igual que .stat-label */
+    font-weight: 500;
+  }
+  
+  .stat-card-usd .stat-value {
+    color: var(--brand-green);  /* igual que .stat-value */
+  }

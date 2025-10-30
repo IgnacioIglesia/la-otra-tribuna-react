@@ -5,6 +5,7 @@ import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
+import { useFilters } from "../../context/FiltersContext"; // 👈 NUEVO
 
 /* ===== Utils ===== */
 function daysFrom(dateStr) {
@@ -34,6 +35,7 @@ function matchesTalle(prodTalle, selected) {
 }
 
 export default function Home() {
+  const { homeFilters, setHomeFilters } = useFilters(); // 👈 NUEVO
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -70,7 +72,7 @@ export default function Home() {
           .from("publicacion")
           .select(`
             id_publicacion, id_usuario, titulo, precio, categoria, coleccion,
-            estado, permiso_oferta, fecha_publicacion, club, stock, talle,
+            estado, permiso_oferta, fecha_publicacion, club, stock, talle, moneda,
             foto ( url, orden_foto )
           `)
           .eq("estado", "Activa")
@@ -93,6 +95,7 @@ export default function Home() {
             isOwn: !!currentUserId && pub.id_usuario === currentUserId,
             nombre: pub.titulo,
             precio: Number(pub.precio) || 0,
+            moneda: pub.moneda || "USD",
             club: pub.club || "",
             categoria: mapCategoria(pub.categoria),
             coleccion: pub.coleccion || "Actual",
@@ -162,51 +165,67 @@ export default function Home() {
 
   /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
-  const [coleccion, setColeccion] = useState("");   // "" => placeholder "Elegí colección"
-  const [categoria, setCategoria] = useState("");   // "" => placeholder "Elegí categoría"
+  const [moneda, setMoneda] = useState("");         // "" => Todas
+  const [coleccion, setColeccion] = useState("");   // "" => Todas
+  const [categoria, setCategoria] = useState("");   // "" => Todas
   const [equipo, setEquipo] = useState("Todos");
-  const [talle, setTalle] = useState("");           // "" => placeholder "Elegí talle"
+  const [talle, setTalle] = useState("");           // "" => Todos
+
+  // ✅ Detectar si hay mezcla de monedas
+  const hayMezclaMonedas = useMemo(() => {
+    if (moneda) return false; // Si ya filtró por moneda, no hay mezcla
+    const monedasUnicas = new Set(rows.map(p => p.moneda));
+    return monedasUnicas.size > 1;
+  }, [rows, moneda]);
 
   const hasCategoria = categoria === "Club" || categoria === "Selección";
 
-  // categorías disponibles según colección
+  // categorías disponibles según colección y moneda
   const categorias = useMemo(() => {
-    const base = coleccion && coleccion !== "Todas"
-      ? rows.filter((p) => p.coleccion === coleccion)
-      : rows;
+    let base = rows;
+    if (moneda) base = base.filter((p) => p.moneda === moneda);
+    if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
+    
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
     const allowed = ["Club", "Selección"];
     return unique.filter((c) => allowed.includes(c));
-  }, [rows, coleccion]);
+  }, [rows, coleccion, moneda]);
 
-  // equipos (depende de colección y categoría)
+  // equipos (depende de moneda, colección y categoría)
   const equipos = useMemo(() => {
-    const baseColeccion = coleccion && coleccion !== "Todas"
-      ? rows.filter((p) => p.coleccion === coleccion)
-      : rows;
+    let base = rows;
+    if (moneda) base = base.filter((p) => p.moneda === moneda);
+    if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
 
     if (!hasCategoria) {
-      const list = Array.from(new Set(baseColeccion.map((p) => p.club).filter(Boolean)));
+      const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
       return ["Todos", ...list];
     }
-    const base = baseColeccion.filter((p) => p.categoria === categoria);
+    base = base.filter((p) => p.categoria === categoria);
     const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
     return ["Todos", ...list];
-  }, [rows, coleccion, categoria, hasCategoria]);
+  }, [rows, moneda, coleccion, categoria, hasCategoria]);
 
-  // precio
+  // precio máximo según moneda seleccionada
   const [maxPrecio, setMaxPrecio] = useState(0);
   const maxPrecioAbsoluto = useMemo(() => {
-    if (!rows.length) return 0;
-    return Math.max(...rows.map((p) => Number(p.precio) || 0));
-  }, [rows]);
-  useEffect(() => { if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto); }, [maxPrecioAbsoluto]);
+    const base = moneda ? rows.filter((p) => p.moneda === moneda) : rows;
+    if (!base.length) return 0;
+    const max = Math.max(...base.map((p) => Number(p.precio) || 0));
+    return max + 1; // ✅ Agregar 1 para incluir el producto más caro
+  }, [rows, moneda]);
+  
+  useEffect(() => { 
+    if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto); 
+  }, [maxPrecioAbsoluto]);
+  
   const pct = maxPrecioAbsoluto ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100)) : 0;
 
   // aplicar filtros
   const productos = useMemo(() => {
     let list = rows.filter(
       (p) =>
+        (moneda === "" || p.moneda === moneda) &&
         (coleccion === "" || coleccion === "Todas" || p.coleccion === coleccion) &&
         (categoria === "" || categoria === "Todos" || p.categoria === categoria) &&
         (equipo === "Todos" || p.club === equipo) &&
@@ -221,9 +240,52 @@ export default function Home() {
       default: break;
     }
     return list;
-  }, [rows, coleccion, categoria, equipo, talle, maxPrecio, sort]);
+  }, [rows, moneda, coleccion, categoria, equipo, talle, maxPrecio, sort]);
 
   const [anyDdOpen, setAnyDdOpen] = useState(false);
+
+  const resetFilters = () => {
+    setSort("default");
+    setMoneda("");
+    setColeccion("");
+    setCategoria("");
+    setEquipo("Todos");
+    setTalle("");
+    const newMax = rows.length ? Math.max(...rows.map((p) => Number(p.precio) || 0)) + 1 : 0;
+    setMaxPrecio(newMax);
+    setAnyDdOpen(false);
+  };
+
+  /* ===== Persistencia de filtros (rehidratar/guardar) ===== */
+  // Rehidratar una sola vez al montar (si hay snapshot previo)
+  useEffect(() => {
+    if (!homeFilters) return;
+    const {
+      sort: _sort,
+      moneda: _moneda,
+      coleccion: _coleccion,
+      categoria: _categoria,
+      equipo: _equipo,
+      talle: _talle,
+      maxPrecio: _maxPrecio
+    } = homeFilters;
+
+    if (_sort !== undefined) setSort(_sort);
+    if (_moneda !== undefined) setMoneda(_moneda);
+    if (_coleccion !== undefined) setColeccion(_coleccion);
+    if (_categoria !== undefined) setCategoria(_categoria);
+    if (_equipo !== undefined) setEquipo(_equipo);
+    if (_talle !== undefined) setTalle(_talle);
+    if (_maxPrecio !== undefined) setMaxPrecio(_maxPrecio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 👈 solo al montar
+
+  // Guardar snapshot cada vez que cambie algún filtro
+  useEffect(() => {
+    setHomeFilters({
+      sort, moneda, coleccion, categoria, equipo, talle, maxPrecio
+    });
+  }, [sort, moneda, coleccion, categoria, equipo, talle, maxPrecio, setHomeFilters]);
 
   /* ===== Render ===== */
   return (
@@ -250,83 +312,109 @@ export default function Home() {
           {!loading && !error && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* TOOLBAR — TODO EN UNA LÍNEA */}
-        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
-          <div className="ft-inline">
-            {/* Pills */}
-            <div className="ft-pills">
-              <Dropdown
-                icon="↕︎"
-                value={sort}
-                onChange={setSort}
-                onOpenChange={setAnyDdOpen}
-                options={[
-                  { value: "default",    label: "Por defecto" },
-                  { value: "price-asc",  label: "Precio: menor a mayor" },
-                  { value: "price-desc", label: "Precio: mayor a menor" },
-                  { value: "name",       label: "Nombre (A–Z)" },
-                ]}
-              />
-              <Dropdown
-                icon="↕︎"
-                placeholder="Elegí colección"
-                value={coleccion}
-                onChange={setColeccion}
-                onOpenChange={setAnyDdOpen}
-                options={[
-                  { value: "Todas",  label: "Todas" },
-                  { value: "Actual", label: "Actual" },
-                  { value: "Retro",  label: "Retro" },
-                ]}
-              />
-              <Dropdown
-                icon="↕︎"
-                placeholder="Elegí categoría"
-                value={categoria}
-                onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
-                onOpenChange={setAnyDdOpen}
-                options={[
-                  { value: "Todos", label: "Todos" },
-                  ...categorias.map((c) => ({ value: c, label: c })),
-                ]}
-              />
-              <Dropdown
-                icon="↕︎"
-                placeholder="Todos"
-                value={hasCategoria ? equipo : "Todos"}
-                onChange={setEquipo}
-                onOpenChange={setAnyDdOpen}
-                disabled={!hasCategoria}
-                options={
-                  (hasCategoria ? equipos : ["Todos"]).map((eq) =>
-                    typeof eq === "string"
-                      ? { value: eq, label: eq }
-                      : { value: eq, label: eq === "Todos" ? "Todos" : eq }
-                  )
-                }
-                align="right"
-              />
-              <Dropdown
-                icon="↕︎"
-                placeholder="Elegí talle"
-                value={talle}
-                onChange={setTalle}
-                onOpenChange={setAnyDdOpen}
-                options={[
-                  { value: "Todos", label: "Todos" },
-                  ...SIZES.map((s) => ({ value: s, label: s })),
-                ]}
-              />
-            </div>
+        {/* FILTROS EN DOS LÍNEAS */}
+        <div className={`filters-toolbar-v2 ${anyDdOpen ? "dd-open" : ""}`}>
+          {/* PRIMERA LÍNEA: Ordenamiento y Filtros principales */}
+          <div className="filter-row filter-row--main">
+            <Dropdown
+              icon="↕︎"
+              value={sort}
+              onChange={setSort}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "default",    label: "Por defecto" },
+                { value: "price-asc",  label: "Precio: menor a mayor" },
+                { value: "price-desc", label: "Precio: mayor a menor" },
+                { value: "name",       label: "Nombre (A–Z)" },
+              ]}
+            />
+            
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí moneda"
+              value={moneda}
+              onChange={(v) => {
+                setMoneda(v);
+                // Resetear precio cuando cambia moneda
+                const newBase = v ? rows.filter((p) => p.moneda === v) : rows;
+                const newMax = newBase.length ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1 : 0;
+                setMaxPrecio(newMax);
+              }}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "",    label: "Todas" },
+                { value: "USD", label: "USD" },
+                { value: "UYU", label: "UYU" },
+              ]}
+            />
+            
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí colección"
+              value={coleccion}
+              onChange={setColeccion}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "Todas",  label: "Todas" },
+                { value: "Actual", label: "Actual" },
+                { value: "Retro",  label: "Retro" },
+              ]}
+            />
+            
+            <Dropdown
+              icon="↕"
+              placeholder="Elegí categoría"
+              value={categoria}
+              onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "Todos", label: "Todos" },
+                ...categorias.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+            
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí equipo"
+              value={hasCategoria ? equipo : "Todos"}
+              onChange={setEquipo}
+              onOpenChange={setAnyDdOpen}
+              disabled={!hasCategoria}
+              options={
+                (hasCategoria ? equipos : ["Todos"]).map((eq) =>
+                  typeof eq === "string"
+                    ? { value: eq, label: eq }
+                    : { value: eq, label: eq === "Todos" ? "Todos" : eq }
+                )
+              }
+            />
+            
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí talle"
+              value={talle}
+              onChange={setTalle}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "Todos", label: "Todos" },
+                ...SIZES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+          </div>
 
-            {/* Slider que se estira */}
-            <div className="ft-price-inline" style={{ "--pct": `${pct}%` }}>
-              <span className="ft-price-label">Precio máx.:</span>
-              <span className="ft-price-value">
-                ${Number(maxPrecio || 0).toLocaleString("es-UY")}
-              </span>
+          {/* SEGUNDA LÍNEA: Precio y Reset */}
+          <div className="filter-row filter-row--secondary">
+            <div className="price-filter" style={{ "--pct": `${pct}%` }}>
+              <label className="price-label">
+                Precio máx.: 
+                <span className="price-value">
+                  {moneda === "USD" ? "U$D" : moneda === "UYU" ? "$" : "$"}
+                  {" "}{Number(maxPrecio || 0).toLocaleString("es-UY")}
+                </span>
+              </label>
               <input
                 type="range"
+                className="price-slider"
                 min="0"
                 max={maxPrecioAbsoluto || 0}
                 step="1"
@@ -336,23 +424,14 @@ export default function Home() {
               />
             </div>
 
-            {/* Reset a la derecha */}
             <button
-              className="ft-reset"
+              className="btn-reset-filters"
               type="button"
-              onClick={() => {
-                setSort("default");
-                setColeccion("");
-                setCategoria("");
-                setEquipo("Todos");
-                setTalle("");
-                setMaxPrecio(maxPrecioAbsoluto || 0);
-                setAnyDdOpen(false);
-              }}
+              onClick={resetFilters}
               title="Restablecer filtros"
               disabled={loading || !!error}
             >
-              Restablecer
+               Restablecer
             </button>
           </div>
         </div>

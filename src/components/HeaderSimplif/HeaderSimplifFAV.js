@@ -175,9 +175,14 @@ export default function HeaderSimplifFAV() {
           </button>
 
           <div className="brand-wrap">
-            <a href="/" className="logo-link" aria-label="Ir al inicio">
+            <button
+              type="button"
+              className="logo-link"
+              onClick={goToCatalog}
+              aria-label="Ir al catálogo"
+            >
               <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
-            </a>
+            </button>
           </div>
 
           <div className="search">

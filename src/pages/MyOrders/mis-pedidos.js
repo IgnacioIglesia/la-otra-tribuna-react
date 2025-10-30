@@ -17,16 +17,24 @@ const ESTADOS_PEDIDO = {
   cancelado:  { label: "Cancelado",  color: "#ef4444", icon: "✗"  },
 };
 
-function money(n) {
-  try {
-    return new Intl.NumberFormat("es-UY", {
+// ✅ Función mejorada que acepta la moneda
+function money(n, currency = "UYU") {
+  const amount = Number(n) || 0;
+  
+  if (currency === "USD") {
+    const formatted = new Intl.NumberFormat("es-UY", {
       style: "currency",
-      currency: "UYU",
+      currency: "USD",
       maximumFractionDigits: 0,
-    }).format(Number(n) || 0);
-  } catch {
-    return `$${Number(n || 0).toFixed(0)}`;
+    }).format(amount);
+    return formatted.replace("US$", "U$D");
   }
+  
+  return new Intl.NumberFormat("es-UY", {
+    style: "currency",
+    currency: "UYU",
+    maximumFractionDigits: 0,
+  }).format(amount);
 }
 
 export default function MisPedidos() {
@@ -95,7 +103,7 @@ export default function MisPedidos() {
             let pub = null;
             let vendedor = null;
 
-            // Publicación
+            // Publicación (✅ AHORA INCLUYE MONEDA)
             const { data: pubData } = await supabase
               .from("publicacion")
               .select(`
@@ -105,6 +113,7 @@ export default function MisPedidos() {
                 club,
                 categoria,
                 id_usuario,
+                moneda,
                 foto ( url, orden_foto )
               `)
               .eq("id_publicacion", pedido.id_publicacion)
@@ -136,6 +145,7 @@ export default function MisPedidos() {
               estado: pedido.estado || "pendiente",
               total: Number(pedido.total) || 0,
               cantidad: pedido.cantidad || 1,
+              moneda: pub?.moneda || "UYU", // ✅ Moneda del pedido
               producto: {
                 id: pub?.id_publicacion || pedido.id_publicacion,
                 titulo: pub?.titulo || "Sin título",
@@ -143,6 +153,7 @@ export default function MisPedidos() {
                 club: pub?.club || "",
                 categoria: pub?.categoria || "Club",
                 img: primeraFoto,
+                moneda: pub?.moneda || "UYU", // ✅ Moneda del producto
               },
               vendedor: {
                 nombre:
@@ -169,36 +180,31 @@ export default function MisPedidos() {
       ? pedidos
       : pedidos.filter((p) => p.estado === filtroEstado);
 
+  // ✅ Estadísticas separadas por moneda
   const estadisticas = pedidos.reduce(
     (acc, p) => {
-      acc.total += p.total;
+      // Total según moneda
+      if (p.moneda === "USD") {
+        acc.totalUSD += p.total;
+      } else {
+        acc.totalUYU += p.total;
+      }
+      
       acc.cantidad += p.cantidad;
       if (p.estado === "entregado") acc.entregados++;
       if (p.estado === "enviado") acc.enTransito++;
       if (p.estado === "pendiente" || p.estado === "confirmado") acc.enProceso++;
       return acc;
     },
-    { total: 0, cantidad: 0, entregados: 0, enTransito: 0, enProceso: 0 }
-  );
-
-  const handleCancelarPedido = async (idPedido) => {
-    if (!window.confirm("¿Estás seguro de cancelar este pedido?")) return;
-    try {
-      const { error } = await supabase
-        .from("pedido")
-        .update({ estado: "cancelado" })
-        .eq("id_pedido", idPedido);
-      if (error) throw error;
-
-      setPedidos((prev) =>
-        prev.map((p) =>
-          p.id_pedido === idPedido ? { ...p, estado: "cancelado" } : p
-        )
-      );
-    } catch (err) {
-      alert("Error al cancelar el pedido: " + err.message);
+    { 
+      totalUYU: 0, 
+      totalUSD: 0, 
+      cantidad: 0, 
+      entregados: 0, 
+      enTransito: 0, 
+      enProceso: 0 
     }
-  };
+  );
 
   return (
     <>
@@ -225,10 +231,20 @@ export default function MisPedidos() {
         ) : (
           <>
             <div className="stats-grid">
+              {/* ✅ Total en Pesos */}
               <div className="stat-card">
-                <span className="stat-label">Total Gastado</span>
-                <span className="stat-value">{money(estadisticas.total)}</span>
+                <span className="stat-label">Total Gastado (UYU)</span>
+                <span className="stat-value">{money(estadisticas.totalUYU, "UYU")}</span>
               </div>
+
+              {/* ✅ Total en Dólares (solo si hay compras en USD) */}
+              {estadisticas.totalUSD > 0 && (
+                <div className="stat-card stat-card-usd">
+                  <span className="stat-label">Total Gastado (USD)</span>
+                  <span className="stat-value">{money(estadisticas.totalUSD, "USD")}</span>
+                </div>
+              )}
+
               <div className="stat-card">
                 <span className="stat-label">Productos Comprados</span>
                 <span className="stat-value">{estadisticas.cantidad}</span>
@@ -288,14 +304,14 @@ export default function MisPedidos() {
                         alt={pedido.producto.titulo}
                         className="pedido-img"
                         onClick={() =>
-                          navigate(`/publicacion/${pedido.producto.id}`)
+                          navigate(`/publication/${pedido.producto.id}`)
                         }
                       />
                       <div className="pedido-info">
                         <h3
                           className="pedido-titulo"
                           onClick={() =>
-                            navigate(`/publicacion/${pedido.producto.id}`)
+                            navigate(`/publication/${pedido.producto.id}`)
                           }
                           style={{ cursor: "pointer" }}
                         >
@@ -305,7 +321,7 @@ export default function MisPedidos() {
                         <div className="pedido-detalles">
                           <span>Cantidad: {pedido.cantidad}</span>
                           <span>
-                            Precio unitario: {money(pedido.producto.precio)}
+                            Precio unitario: {money(pedido.producto.precio, pedido.producto.moneda)}
                           </span>
                         </div>
                       </div>
@@ -318,31 +334,23 @@ export default function MisPedidos() {
 
                       <div className="pedido-total">
                         <span className="total-label">Total</span>
-                        <span className="total-value">{money(pedido.total)}</span>
+                        <span className="total-value">{money(pedido.total, pedido.moneda)}</span>
                       </div>
                     </div>
 
-                    <div className="pedido-actions">
-                      {(pedido.estado === "pendiente" ||
-                        pedido.estado === "confirmado") && (
-                        <button
-                          onClick={() => handleCancelarPedido(pedido.id_pedido)}
-                          className="btn-cancelar"
-                        >
-                          Cancelar pedido
-                        </button>
-                      )}
-                      {pedido.estado === "entregado" && (
+                    {/* ✅ ELIMINADA LA SECCIÓN DE ACCIONES (cancelar pedido) */}
+                    {pedido.estado === "entregado" && (
+                      <div className="pedido-actions">
                         <button
                           onClick={() =>
-                            navigate(`/publicacion/${pedido.producto.id}`)
+                            navigate(`/publication/${pedido.producto.id}`)
                           }
                           className="btn-comprar-nuevo"
                         >
                           Comprar de nuevo
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

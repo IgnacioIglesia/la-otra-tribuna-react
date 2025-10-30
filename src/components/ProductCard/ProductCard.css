@@ -3,7 +3,6 @@
   position: relative; /* ✅ Para posicionar badges y botones */
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -83,7 +82,7 @@
 .card .media {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 6;
   background: #f5f7f9;
   overflow: hidden;
 }
@@ -110,11 +109,9 @@
 .card .body {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   flex: 1;
   padding: 10px 12px;
-  gap: 6px;
-  min-height: 140px;
+  gap: 4px; /* ✅ Reducido de 6px */
 }
 
 /* ===== Meta (texto + precio) ===== */
@@ -123,7 +120,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 10px;
-  flex: 1;
+  margin-bottom: 0.35rem; /* ✅ Añadido para controlar espacio */
 }
 
 /* ===== Título ===== */
@@ -134,11 +131,11 @@
   line-clamp: 2;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   color: #111827;
-  margin: 0 0 2px 0;
+  margin: 0 0 3px 0;
 }
 
 .card-title-link {
@@ -159,21 +156,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #6b7280;
-  font-size: 11.5px;
-  line-height: 1.1;
+  font-size: 12.5px;
+  line-height: 1.2;
+  margin-top: 2px; /* ✅ Ajustado */
 }
 
 /* ===== Precios ===== */
 .price {
   text-align: right;
-  min-width: 86px;
+  min-width: 90px;
 }
 
 .price .price-old,
 .price-old {
   text-decoration: line-through;
   color: #888;
-  font-size: 11.5px;
+  font-size: 12.5px;
   margin-bottom: 2px;
 }
 
@@ -182,11 +180,12 @@
   font-weight: 700;
   color: #064e3b;
   font-size: 13px;
+  margin-bottom: 0.2rem; /* ✅ Añadido */
 }
 
 /* Stock discreto a la derecha del precio */
 .pc-stock-mini {
-  font-size: 11.5px;
+  font-size: 12px;
   color: #64748b;
   margin-top: 2px;
 }
@@ -196,13 +195,139 @@
   font-weight: 600;
 }
 
-/* ===== Botones ===== */
+/* ===== Talle (idéntico a Stock) ===== */
+.pc-talle {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ===== ESTILOS PARA ESTADOS DEL CARRITO ===== */
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.4rem; /* ✅ Reducido de 0.75rem */
+  min-height: 85px;
+}
+
+/* Estado: Producto en el carrito */
+.cart-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.65rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  transition: background 0.3s ease;
+}
+
+/* ✅ Estado al máximo - cambio de color integrado */
+.cart-status.at-max {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.cart-status svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.cart-qty-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ✅ Badge de máximo integrado */
+.max-badge {
+  font-size: 0.7rem;
+  opacity: 0.95;
+  font-weight: 700;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 1; }
+}
+
+/* Grupo de acciones del carrito */
+.cart-actions-group {
+  display: flex;
+  gap: 0.4rem;
+}
+
+/* Botones compactos */
+.btn.secondary-compact,
+.btn.danger-compact {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  border-radius: 5px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn.secondary-compact svg,
+.btn.danger-compact svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.btn.secondary-compact {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+}
+
+.btn.secondary-compact:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn.danger-compact {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+}
+
+.btn.danger-compact:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn.secondary-compact:disabled,
+.btn.danger-compact:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== Botones principales ===== */
 .card .btn.primary {
   margin-top: auto;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 0.5rem;
   height: 36px;
   padding: 0 10px;
   border-radius: 6px;
@@ -212,13 +337,14 @@
   background: #064e3b;
   color: #fff;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition: all 0.2s ease;
   line-height: 1;
 }
 
-.card .btn.primary:hover {
+.card .btn.primary:hover:not(:disabled) {
   background: #046c4e;
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(6, 78, 59, 0.4);
 }
 
 .card .btn.primary:disabled {
@@ -258,6 +384,23 @@
   padding: 8px 10px;
   font-size: 12.5px;
   font-weight: 600;
+  margin-top: auto;
+}
+
+/* Animación suave al cambiar de estado */
+.card-actions > * {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===== Compatibilidad con otras clases ===== */
@@ -289,12 +432,26 @@
   text-overflow: ellipsis;
 }
 
-/* ===== Talle (idéntico a Stock) ===== */
-.pc-talle {
-  font-size: 11.5px;
-  color: #64748b;
-  margin-top: 2px;
+/* Responsive */
+@media (max-width: 480px) {
+  .card-actions {
+    min-height: 100px;
+  }
+  
+  .cart-actions-group {
+    flex-direction: column;
+  }
+  
+  .btn.secondary-compact,
+  .btn.danger-compact {
+    width: 100%;
+  }
+  
+  .cart-status {
+    font-size: 0.75rem;
+  }
+  
+  .max-badge {
+    font-size: 0.65rem;
+  }
 }
-
-
-

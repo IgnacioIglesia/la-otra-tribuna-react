@@ -2,6 +2,27 @@
     padding: 24px 0 48px;
   }
   
+  /* ===== Tipografía mejorada para precios en checkout ===== */
+.mi-price,
+.ck-totals strong {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.mi-price {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.ck-totals strong {
+  font-size: 1.5rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
   .ck-title {
     font-size: 28px;
     font-weight: 800;

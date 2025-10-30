@@ -48,3 +48,43 @@
     color: #64748b;
     margin: 0;
   }
+/* ===== Tipografía mejorada para precios - estilo Apple ===== */
+.cart-price,
+.cart-total strong,
+.original-currency,
+.converted-currency {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cart-price {
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.cart-total strong {
+  font-size: 1.5rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.original-currency {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.converted-currency {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ===== También para el indicador de cantidad en carrito ===== */
+.cart-qty-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

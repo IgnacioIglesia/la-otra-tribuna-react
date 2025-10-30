@@ -9,12 +9,32 @@ import Dropdown from "../../components/Dropdown/Dropdown";
 const PLACEHOLDER = "https://placehold.co/150x150?text=Producto";
 
 const ESTADOS_PEDIDO = {
-  pendiente: { label: "Pendiente", color: "#f59e0b" },
+  pendiente:  { label: "Pendiente",  color: "#f59e0b" },
   confirmado: { label: "Confirmado", color: "#3b82f6" },
-  enviado: { label: "Enviado", color: "#8b5cf6" },
-  entregado: { label: "Entregado", color: "#10b981" },
-  cancelado: { label: "Cancelado", color: "#ef4444" },
+  enviado:    { label: "Enviado",    color: "#8b5cf6" },
+  entregado:  { label: "Entregado",  color: "#10b981" },
+  cancelado:  { label: "Cancelado",  color: "#ef4444" },
 };
+
+// ✅ Formateo de moneda igual que en MisPedidos (U$D para USD)
+function money(n, currency = "UYU") {
+  const amount = Number(n) || 0;
+
+  if (currency === "USD") {
+    const formatted = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+    return formatted.replace("US$", "U$D");
+  }
+
+  return new Intl.NumberFormat("es-UY", {
+    style: "currency",
+    currency: "UYU",
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
 
 export default function MisVentas() {
   const navigate = useNavigate();
@@ -22,6 +42,7 @@ export default function MisVentas() {
   const [ventas, setVentas] = useState([]);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState(null);
+
   const estadoOptions = useMemo(
     () =>
       Object.entries(ESTADOS_PEDIDO).map(([value, { label }]) => ({
@@ -59,9 +80,8 @@ export default function MisVentas() {
 
         const idUsuario = userData.id_usuario;
         setUserId(idUsuario);
-        console.log("🔍 Mi ID de usuario:", idUsuario);
 
-        // Primero obtener todos los pedidos
+        // Traer TODOS los pedidos
         const { data: pedidos, error: pedidosError } = await supabase
           .from("pedido")
           .select(`
@@ -76,49 +96,59 @@ export default function MisVentas() {
           .order("fecha_pedido", { ascending: false });
 
         if (pedidosError) throw pedidosError;
-        console.log("📦 Total de pedidos en la BD:", pedidos?.length);
-        console.log("📦 Pedidos:", pedidos);
 
-        // Filtrar solo los pedidos de mis publicaciones
+        // IDs de mis publicaciones
         const { data: misPublicaciones, error: pubError } = await supabase
           .from("publicacion")
           .select("id_publicacion")
           .eq("id_usuario", idUsuario);
 
         if (pubError) throw pubError;
-        console.log("📝 Mis publicaciones:", misPublicaciones);
 
-        const misPublicacionesIds = misPublicaciones.map(p => p.id_publicacion);
-        console.log("🎯 IDs de mis publicaciones:", misPublicacionesIds);
+        const misPublicacionesIds = (misPublicaciones || []).map(p => p.id_publicacion);
 
-        const pedidosFiltrados = pedidos.filter(p => misPublicacionesIds.includes(p.id_publicacion));
-        console.log("✅ Pedidos filtrados (mis ventas):", pedidosFiltrados);
+        // Quedarme solo con pedidos de mis publicaciones (mis ventas)
+        const pedidosFiltrados = (pedidos || []).filter(p =>
+          misPublicacionesIds.includes(p.id_publicacion)
+        );
 
-        // Enriquecer con datos de publicacion y comprador
+        // Enriquecer cada venta con datos de publicación (incluye MONEDA) y comprador
         const mapped = await Promise.all(
           pedidosFiltrados.map(async (pedido) => {
-            // Obtener datos de la publicación
+            // Publicación (incluye moneda)
             const { data: pub } = await supabase
               .from("publicacion")
-              .select("id_publicacion, titulo, precio, club, categoria, foto(url, orden_foto)")
+              .select(`
+                id_publicacion,
+                titulo,
+                precio,
+                club,
+                categoria,
+                moneda,
+                foto ( url, orden_foto )
+              `)
               .eq("id_publicacion", pedido.id_publicacion)
-              .single();
+              .maybeSingle();
 
-            // Obtener datos del comprador
+            // Comprador
             const { data: comprador } = await supabase
               .from("usuario")
               .select("nombre, apellido, email")
               .eq("id_usuario", pedido.id_usuario)
-              .single();
+              .maybeSingle();
 
             const primeraFoto = pub?.foto?.[0]?.url || PLACEHOLDER;
+            const moneda = pub?.moneda || "UYU";
 
             return {
               id_pedido: pedido.id_pedido,
-              fecha: new Date(pedido.fecha_pedido).toLocaleDateString("es-UY"),
+              fecha: pedido.fecha_pedido
+                ? new Date(pedido.fecha_pedido).toLocaleDateString("es-UY")
+                : "-",
               estado: pedido.estado || "pendiente",
               total: Number(pedido.total) || 0,
               cantidad: pedido.cantidad || 1,
+              moneda, // ✅ moneda de la venta (desde la publicación)
               producto: {
                 id: pub?.id_publicacion,
                 titulo: pub?.titulo || "Sin título",
@@ -126,18 +156,19 @@ export default function MisVentas() {
                 club: pub?.club || "",
                 categoria: pub?.categoria || "Club",
                 img: primeraFoto,
+                moneda, // ✅ moneda del producto
               },
               comprador: {
-                nombre: `${comprador?.nombre || ""} ${comprador?.apellido || ""}`.trim() || "Usuario",
+                nombre:
+                  `${comprador?.nombre || ""} ${comprador?.apellido || ""}`.trim() ||
+                  "Usuario",
                 email: comprador?.email || "",
               },
             };
           })
         );
 
-        if (alive) {
-          setVentas(mapped);
-        }
+        if (alive) setVentas(mapped);
       } catch (err) {
         if (alive) setError(err.message || "Error al cargar las ventas");
       } finally {
@@ -147,6 +178,7 @@ export default function MisVentas() {
     return () => { alive = false; };
   }, [navigate]);
 
+  // Cambiar estado del pedido
   const handleEstadoChange = async (idPedido, nuevoEstado) => {
     try {
       const { error } = await supabase
@@ -156,7 +188,6 @@ export default function MisVentas() {
 
       if (error) throw error;
 
-      // Actualizar estado local
       setVentas((prev) =>
         prev.map((v) =>
           v.id_pedido === idPedido ? { ...v, estado: nuevoEstado } : v
@@ -167,15 +198,18 @@ export default function MisVentas() {
     }
   };
 
+  // ✅ Estadísticas separadas por moneda (igual enfoque que MisPedidos)
   const estadisticas = ventas.reduce(
     (acc, v) => {
-      acc.total += v.total;
+      if (v.moneda === "USD") acc.totalUSD += v.total;
+      else acc.totalUYU += v.total;
+
       acc.cantidad += v.cantidad;
       if (v.estado === "entregado") acc.completadas++;
       if (v.estado === "pendiente") acc.pendientes++;
       return acc;
     },
-    { total: 0, cantidad: 0, completadas: 0, pendientes: 0 }
+    { totalUYU: 0, totalUSD: 0, cantidad: 0, completadas: 0, pendientes: 0 }
   );
 
   return (
@@ -205,10 +239,20 @@ export default function MisVentas() {
         ) : (
           <>
             <div className="stats-grid">
+              {/* Total UYU */}
               <div className="stat-card">
-                <span className="stat-label">Total Vendido</span>
-                <span className="stat-value">${estadisticas.total.toFixed(2)}</span>
+                <span className="stat-label">Total Vendido (UYU)</span>
+                <span className="stat-value">{money(estadisticas.totalUYU, "UYU")}</span>
               </div>
+
+              {/* Total USD (solo si hay ventas en USD) */}
+              {estadisticas.totalUSD > 0 && (
+                <div className="stat-card stat-card-usd">
+                  <span className="stat-label">Total Vendido (USD)</span>
+                  <span className="stat-value">{money(estadisticas.totalUSD, "USD")}</span>
+                </div>
+              )}
+
               <div className="stat-card">
                 <span className="stat-label">Productos Vendidos</span>
                 <span className="stat-value">{estadisticas.cantidad}</span>
@@ -227,7 +271,9 @@ export default function MisVentas() {
               {ventas.map((venta) => (
                 <div key={venta.id_pedido} className="venta-card">
                   <div className="venta-header">
-                    <span className="venta-fecha">Pedido #{venta.id_pedido} - {venta.fecha}</span>
+                    <span className="venta-fecha">
+                      Pedido #{venta.id_pedido} - {venta.fecha}
+                    </span>
                     <span
                       className="venta-estado"
                       style={{ backgroundColor: ESTADOS_PEDIDO[venta.estado]?.color }}
@@ -248,7 +294,9 @@ export default function MisVentas() {
                       <p className="venta-club">{venta.producto.club}</p>
                       <div className="venta-detalles">
                         <span>Cantidad: {venta.cantidad}</span>
-                        <span>Precio unitario: ${venta.producto.precio.toFixed(2)}</span>
+                        <span>
+                          Precio unitario: {money(venta.producto.precio, venta.producto.moneda)}
+                        </span>
                       </div>
                     </div>
                     <div className="venta-comprador">
@@ -258,7 +306,7 @@ export default function MisVentas() {
                     </div>
                     <div className="venta-total">
                       <span className="total-label">Total</span>
-                      <span className="total-value">${venta.total.toFixed(2)}</span>
+                      <span className="total-value">{money(venta.total, venta.moneda)}</span>
                     </div>
                   </div>
 

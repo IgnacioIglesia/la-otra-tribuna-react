@@ -69,7 +69,7 @@ export default function MyListings() {
         .select(`
           id_publicacion, id_usuario, id_producto,
           titulo, descripcion, precio, moneda,
-          condicion, autenticidad, categoria, talle, stock,
+          condicion, autenticidad, categoria, coleccion, talle, stock,
           estado, club, permiso_oferta,
           foto ( id_foto, url, orden_foto )
         `)
@@ -93,7 +93,19 @@ export default function MyListings() {
     }
   }
 
-  const uyMoney = useMemo(
+  // Formateador para USD
+  const usdMoney = useMemo(
+    () =>
+      new Intl.NumberFormat("es-UY", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }),
+    []
+  );
+
+  // Formateador para UYU
+  const uyuMoney = useMemo(
     () =>
       new Intl.NumberFormat("es-UY", {
         style: "currency",
@@ -102,6 +114,16 @@ export default function MyListings() {
       }),
     []
   );
+
+  const formatPrice = (precio, moneda) => {
+    const amount = Number(precio) || 0;
+    if (moneda === "USD") {
+      // Reemplazar "US$" por "U$D"
+      return usdMoney.format(amount).replace("US$", "U$D");
+    }
+    // Para UYU, mantener el formato estándar
+    return uyuMoney.format(amount);
+  };
 
   const openEdit = (pub) => {
     if (pub.estado === "Vendida") {
@@ -116,6 +138,8 @@ export default function MyListings() {
       precio: Number(pub.precio) || 0,
       stock: Number(pub.stock) || 0,
       permiso_oferta: !!pub.permiso_oferta,
+      coleccion: pub.coleccion || "Actual",
+      categoria: pub.categoria || "Club",
     });
   };
 
@@ -230,10 +254,11 @@ export default function MyListings() {
         titulo: form.titulo?.trim() || editing.titulo,
         descripcion: form.descripcion ?? "",
         precio: Number(form.precio) || 0,
-        moneda: form.moneda || "UYU",
+        moneda: form.moneda || "USD",
         condicion: form.condicion || "Nuevo",
         autenticidad: form.autenticidad || "Original",
         categoria: form.categoria || "Club",
+        coleccion: form.coleccion || "Actual",
         talle: form.talle || "M",
         stock: Number(form.stock) || 0,
         estado: form.estado || "Activa",
@@ -307,10 +332,10 @@ export default function MyListings() {
                   <div className="listing-body">
                     <h3 className="listing-title">{p.titulo}</h3>
                     <div className="listing-meta">
-                      {(p.club || "—")} • {p.categoria}
+                      {(p.club || "—")} • {p.categoria} • {p.coleccion || "Actual"}
                     </div>
                     <div className="listing-price">
-                      {p.moneda} {uyMoney.format(Number(p.precio)).replace("UYU ", "")}
+                      {formatPrice(p.precio, p.moneda)}
                     </div>
                   </div>
 
@@ -408,9 +433,30 @@ export default function MyListings() {
               <div>
                 <label className="label">Categoría</label>
                 <select value={form.categoria || "Club"} onChange={onChange("categoria")}>
-                  <option>Club</option>
-                  <option>Selección</option>
-                  <option>Retro</option>
+                  <option value="Club">Club</option>
+                  <option value="Seleccion">Selección</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid-2">
+              <div>
+                <label className="label">Colección</label>
+                <select value={form.coleccion || "Actual"} onChange={onChange("coleccion")}>
+                  <option value="Actual">Actual</option>
+                  <option value="Retro">Retro</option>
+                </select>
+              </div>
+              <div>
+                <label className="label">Talle</label>
+                <select value={form.talle || "M"} onChange={onChange("talle")}>
+                  <option>XS</option>
+                  <option>S</option>
+                  <option>M</option>
+                  <option>L</option>
+                  <option>XL</option>
+                  <option>XXL</option>
+                  <option>XXXL</option>
                 </select>
               </div>
             </div>
@@ -435,9 +481,9 @@ export default function MyListings() {
               </div>
               <div>
                 <label className="label">Moneda</label>
-                <select value={form.moneda || "UYU"} onChange={onChange("moneda")}>
-                  <option>UYU</option>
+                <select value={form.moneda || "USD"} onChange={onChange("moneda")}>
                   <option>USD</option>
+                  <option>UYU</option>
                 </select>
               </div>
               <div>
@@ -472,39 +518,25 @@ export default function MyListings() {
                 </select>
               </div>
               <div>
-                <label className="label">Talle</label>
-                <select value={form.talle || "M"} onChange={onChange("talle")}>
-                  <option>XS</option>
-                  <option>S</option>
-                  <option>M</option>
-                  <option>L</option>
-                  <option>XL</option>
-                  <option>XXL</option>
-                  <option>XXXL</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid-2">
-              <div>
                 <label className="label">Estado</label>
                 <select value={form.estado || "Activa"} onChange={onChange("estado")}>
                   <option>Activa</option>
                   <option>Vendida</option>
                 </select>
               </div>
-              <label className="checkbox">
-                <input
-                  type="checkbox"
-                  checked={!!form.permiso_oferta}
-                  onChange={onChange("permiso_oferta")}
-                />
-                <span>
-                  <strong>Participar en ofertas automáticas</strong>
-                  <small>Si no se vende en 30 días, aplicamos 10% de descuento.</small>
-                </span>
-              </label>
             </div>
+
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={!!form.permiso_oferta}
+                onChange={onChange("permiso_oferta")}
+              />
+              <span>
+                <strong>Participar en ofertas automáticas</strong>
+                <small>Si no se vende en 30 días, aplicamos 10% de descuento.</small>
+              </span>
+            </label>
 
             <div className="modal-actions">
               <button

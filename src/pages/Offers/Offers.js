@@ -1,17 +1,31 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../../components/Header/Header";
 import ProductGrid from "../../components/ProductGrid/ProductGrid";
-import Dropdown from "../../components/Dropdown/Dropdown"; // ✅ nuevo
+import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Offers.css";
+import { useFilters } from "../../context/FiltersContext"; // 👈 NUEVO
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 
+/* ===== Utils ===== */
 function daysFrom(dateStr) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return Infinity;
   const ms = Date.now() - d.getTime();
   return Math.floor(ms / (1000 * 60 * 60 * 24));
+}
+
+/* ===== Talles ===== */
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+/** Devuelve true si el producto tiene el talle seleccionado. (idéntico a Home.js) */
+function matchesTalle(prodTalle, selected) {
+  if (!selected || selected === "Todos") return true;
+  const wanted = String(selected).toUpperCase().trim();
+  const raw = String(prodTalle || "").toUpperCase();
+  const tokens = raw.split(/[^A-Z0-9]+/).filter(Boolean);
+  return tokens.some((t) => t === wanted);
 }
 
 function mapCategoria(cat) {
@@ -20,115 +34,133 @@ function mapCategoria(cat) {
 }
 
 export default function Offers() {
+  const { offersFilters, setOffersFilters } = useFilters(); // 👈 NUEVO
+
   const [loading, setLoading] = useState(true);
   const [all, setAll] = useState([]);
+  const [error, setError] = useState("");
 
-  /* ===== Filtros ===== */
+  /* ===== Filtros (copiados de Home.js) ===== */
   const [sort, setSort] = useState("default");
-  const [coleccion, setColeccion] = useState("");
-  const [categoria, setCategoria] = useState("Todas");
+  const [moneda, setMoneda] = useState("");         // "" => Todas
+  const [coleccion, setColeccion] = useState("");   // "" => Todas
+  const [categoria, setCategoria] = useState("");   // "" => Todas
   const [equipo, setEquipo] = useState("Todos");
-  const [maxPrecio, setMaxPrecio] = useState(0);
+  const [talle, setTalle] = useState("");           // "" => Todos
 
   /* ===== Control del dropdown abierto (para z-index del toolbar) ===== */
   const [anyDdOpen, setAnyDdOpen] = useState(false);
 
+  /* ===== Data ===== */
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("publicacion")
-        .select(`
-          id_publicacion,
-          titulo,
-          precio,
-          precio_oferta,
-          categoria,
-          coleccion,
-          estado,
-          permiso_oferta,
-          fecha_publicacion,
-          club,
-          stock,
-          talle,
-          foto ( url, orden_foto )
-        `)
-        .eq("estado", "Activa")
-        .eq("permiso_oferta", true)
-        .gt("stock", 0)
-        .order("orden_foto", { foreignTable: "foto", ascending: true });
+      try {
+        setLoading(true);
+        setError("");
+        const { data, error } = await supabase
+          .from("publicacion")
+          .select(`
+            id_publicacion,
+            id_usuario,
+            titulo,
+            precio,
+            precio_oferta,
+            categoria,
+            coleccion,
+            estado,
+            permiso_oferta,
+            fecha_publicacion,
+            club,
+            stock,
+            talle,
+            moneda,
+            foto ( url, orden_foto )
+          `)
+          .eq("estado", "Activa")
+          .eq("permiso_oferta", true)
+          .gt("stock", 0)
+          .order("id_publicacion", { ascending: false })
+          .order("orden_foto", { foreignTable: "foto", ascending: true });
 
-      if (error) {
-        console.error(error);
+        if (error) throw error;
+
+        // Solo ofertas válidas (>= 30 días)
+        const mapped = (data || [])
+          .filter((p) => daysFrom(p.fecha_publicacion) >= 30)
+          .map((pub) => {
+            const foto = pub.foto?.[0]?.url || PLACEHOLDER;
+            const basePrice = Number(pub.precio) || 0;
+            const offerPrice =
+              pub.precio_oferta != null
+                ? Number(pub.precio_oferta)
+                : Math.round(basePrice * 0.9);
+
+            return {
+              id: pub.id_publicacion,
+              ownerId: pub.id_usuario,
+              nombre: pub.titulo,
+              club: pub.club || "",
+              categoria: mapCategoria(pub.categoria),
+              coleccion: pub.coleccion || "Actual",
+              img: foto,
+              stock: Number(pub.stock) || 0,
+              talle: pub.talle || "",
+              moneda: pub.moneda || "USD", // igual que Home.js
+              isOffer: true,
+              precio: basePrice,               // precio base
+              precioAnterior: basePrice,       // para mostrar tachado
+              precio_oferta: offerPrice,       // precio efectivo de oferta
+            };
+          });
+
+        setAll(mapped);
+      } catch (e) {
+        setError(e.message || "No se pudieron cargar las ofertas.");
         setAll([]);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const mapped = (data || [])
-        .filter((p) => daysFrom(p.fecha_publicacion) >= 30)
-        .map((pub) => {
-          const foto = pub.foto?.[0]?.url || PLACEHOLDER;
-          const basePrice = Number(pub.precio);
-          const offerPrice =
-            pub.precio_oferta != null
-              ? Number(pub.precio_oferta)
-              : Math.round(basePrice * 0.9);
-
-          return {
-            id: pub.id_publicacion,
-            nombre: pub.titulo,
-            club: pub.club || "",
-            categoria: mapCategoria(pub.categoria),
-            coleccion: pub.coleccion || "Actual",
-            img: foto,
-            stock: Number(pub.stock) || 0,
-            talle: pub.talle || null,
-            isOffer: true,
-            precio: basePrice,
-            precioAnterior: basePrice,
-            precio_oferta: offerPrice,
-          };
-        });
-
-      setAll(mapped);
-      setLoading(false);
     })();
   }, []);
 
-  useEffect(() => {
-    if (!coleccion || coleccion === "Todas") {
-      setCategoria("Todas");
-      setEquipo("Todos");
-    }
-  }, [coleccion]);
+  // Estados derivados
+  const hasCategoria = categoria === "Club" || categoria === "Selección";
 
-  const hasColeccion = !!coleccion && coleccion !== "Todas";
-  const hasCategoria = hasColeccion && categoria !== "Todas";
-
+  // categorías disponibles según moneda y colección (copiado de Home.js, adaptado al array "all")
   const categorias = useMemo(() => {
-    const base = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
+    let base = all;
+    if (moneda) base = base.filter((p) => p.moneda === moneda);
+    if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
+
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
     const allowed = ["Club", "Selección"];
-    const filtered = unique.filter((c) => allowed.includes(c));
-    return ["Todas", ...filtered];
-  }, [all, hasColeccion, coleccion]);
+    return unique.filter((c) => allowed.includes(c));
+  }, [all, coleccion, moneda]);
 
+  // equipos según moneda, colección y categoría (idéntico patrón a Home.js)
   const equipos = useMemo(() => {
-    const baseColeccion = hasColeccion ? all.filter((p) => p.coleccion === coleccion) : all;
-    if (categoria === "Todas") {
-      const list = Array.from(new Set(baseColeccion.map((p) => p.club).filter(Boolean)));
+    let base = all;
+    if (moneda) base = base.filter((p) => p.moneda === moneda);
+    if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
+
+    if (!hasCategoria) {
+      const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
       return ["Todos", ...list];
     }
-    const base = baseColeccion.filter((p) => p.categoria === categoria);
+    base = base.filter((p) => p.categoria === categoria);
     const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
     return ["Todos", ...list];
-  }, [all, hasColeccion, coleccion, categoria]);
+  }, [all, moneda, coleccion, categoria, hasCategoria]);
 
+  // Precio máximo según moneda seleccionada (como en Home.js, pero usando precio de oferta si existe)
+  const [maxPrecio, setMaxPrecio] = useState(0);
   const maxPrecioAbsoluto = useMemo(() => {
-    if (!all.length) return 0;
-    return Math.max(...all.map((p) => Number(p.precioAnterior || p.precio) || 0));
-  }, [all]);
+    const base = moneda ? all.filter((p) => p.moneda === moneda) : all;
+    if (!base.length) return 0;
+    return Math.max(
+      ...base.map((p) => Number(p.precio_oferta ?? p.precio) || 0)
+    );
+  }, [all, moneda]);
 
   useEffect(() => {
     if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto);
@@ -138,21 +170,28 @@ export default function Offers() {
     ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
     : 0;
 
+  // Aplicar filtros (copiado de Home.js, agregando talle y moneda)
   const productos = useMemo(() => {
     let list = all.filter(
       (p) =>
         (coleccion === "" || coleccion === "Todas" || p.coleccion === coleccion) &&
-        (categoria === "Todas" || p.categoria === categoria) &&
+        (categoria === "" || categoria === "Todos" || p.categoria === categoria) &&
         (equipo === "Todos" || p.club === equipo) &&
-        (Number(p.precioAnterior || p.precio) || 0) <= (Number(maxPrecio) || 0)
+        (moneda === "" || p.moneda === moneda) &&
+        matchesTalle(p.talle, talle) &&
+        (Number(p.precio_oferta ?? p.precio) || 0) <= (Number(maxPrecio) || 0)
     );
 
     switch (sort) {
       case "price-asc":
-        list = list.slice().sort((a, b) => (a.precio_oferta ?? a.precio) - (b.precio_oferta ?? b.precio));
+        list = list.slice().sort(
+          (a, b) => (a.precio_oferta ?? a.precio) - (b.precio_oferta ?? b.precio)
+        );
         break;
       case "price-desc":
-        list = list.slice().sort((a, b) => (b.precio_oferta ?? b.precio) - (a.precio_oferta ?? a.precio));
+        list = list.slice().sort(
+          (a, b) => (b.precio_oferta ?? b.precio) - (a.precio_oferta ?? a.precio)
+        );
         break;
       case "name":
         list = list.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -162,7 +201,49 @@ export default function Offers() {
     }
 
     return list;
-  }, [all, coleccion, categoria, equipo, maxPrecio, sort]);
+  }, [all, coleccion, categoria, equipo, talle, maxPrecio, sort, moneda]);
+
+  const resetFilters = () => {
+    setSort("default");
+    setMoneda("");
+    setColeccion("");
+    setCategoria("");
+    setEquipo("Todos");
+    setTalle("");
+    setMaxPrecio(maxPrecioAbsoluto || 0);
+    setAnyDdOpen(false);
+  };
+
+  /* ===== Persistencia de filtros (rehidratar/guardar) ===== */
+  // Rehidratar una sola vez al montar (si hay snapshot previo)
+  useEffect(() => {
+    if (!offersFilters) return;
+    const {
+      sort: _sort,
+      moneda: _moneda,
+      coleccion: _coleccion,
+      categoria: _categoria,
+      equipo: _equipo,
+      talle: _talle,
+      maxPrecio: _maxPrecio
+    } = offersFilters;
+
+    if (_sort !== undefined) setSort(_sort);
+    if (_moneda !== undefined) setMoneda(_moneda);
+    if (_coleccion !== undefined) setColeccion(_coleccion);
+    if (_categoria !== undefined) setCategoria(_categoria);
+    if (_equipo !== undefined) setEquipo(_equipo);
+    if (_talle !== undefined) setTalle(_talle);
+    if (_maxPrecio !== undefined) setMaxPrecio(_maxPrecio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 👈 solo al montar
+
+  // Guardar snapshot cada vez que cambie algún filtro
+  useEffect(() => {
+    setOffersFilters({
+      sort, moneda, coleccion, categoria, equipo, talle, maxPrecio
+    });
+  }, [sort, moneda, coleccion, categoria, equipo, talle, maxPrecio, setOffersFilters]);
 
   return (
     <>
@@ -189,23 +270,46 @@ export default function Offers() {
       <main className="container catalog">
         <div className="catalog-head">
           <h2 className="catalog-title">Ofertas disponibles</h2>
-          {!loading && <p className="catalog-sub">Resultados: {productos.length}</p>}
+          {!loading && !error && <p className="catalog-sub">Resultados: {productos.length}</p>}
+          {error && <p className="catalog-sub" role="alert">{error}</p>}
         </div>
 
-        {/* TOOLBAR con Dropdowns */}
-        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
-          <div className="ft-left">
-            {/* Ordenar */}
+        {/* TOOLBAR — DOS LÍNEAS (copiado de Home.js -> v2) */}
+        <div className={`filters-toolbar-v2 ${anyDdOpen ? "dd-open" : ""}`}>
+          {/* PRIMERA LÍNEA: Orden + filtros principales */}
+          <div className="filter-row filter-row--main">
             <Dropdown
               icon="↕︎"
               value={sort}
               onChange={setSort}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "default", label: "Por defecto" },
-                { value: "price-asc", label: "Precio: menor a mayor" },
+                { value: "default",    label: "Por defecto" },
+                { value: "price-asc",  label: "Precio: menor a mayor" },
                 { value: "price-desc", label: "Precio: mayor a menor" },
-                { value: "name", label: "Nombre (A–Z)" },
+                { value: "name",       label: "Nombre (A–Z)" },
+              ]}
+            />
+
+            {/* Moneda */}
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí moneda"
+              value={moneda}
+              onChange={(v) => {
+                setMoneda(v);
+                // Resetear precio cuando cambia moneda (igual idea que Home.js)
+                const newBase = v ? all.filter((p) => p.moneda === v) : all;
+                const newMax = newBase.length
+                  ? Math.max(...newBase.map((p) => Number(p.precio_oferta ?? p.precio) || 0))
+                  : 0;
+                setMaxPrecio(newMax);
+              }}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "",    label: "Todas" },
+                { value: "USD", label: "USD" },
+                { value: "UYU", label: "UYU" },
               ]}
             />
 
@@ -213,14 +317,13 @@ export default function Offers() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí colección"
-              value={coleccion || ""}
+              value={coleccion}
               onChange={setColeccion}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "", label: "Elegí colección" },
-                { value: "Todas", label: "Todas" },
+                { value: "Todas",  label: "Todas" },
                 { value: "Actual", label: "Actual" },
-                { value: "Retro", label: "Retro" },
+                { value: "Retro",  label: "Retro" },
               ]}
             />
 
@@ -228,13 +331,12 @@ export default function Offers() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí categoría"
-              value={hasColeccion ? categoria : ""}
-              onChange={setCategoria}
+              value={categoria}
+              onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
               onOpenChange={setAnyDdOpen}
-              disabled={!hasColeccion}
               options={[
-                { value: "Todas", label: "Todas" },
-                ...categorias.filter((c) => c !== "Todas").map((c) => ({ value: c, label: c })),
+                { value: "Todos", label: "Todos" },
+                ...categorias.map((c) => ({ value: c, label: c })),
               ]}
             />
 
@@ -242,52 +344,61 @@ export default function Offers() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí equipo"
-              value={hasCategoria ? equipo : ""}
+              value={hasCategoria ? equipo : "Todos"}
               onChange={setEquipo}
               onOpenChange={setAnyDdOpen}
               disabled={!hasCategoria}
-              align="right"
               options={
-                (hasCategoria ? equipos : ["Elegí categoría"]).map((eq) =>
-                  eq === "Elegí categoría"
-                    ? { value: "", label: "Elegí categoría" }
+                (hasCategoria ? equipos : ["Todos"]).map((eq) =>
+                  typeof eq === "string"
+                    ? { value: eq, label: eq }
                     : { value: eq, label: eq === "Todos" ? "Todos" : eq }
                 )
               }
             />
 
-            {/* Precio */}
-            <div className="ft-price">
-              <span className="ft-price-label">Precio máx.:</span>
-              <span className="ft-price-value">
-                ${Number(maxPrecio || 0).toLocaleString("es-UY")}
-              </span>
+            {/* Talle */}
+            <Dropdown
+              icon="↕︎"
+              placeholder="Elegí talle"
+              value={talle}
+              onChange={setTalle}
+              onOpenChange={setAnyDdOpen}
+              options={[
+                { value: "Todos", label: "Todos" },
+                ...SIZES.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+          </div>
+
+          {/* SEGUNDA LÍNEA: Precio y Reset */}
+          <div className="filter-row filter-row--secondary">
+            <div className="price-filter" style={{ "--pct": `${pct}%` }}>
+              <label className="price-label">
+                Precio máx.:
+                <span className="price-value">
+                  {moneda === "USD" ? "U$D" : moneda === "UYU" ? "$" : "$"}{" "}
+                  {Number(maxPrecio || 0).toLocaleString("es-UY")}
+                </span>
+              </label>
               <input
                 type="range"
+                className="price-slider"
                 min="0"
                 max={maxPrecioAbsoluto || 0}
                 step="1"
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
-                style={{ "--pct": `${pct}%` }}
                 aria-label="Precio máximo"
               />
             </div>
 
-            {/* Reset */}
             <button
-              className="ft-reset"
+              className="btn-reset-filters"
               type="button"
-              onClick={() => {
-                setSort("default");
-                setColeccion("");
-                setCategoria("Todas");
-                setEquipo("Todos");
-                setMaxPrecio(maxPrecioAbsoluto || 0);
-                setAnyDdOpen(false);
-              }}
+              onClick={resetFilters}
               title="Restablecer filtros"
-              disabled={loading}
+              disabled={loading || !!error}
             >
               Restablecer
             </button>
@@ -296,12 +407,13 @@ export default function Offers() {
 
         {/* ESTADOS */}
         {loading && <div className="empty">Cargando ofertas…</div>}
-        {!loading && (
-          productos.length === 0 ? (
-            <div className="empty">No hay productos en oferta que coincidan con tus filtros.</div>
-          ) : (
-            <ProductGrid products={productos} />
-          )
+        {error && !loading && <div className="empty" role="alert">{error}</div>}
+
+        {/* GRILLA */}
+        {!loading && !error && (
+          productos.length === 0
+            ? <div className="empty">No hay productos en oferta que coincidan con tus filtros.</div>
+            : <ProductGrid products={productos} />
         )}
       </main>
     </>
