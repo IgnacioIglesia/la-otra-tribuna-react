@@ -9,10 +9,9 @@
   overflow: hidden;
   margin-bottom: 60px;
   background: #000;
-  isolation: isolate; /* asegura stacking propio */
+  isolation: isolate;
 }
 
-/* Capas de imagen */
 .hero-bg {
   position: absolute;
   inset: 0;
@@ -22,488 +21,194 @@
   opacity: 0;
   transition: opacity 900ms ease-in-out, filter 900ms ease-in-out;
   will-change: opacity, transform, filter;
-  z-index: 0; /* fondo */
+  z-index: 0;
 }
 
-/* La que entra */
-.hero-bg.active {
-  opacity: 1;
-  filter: blur(0px);
-}
+.hero-bg.active { opacity: 1; filter: blur(0px); }
+.hero-bg.prev   { opacity: 1; filter: blur(2px); }
 
-/* La que sale (se apaga con leve blur) */
-.hero-bg.prev {
-  opacity: 1;
-  filter: blur(2px);
-}
-
-/* Ken Burns: alterno izquierda/derecha para dinamismo */
 .hero-bg.active.dir-left  { animation: kb-left 12s ease-in-out forwards; }
 .hero-bg.active.dir-right { animation: kb-right 12s ease-in-out forwards; }
 
-@keyframes kb-left {
-  0%   { transform: scale(1.04) translate(1%, 0); }
-  100% { transform: scale(1.12) translate(-2%, -1%); }
-}
-@keyframes kb-right {
-  0%   { transform: scale(1.04) translate(-1%, 0); }
-  100% { transform: scale(1.12) translate(2%, -1%); }
-}
+@keyframes kb-left  { 0% {transform:scale(1.04) translate(1%,0)} 100% {transform:scale(1.12) translate(-2%,-1%)} }
+@keyframes kb-right { 0% {transform:scale(1.04) translate(-1%,0)} 100% {transform:scale(1.12) translate( 2%,-1%)} }
 
-/* Overlay SIEMPRE debajo del texto */
 .hero-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+  position: absolute; inset: 0; z-index: 1;
   background: linear-gradient(rgba(0,0,0,.68), rgba(0,0,0,.68));
   pointer-events: none;
 }
 
-/* Contenido */
 .hero-content {
-  position: absolute;
-  inset: 0;
-  z-index: 2; /* arriba del overlay */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 8px;
-  padding: 0 16px;
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 8px; padding: 0 16px;
 }
 
-/* Texto blanco y nítido */
-.hero-title,
-.hero-subtitle {
-  color: #fff !important;
-  mix-blend-mode: normal;
-}
-
+.hero-title, .hero-subtitle { color: #fff !important; mix-blend-mode: normal; }
 .hero-title {
-  margin: 0;
-  font-size: clamp(28px, 4.4vw, 48px);
-  line-height: 1.05;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-shadow: 0 4px 18px rgba(0,0,0,.55);
+  margin: 0; font-size: clamp(28px, 4.4vw, 48px); line-height: 1.05;
+  font-weight: 800; letter-spacing: -0.02em; text-shadow: 0 4px 18px rgba(0,0,0,.55);
 }
-
-.hero-subtitle {
-  margin: 0;
-  font-size: 16px;
-  opacity: .98;
-  text-shadow: 0 3px 12px rgba(0,0,0,.5);
-}
-
-
+.hero-subtitle { margin: 0; font-size: 16px; opacity: .98; text-shadow: 0 3px 12px rgba(0,0,0,.5); }
 
 /* ================================
    Catálogo
 ==================================*/
 .catalog {
-  margin-top: 40px;
-  padding: 28px 0 48px;
-  background-color: #fff;
-  border-radius: 16px;
+  margin-top: 40px; padding: 28px 0 48px;
+  background-color: #fff; border-radius: 16px;
+  position: relative; z-index: 1; overflow: visible;
 }
-
-.catalog-title {
-  font-size: 22px;
-  margin: 0;
-}
-
-.catalog-sub {
-  color: #64748b;
-  margin: 6px 0 0;
-}
-
-.catalog-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
+.catalog-title { font-size: 22px; margin: 0; }
+.catalog-sub { color: #64748b; margin: 6px 0 0; }
+.catalog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 
 /* ================================
-   Toolbar de filtros
+   Toolbar de filtros (limpia y responsiva)
 ==================================*/
 .filters-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border: 1px solid #e6e8eb;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.06);
+  position: relative; z-index: 20;
+  display: flex; align-items: center;
+  padding: 12px 20px;                 /* aire a la derecha */
+  border: 1px solid #e6e8eb; border-radius: 14px; background: #fff;
+  box-shadow: 0 4px 14px rgba(16,24,40,0.06);
   margin: 14px 0 18px;
-  flex-wrap: nowrap; /* evita salto de línea */
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;                  /* corta desbordes horizontales */
+  overflow-y: hidden;                  /* cerrado por defecto */
+}
+.filters-toolbar.dd-open {
+  overflow-x: hidden;                  /* seguimos cortando a lo ancho */
+  overflow-y: visible;                 /* deja pasar los menús hacia abajo */
 }
 
-/* Ocultar scrollbar visual, mantener scroll funcional */
-.filters-toolbar::-webkit-scrollbar {
-  height: 6px;
-}
-.filters-toolbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 999px;
-}
-
+/* GRID maestro: ordenar | colección | categoría | equipo | talle | slider | reset */
 .ft-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-wrap: nowrap; /* todo en la misma fila */
+  display: grid; align-items: center; width: 100%; gap: 12px; min-width: 0;
+  grid-template-columns:
+    max-content   /* ordenar   */
+    max-content   /* colección */
+    max-content   /* categoría */
+    max-content   /* equipo    */
+    max-content   /* talle     */
+    minmax(240px, 1fr) /* slider elástico y adaptable */
+    max-content;  /* reset     */
 }
 
-/* Campo tipo "pill" */
+/* Campo tipo pill (por si usás selects nativos en otro lado) */
 .ft-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f7f9fa;
-  border: 1px solid #e6e8eb;
-  border-radius: 999px;
-  padding: 6px 10px 6px 8px;
-  flex: 0 0 auto;
-  white-space: nowrap;
+  display: flex; align-items: center; gap: 8px;
+  background: #f7f9fa; border: 1px solid #e6e8eb; border-radius: 999px;
+  padding: 6px 10px; white-space: nowrap; flex: 0 0 auto;
 }
+.ft-icon { font-size: 13px; opacity: .8; }
 
-.ft-icon {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.ft-field select {
-  appearance: none;
-  border: none;
-  background: transparent;
-  padding: 2px 4px 2px 2px;
-  font-size: 14px;
-  color: #0f172a;
-  outline: none;
-}
-
-.ft-field select:disabled {
-  color: #94a3b8;
-}
-
-/* Precio */
+/* ===== Precio (slider) ===== */
 .ft-price {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 320px;
-  min-width: 260px;
-  white-space: nowrap;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 0; position: relative; z-index: 5; white-space: nowrap;
+  padding-right: 16px;                 /* colchón para el pulgar */
+  overflow: hidden;                    /* recorta cualquier salida */
 }
+.ft-price-label { font-size: 13px; color: #334155; white-space: nowrap; }
+.ft-price-value { font-weight: 700; font-size: 14px; color: #0f1a2a; }
 
-.ft-price-label {
-  font-size: 13px;
-  color: #334155;
-  white-space: nowrap;
-}
-
-.ft-price-value {
-  font-weight: 700;
-  font-size: 14px;
-  color: #0f1a2a;
-  min-width: 100px;
-}
-
+/* Slider: no se desborda y se adapta al ancho disponible */
 .ft-price input[type="range"] {
-  flex: 1 1 auto;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 999px;
-  outline: none;
-  background: linear-gradient(#0e5135, #0e5135) 0 / var(--pct, 0%) 100% no-repeat,
+  width: 100%;
+  -webkit-appearance: none; appearance: none;
+  height: 6px; border-radius: 999px; outline: none;
+
+  /* clave: padding sin agrandar el control */
+  box-sizing: border-box;
+  padding-inline: 12px;
+  background-clip: content-box;        /* el progreso respeta el padding */
+
+  background:
+    linear-gradient(#0e5135, #0e5135) 0 / var(--pct, 0%) 100% no-repeat,
     #e5e7eb;
 }
-
 .ft-price input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: transparent;
+  height: 6px; border-radius: 999px; background: transparent;
 }
 .ft-price input[type="range"]::-moz-range-track {
-  height: 6px;
-  border-radius: 999px;
-  background: transparent;
+  height: 6px; border-radius: 999px; background: transparent;
 }
-
 .ft-price input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  margin-top: -6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #0e5135;
-  border: 2px solid #fff;
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.2);
+  -webkit-appearance: none; appearance: none;
+  margin-top: -6px; width: 18px; height: 18px; border-radius: 50%;
+  background: #0e5135; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(16,24,40,.2);
   cursor: pointer;
 }
-
 .ft-price input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #0e5135;
-  border: 2px solid #fff;
-  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.2);
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #0e5135; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(16,24,40,.2);
   cursor: pointer;
 }
 
 /* Botón reset */
 .ft-reset {
   flex: 0 0 auto;
-  appearance: none;
-  border: 1px solid #d7dbe0;
-  background: #fff;
-  color: #0f172a;
-  font-size: 13px;
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
-  white-space: nowrap;
+  appearance: none; border: 1px solid #d7dbe0; background: #fff; color: #0f172a;
+  font-size: 13px; border-radius: 10px; padding: 6px 10px; white-space: nowrap;
+  cursor: pointer; transition: background .15s ease, border-color .15s ease, transform .05s ease;
 }
-.ft-reset:hover {
-  background: #f6f8f9;
-}
-.ft-reset:active {
-  transform: translateY(1px);
-}
-.ft-reset:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.ft-reset:hover { background: #f6f8f9; }
+.ft-reset:active { transform: translateY(1px); }
+.ft-reset:disabled { opacity: .55; cursor: not-allowed; }
 
-/* Responsive */
-@media (max-width: 980px) {
-  .filters-toolbar {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 560px) {
-  .ft-left {
-    gap: 8px;
-  }
-  .ft-field {
-    padding: 6px 8px;
-  }
-  .ft-price-value {
-    min-width: 0;
-  }
-}
+/* Asegurar menús de dropdown por encima de la grilla */
+.dd { position: relative; z-index: 30; }
+.dd-menu { position: absolute; z-index: 9999; pointer-events: auto; }
 
 /* ================================
-   Grilla de productos (Home)
-   -> columnas controladas por ProductGrid.css
+   Responsivo: dos filas limpias
 ==================================*/
-.catalog .products-grid {
-  display: grid;
-  gap: 16px;
-  align-items: start;
-  margin-top: 16px;
-}
-
-.catalog .products-grid > * {
-  min-width: 0;
-}
-
-/* Card */
-.card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  background: #fff;
-  border: 1px solid #eef0f2;
-  box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
-}
-
-.card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.1);
-}
-
-.card .media {
-  aspect-ratio: 4 / 5;
-  background: #fafafa;
-}
-
-.card .media img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-}
-
-/* Vacío / estados */
-.empty {
-  margin-top: 24px;
-  padding: 22px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-  color: #475569;
-  text-align: center;
-}
-
-/* Utilidades menores */
-.align-right {
-  justify-self: end;
-}
-
-/* --- FIX de stacking para dropdowns en la toolbar --- */
-.filters-toolbar { position: relative; z-index: 5; }
-.dd { position: relative; z-index: 6; }
-.dd-menu { z-index: 1000; }
-
-/* Si algún navegador recorta por overflow-x, cuando haya un menú abierto liberamos el overflow */
-.filters-toolbar.dd-open { overflow: visible; }
-
-/* --- FIX: asegurar que los dropdowns sean clickeables y estén por encima --- */
-.filters-toolbar {
-  position: relative;
-  z-index: 20; /* antes 5 */
-}
-
-.dd {
-  position: relative;
-  z-index: 30; /* cada dropdown en su propio stacking */
-}
-
-.dd-menu {
-  position: absolute;
-  z-index: 9999; /* siempre arriba de las cards */
-  pointer-events: auto;
-}
-
-/* Si el contenedor .catalog estaba bloqueando eventos, lo liberamos */
-.catalog {
-  position: relative;
-  z-index: 1;
-  overflow: visible; /* para que no recorte el menú */
-}
-
-/* Fix para las cards, aseguramos que no bloqueen los clics de la toolbar */
-.catalog .products-grid {
-  position: relative;
-  z-index: 1;
-}
-
-/* --- Fix: que el slider no quede debajo del botón Restablecer --- */
-.filters-toolbar { position: relative; }
-
-/* El contenedor del slider queda por encima de otros elementos */
-.ft-price {
-  position: relative;
-  z-index: 5;
-  flex: 1 1 420px;      /* le damos aire para que no se meta debajo */
-  min-width: 340px;     /* evita que se achique demasiado en desktop */
-}
-
-.ft-price input[type="range"] {
-  width: 100%;          /* ocupa el ancho disponible del contenedor */
-}
-
-/* El botón queda con menor prioridad en el stacking */
-.ft-reset {
-  position: relative;
-  z-index: 1;
-  margin-left: 12px;    /* separa visualmente del slider */
-}
-
-/* En pantallas medianas/angostas, preferí que rompa línea antes de solaparse */
-@media (max-width: 980px) {
-  .filters-toolbar {
-    flex-wrap: wrap;      /* permite bajar el botón si no hay espacio */
-    row-gap: 10px;
-  }
-  .ft-price {
-    flex: 1 1 100%;
-    min-width: 260px;
-  }
-  .ft-reset {
-    margin-left: 0;
-  }
-}
-
-/* ===== Toolbar siempre visible, sin scroll horizontal ===== */
-
-/* 1) La fila de filtros ocupa todo el ancho */
-.filters-toolbar {
-  position: relative;
-  overflow: visible;          /* sin scroll horizontal */
-  padding: 12px 14px;
-}
-
-/* 2) Cambiamos .ft-left a GRID para controlar bien columnas */
-.ft-left {
-  display: grid;
-  align-items: center;
-  width: 100%;
-  gap: 12px;
-  /* Orden: Ordenar | Colección | Categoría 1 | Categoría 2 | Slider | Botón */
-  grid-template-columns:
-    max-content               /* ordenar */
-    max-content               /* colección */
-    max-content               /* categoría 1 */
-    max-content               /* categoría 2 */
-    minmax(220px, 1fr)        /* slider, crece/achica */
-    max-content;              /* restablecer */
-}
-
-/* 3) El slider es flexible y capta clics por encima */
-.ft-price {
-  min-width: 0;               /* permite encogerse sin romper */
-  position: relative;
-  z-index: 5;                 /* por encima de lo demás */
-}
-.ft-price input[type="range"] { width: 100%; }
-
-/* 4) Botón normal, sin superponerse */
-.ft-reset {
-  position: relative;
-  z-index: 1;
-  margin-left: 4px;
-}
-
-/* 5) Afinamos un poco los "pills" para que entren mejor */
-.ft-field { padding: 6px 10px; }
-.ft-icon { font-size: 13px; }
-
-/* ===== Responsivo: en pantallas medianas/chicas, dos filas limpias ===== */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .ft-left {
-    grid-template-columns: repeat(3, max-content) 1fr; /* 4 columnas */
+    grid-template-columns: repeat(4, max-content) 1fr;
     grid-auto-rows: auto;
   }
-  /* Slider a lo ancho de la fila */
-  .ft-price { grid-column: 1 / -1; }
-  /* Botón a la derecha en la segunda fila */
+  .ft-price { grid-column: 1 / -1; }       /* slider ocupa fila completa */
   .ft-reset { grid-column: 1 / -1; justify-self: end; }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .ft-left {
-    grid-template-columns: 1fr 1fr;  /* dos columnas */
+    grid-template-columns: 1fr 1fr;         /* dos columnas de pills */
     gap: 10px;
   }
   .ft-price { grid-column: 1 / -1; }
   .ft-reset { grid-column: 1 / -1; justify-self: end; }
 }
+
+/* ================================
+   Grilla de productos (Home)
+==================================*/
+.catalog .products-grid {
+  display: grid; gap: 16px; align-items: start; margin-top: 16px;
+  position: relative; z-index: 1;
+}
+.catalog .products-grid > * { min-width: 0; }
+
+/* Card */
+.card {
+  height: 100%; display: flex; flex-direction: column;
+  border-radius: 12px; overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease;
+  background: #fff; border: 1px solid #eef0f2;
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06);
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(16,24,40,0.1); }
+.card .media { aspect-ratio: 4 / 5; background: #fafafa; }
+.card .media img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* Estados vacíos */
+.empty {
+  margin-top: 24px; padding: 22px;
+  border: 1px dashed #cbd5e1; border-radius: 12px;
+  color: #475569; text-align: center;
+}
+
+/* Utilidades menores */
+.align-right { justify-self: end; }
