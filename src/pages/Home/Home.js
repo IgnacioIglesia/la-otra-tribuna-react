@@ -24,13 +24,11 @@ const HERO_IMGS = ["/assets/fondo1.png", "/assets/fondo2.png", "/assets/fondo3.p
 /* ===== Talles ===== */
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-/** Devuelve true si el producto tiene el talle seleccionado.
- *  Soporta strings como "M", "M/L", "S, M, L", etc. */
+/** Devuelve true si el producto tiene el talle seleccionado. */
 function matchesTalle(prodTalle, selected) {
   if (!selected || selected === "Todos") return true;
   const wanted = String(selected).toUpperCase().trim();
   const raw = String(prodTalle || "").toUpperCase();
-  // Tokenizar por no-alfanuméricos (espacios, /, -, comas, etc.)
   const tokens = raw.split(/[^A-Z0-9]+/).filter(Boolean);
   return tokens.some((t) => t === wanted);
 }
@@ -100,7 +98,7 @@ export default function Home() {
             coleccion: pub.coleccion || "Actual",
             stock: Number(pub.stock) || 0,
             img: primeraFoto || PLACEHOLDER,
-            talle: pub.talle || "",          // <— lo usamos en el filtro por talle
+            talle: pub.talle || "",
           };
         });
 
@@ -169,10 +167,9 @@ export default function Home() {
   const [equipo, setEquipo] = useState("Todos");
   const [talle, setTalle] = useState("");           // "" => placeholder "Elegí talle"
 
-  // habilitación: equipo solo si se elige Club o Selección (no “Todos”)
   const hasCategoria = categoria === "Club" || categoria === "Selección";
 
-  // categorías
+  // categorías disponibles según colección
   const categorias = useMemo(() => {
     const base = coleccion && coleccion !== "Todas"
       ? rows.filter((p) => p.coleccion === coleccion)
@@ -182,7 +179,7 @@ export default function Home() {
     return unique.filter((c) => allowed.includes(c));
   }, [rows, coleccion]);
 
-  // equipos
+  // equipos (depende de colección y categoría)
   const equipos = useMemo(() => {
     const baseColeccion = coleccion && coleccion !== "Todas"
       ? rows.filter((p) => p.coleccion === coleccion)
@@ -226,7 +223,6 @@ export default function Home() {
     return list;
   }, [rows, coleccion, categoria, equipo, talle, maxPrecio, sort]);
 
-  /* ===== Control overlay de dropdowns ===== */
   const [anyDdOpen, setAnyDdOpen] = useState(false);
 
   /* ===== Render ===== */
@@ -254,83 +250,77 @@ export default function Home() {
           {!loading && !error && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* TOOLBAR */}
+        {/* TOOLBAR — TODO EN UNA LÍNEA */}
         <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
-          <div className="ft-left">
-            {/* Ordenar */}
-            <Dropdown
-              icon="↕︎"
-              value={sort}
-              onChange={setSort}
-              onOpenChange={setAnyDdOpen}
-              options={[
-                { value: "default",    label: "Por defecto" },
-                { value: "price-asc",  label: "Precio: menor a mayor" },
-                { value: "price-desc", label: "Precio: mayor a menor" },
-                { value: "name",       label: "Nombre (A–Z)" },
-              ]}
-            />
+          <div className="ft-inline">
+            {/* Pills */}
+            <div className="ft-pills">
+              <Dropdown
+                icon="↕︎"
+                value={sort}
+                onChange={setSort}
+                onOpenChange={setAnyDdOpen}
+                options={[
+                  { value: "default",    label: "Por defecto" },
+                  { value: "price-asc",  label: "Precio: menor a mayor" },
+                  { value: "price-desc", label: "Precio: mayor a menor" },
+                  { value: "name",       label: "Nombre (A–Z)" },
+                ]}
+              />
+              <Dropdown
+                icon="↕︎"
+                placeholder="Elegí colección"
+                value={coleccion}
+                onChange={setColeccion}
+                onOpenChange={setAnyDdOpen}
+                options={[
+                  { value: "Todas",  label: "Todas" },
+                  { value: "Actual", label: "Actual" },
+                  { value: "Retro",  label: "Retro" },
+                ]}
+              />
+              <Dropdown
+                icon="↕︎"
+                placeholder="Elegí categoría"
+                value={categoria}
+                onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
+                onOpenChange={setAnyDdOpen}
+                options={[
+                  { value: "Todos", label: "Todos" },
+                  ...categorias.map((c) => ({ value: c, label: c })),
+                ]}
+              />
+              <Dropdown
+                icon="↕︎"
+                placeholder="Todos"
+                value={hasCategoria ? equipo : "Todos"}
+                onChange={setEquipo}
+                onOpenChange={setAnyDdOpen}
+                disabled={!hasCategoria}
+                options={
+                  (hasCategoria ? equipos : ["Todos"]).map((eq) =>
+                    typeof eq === "string"
+                      ? { value: eq, label: eq }
+                      : { value: eq, label: eq === "Todos" ? "Todos" : eq }
+                  )
+                }
+                align="right"
+              />
+              <Dropdown
+                icon="↕︎"
+                placeholder="Elegí talle"
+                value={talle}
+                onChange={setTalle}
+                onOpenChange={setAnyDdOpen}
+                options={[
+                  { value: "Todos", label: "Todos" },
+                  ...SIZES.map((s) => ({ value: s, label: s })),
+                ]}
+              />
+            </div>
 
-            {/* Colección */}
-            <Dropdown
-              icon="↕︎"
-              placeholder="Elegí colección"
-              value={coleccion}
-              onChange={(v) => setColeccion(v)}     // "Todas" = sin filtro
-              onOpenChange={setAnyDdOpen}
-              options={[
-                { value: "Todas",  label: "Todas" },
-                { value: "Actual", label: "Actual" },
-                { value: "Retro",  label: "Retro" },
-              ]}
-            />
-
-            {/* Categoría */}
-            <Dropdown
-              icon="↕︎"
-              placeholder="Elegí categoría"
-              value={categoria}
-              onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
-              onOpenChange={setAnyDdOpen}
-              options={[
-                { value: "Todos", label: "Todos" },
-                ...categorias.map((c) => ({ value: c, label: c })),
-              ]}
-            />
-
-            {/* Equipo */}
-            <Dropdown
-              icon="↕︎"
-              placeholder="Todos"
-              value={hasCategoria ? equipo : "Todos"}
-              onChange={setEquipo}
-              onOpenChange={setAnyDdOpen}
-              disabled={!hasCategoria}
-              options={
-                (hasCategoria ? equipos : ["Todos"]).map((eq) =>
-                  typeof eq === "string"
-                    ? { value: eq, label: eq }
-                    : { value: eq, label: eq === "Todos" ? "Todos" : eq }
-                )
-              }
-              align="right"
-            />
-
-            {/* Talle */}
-            <Dropdown
-              icon="↕︎"
-              placeholder="Elegí talle"
-              value={talle}
-              onChange={setTalle}
-              onOpenChange={setAnyDdOpen}
-              options={[
-                { value: "Todos", label: "Todos" },
-                ...SIZES.map((s) => ({ value: s, label: s })),
-              ]}
-            />
-
-            {/* Precio */}
-            <div className="ft-price">
+            {/* Slider que se estira */}
+            <div className="ft-price-inline" style={{ "--pct": `${pct}%` }}>
               <span className="ft-price-label">Precio máx.:</span>
               <span className="ft-price-value">
                 ${Number(maxPrecio || 0).toLocaleString("es-UY")}
@@ -342,12 +332,11 @@ export default function Home() {
                 step="1"
                 value={maxPrecio || 0}
                 onChange={(e) => setMaxPrecio(Number(e.target.value))}
-                style={{ "--pct": `${pct}%` }}
                 aria-label="Precio máximo"
               />
             </div>
 
-            {/* Reset */}
+            {/* Reset a la derecha */}
             <button
               className="ft-reset"
               type="button"

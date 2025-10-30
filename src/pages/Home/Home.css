@@ -65,121 +65,116 @@
 .catalog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 
 /* ================================
-   Toolbar de filtros (limpia y responsiva)
+   Toolbar de filtros — TODO EN UNA LÍNEA
 ==================================*/
 .filters-toolbar {
   position: relative; z-index: 20;
-  display: flex; align-items: center;
-  padding: 12px 20px;                 /* aire a la derecha */
+  padding: 12px 20px;
   border: 1px solid #e6e8eb; border-radius: 14px; background: #fff;
   box-shadow: 0 4px 14px rgba(16,24,40,0.06);
   margin: 14px 0 18px;
-  overflow-x: hidden;                  /* corta desbordes horizontales */
-  overflow-y: hidden;                  /* cerrado por defecto */
-}
-.filters-toolbar.dd-open {
-  overflow-x: hidden;                  /* seguimos cortando a lo ancho */
-  overflow-y: visible;                 /* deja pasar los menús hacia abajo */
+  overflow: visible;
 }
 
-/* GRID maestro: ordenar | colección | categoría | equipo | talle | slider | reset */
-.ft-left {
-  display: grid; align-items: center; width: 100%; gap: 12px; min-width: 0;
-  grid-template-columns:
-    max-content   /* ordenar   */
-    max-content   /* colección */
-    max-content   /* categoría */
-    max-content   /* equipo    */
-    max-content   /* talle     */
-    minmax(240px, 1fr) /* slider elástico y adaptable */
-    max-content;  /* reset     */
-}
-
-/* Campo tipo pill (por si usás selects nativos en otro lado) */
-.ft-field {
-  display: flex; align-items: center; gap: 8px;
-  background: #f7f9fa; border: 1px solid #e6e8eb; border-radius: 999px;
-  padding: 6px 10px; white-space: nowrap; flex: 0 0 auto;
-}
-.ft-icon { font-size: 13px; opacity: .8; }
-
-/* ===== Precio (slider) ===== */
-.ft-price {
-  display: flex; align-items: center; gap: 10px;
-  min-width: 0; position: relative; z-index: 5; white-space: nowrap;
-  padding-right: 16px;                 /* colchón para el pulgar */
-  overflow: hidden;                    /* recorta cualquier salida */
-}
-.ft-price-label { font-size: 13px; color: #334155; white-space: nowrap; }
-.ft-price-value { font-weight: 700; font-size: 14px; color: #0f1a2a; }
-
-/* Slider: no se desborda y se adapta al ancho disponible */
-.ft-price input[type="range"] {
+/* 3 columnas: [pills] [slider que se estira] [reset]  */
+.ft-inline {
+  display: grid;
+  grid-template-columns: auto 1fr max-content;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 10px;
   width: 100%;
-  -webkit-appearance: none; appearance: none;
-  height: 6px; border-radius: 999px; outline: none;
-
-  /* clave: padding sin agrandar el control */
-  box-sizing: border-box;
-  padding-inline: 12px;
-  background-clip: content-box;        /* el progreso respeta el padding */
-
-  background:
-    linear-gradient(#0e5135, #0e5135) 0 / var(--pct, 0%) 100% no-repeat,
-    #e5e7eb;
-}
-.ft-price input[type="range"]::-webkit-slider-runnable-track {
-  height: 6px; border-radius: 999px; background: transparent;
-}
-.ft-price input[type="range"]::-moz-range-track {
-  height: 6px; border-radius: 999px; background: transparent;
-}
-.ft-price input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  margin-top: -6px; width: 18px; height: 18px; border-radius: 50%;
-  background: #0e5135; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(16,24,40,.2);
-  cursor: pointer;
-}
-.ft-price input[type="range"]::-moz-range-thumb {
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #0e5135; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(16,24,40,.2);
-  cursor: pointer;
 }
 
-/* Botón reset */
-.ft-reset {
-  flex: 0 0 auto;
-  appearance: none; border: 1px solid #d7dbe0; background: #fff; color: #0f172a;
-  font-size: 13px; border-radius: 10px; padding: 6px 10px; white-space: nowrap;
-  cursor: pointer; transition: background .15s ease, border-color .15s ease, transform .05s ease;
+/* grupo de pills (dropdowns) en línea */
+.ft-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;          /* una sola línea */
+  min-width: 0;
+  overflow: hidden;
 }
-.ft-reset:hover { background: #f6f8f9; }
-.ft-reset:active { transform: translateY(1px); }
-.ft-reset:disabled { opacity: .55; cursor: not-allowed; }
 
-/* Asegurar menús de dropdown por encima de la grilla */
+/* si los pills no entran, permito hacer scroll horizontal suave */
+.ft-pills::-webkit-scrollbar { height: 0; }
+.ft-pills {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Dropdown helpers (por si el menú excede el alto del contenedor) */
 .dd { position: relative; z-index: 30; }
 .dd-menu { position: absolute; z-index: 9999; pointer-events: auto; }
 
-/* ================================
-   Responsivo: dos filas limpias
-==================================*/
-@media (max-width: 1200px) {
-  .ft-left {
-    grid-template-columns: repeat(4, max-content) 1fr;
-    grid-auto-rows: auto;
-  }
-  .ft-price { grid-column: 1 / -1; }       /* slider ocupa fila completa */
-  .ft-reset { grid-column: 1 / -1; justify-self: end; }
+/* ===== Slider en línea ===== */
+.ft-price-inline {
+  display: flex; align-items: center; gap: 10px;
+  min-width: 140px; width: 100%;
 }
 
-@media (max-width: 640px) {
-  .ft-left {
-    grid-template-columns: 1fr 1fr;         /* dos columnas de pills */
-    gap: 10px;
+.ft-price-label { font-size: 13px; color: #334155; white-space: nowrap; }
+.ft-price-value { font-weight: 700; font-size: 14px; color: #0f1a2a; min-width: 70px; text-align: right; }
+
+/* barra con color de marca que se rellena hasta el valor */
+.ft-price-inline input[type="range"]{
+  width: 100%;
+  -webkit-appearance: none; appearance: none;
+  height: 6px; border-radius: 999px; outline: none;
+  box-sizing: border-box;
+  padding-inline: 12px;
+  background-clip: content-box;
+  background:
+    linear-gradient(#0e5135,#0e5135) 0 / var(--pct,0%) 100% no-repeat,
+    #e5e7eb;
+}
+.ft-price-inline input[type="range"]::-webkit-slider-runnable-track{ height:6px; border-radius:999px; background:transparent; }
+.ft-price-inline input[type="range"]::-moz-range-track{ height:6px; border-radius:999px; background:transparent; }
+.ft-price-inline input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  margin-top:-6px; width:18px; height:18px; border-radius:50%;
+  background:#0e5135; border:2px solid #fff; box-shadow:0 4px 12px rgba(16,24,40,.2);
+  cursor:pointer;
+}
+.ft-price-inline input[type="range"]::-moz-range-thumb{
+  width:18px; height:18px; border-radius:50%;
+  background:#0e5135; border:2px solid #fff; box-shadow:0 4px 12px rgba(16,24,40,.2);
+  cursor:pointer;
+}
+
+/* Botón reset a la derecha */
+.ft-reset{
+  appearance: none; border: 1px solid #d7dbe0; background: #fff; color: #0f172a;
+  font-size: 13px; border-radius: 10px; padding: 6px 10px; white-space: nowrap;
+  cursor: pointer; transition: background .15s ease, transform .05s ease;
+}
+.ft-reset:hover { background:#f6f8f9; }
+.ft-reset:active { transform: translateY(1px); }
+.ft-reset:disabled { opacity:.55; cursor:not-allowed; }
+
+/* ===== Responsivo ===== */
+@media (max-width: 1200px){
+  .ft-inline{
+    grid-template-columns: 1fr 1fr;           /* pills + slider / reset debajo */
+    grid-template-areas:
+      "pills slider"
+      "pills reset";
   }
-  .ft-price { grid-column: 1 / -1; }
-  .ft-reset { grid-column: 1 / -1; justify-self: end; }
+  .ft-pills { grid-area: pills; }
+  .ft-price-inline { grid-area: slider; }
+  .ft-reset { justify-self: end; grid-area: reset; }
+}
+@media (max-width: 820px){
+  .ft-inline{
+    grid-template-columns: 1fr;               /* stack vertical elegante */
+    grid-template-areas:
+      "pills"
+      "slider"
+      "reset";
+  }
+  .ft-pills{ overflow-x: auto; }
+  .ft-reset{ justify-self: end; }
 }
 
 /* ================================
@@ -210,5 +205,4 @@
   color: #475569; text-align: center;
 }
 
-/* Utilidades menores */
-.align-right { justify-self: end; }
+
