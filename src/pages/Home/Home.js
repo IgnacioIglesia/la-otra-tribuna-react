@@ -20,7 +20,7 @@ function mapCategoria(cat) {
 }
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
-const HERO_IMGS = ["/assets/fondo1.png", "/assets/fondo2.png", "/assets/fondo3.png", "/assets/fondo4.png"];
+const HERO_IMGS = ["/assets/fondo2.png", "/assets/fondo3.png", "/assets/fondo7.png", "/assets/fondo9.png", "/assets/fondo10.png", "/assets/fondo11.png", "/assets/fondo12.png"];
 
 /* ===== Talles ===== */
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
