@@ -9,11 +9,11 @@ import "./Checkout.css";
 /* =========================
    Utilidades y helpers
    ========================= */
-// ✅ Función mejorada que acepta la moneda
 const money = (n, currency = "USD") => {
   const amount = Number(n) || 0;
+  const currencyToUse = currency || "USD";
   
-  if (currency === "USD") {
+  if (currencyToUse === "USD") {
     const formatted = new Intl.NumberFormat("es-UY", {
       style: "currency",
       currency: "USD",
@@ -24,7 +24,7 @@ const money = (n, currency = "USD") => {
   
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
-    currency: currency,
+    currency: currencyToUse,
     maximumFractionDigits: 0,
   }).format(amount);
 };
@@ -141,7 +141,7 @@ function CenteredModal({ open, type = "info", title, children, onClose, primaryA
    ========================= */
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, total, clear, selectedCurrency, convertPrice } = useCart(); // ✅ Agregar selectedCurrency y convertPrice
+  const { items, total, clear, paymentCurrency, convertPrice } = useCart(); // ✅ Corregido
 
   const [email, setEmail] = useState("");
   const [usuario, setUsuario] = useState(null);
@@ -155,6 +155,9 @@ export default function Checkout() {
 
   const [method, setMethod] = useState("card");
   const [card, setCard] = useState({ name: "", number: "", exp: "", cvc: "" });
+  
+  // ✅ Estado para el checkbox de términos
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -195,7 +198,6 @@ export default function Checkout() {
 
         setUsuario(u);
 
-        // Verificar si está baneado
         if (u.esta_baneado) {
           setIsBanned(true);
           setBanReason(u.razon_baneo || "Tu cuenta ha sido suspendida.");
@@ -216,7 +218,6 @@ export default function Checkout() {
         setLoading(false);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   async function fetchAddresses(id_usuario) {
@@ -239,7 +240,6 @@ export default function Checkout() {
     setSelected((list || [])[0] || null);
   }
 
-  // Inputs tarjeta
   const onChangeCard = (key) => (e) => {
     let v = e.target.value;
     if (key === "number") v = formatCardNumber(v);
@@ -248,11 +248,18 @@ export default function Checkout() {
     setCard((c) => ({ ...c, [key]: v }));
   };
 
-  // Confirmar compra
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validaciones previas
+    // ✅ Validar términos aceptados
+    if (!acceptedTerms) {
+      setModalType("error");
+      setModalTitle("Términos requeridos");
+      setModalText("Debes aceptar los términos para continuar con tu pedido.");
+      setModalOpen(true);
+      return;
+    }
+
     if (items.length === 0) {
       setModalType("error");
       setModalTitle("Carrito vacío");
@@ -288,7 +295,6 @@ export default function Checkout() {
     try {
       setLoading(true);
 
-      // 1) Verificar stock de todos los productos
       const stockChecks = await Promise.all(
         items.map(async (item) => {
           const { data: pub, error } = await supabase
@@ -334,24 +340,21 @@ export default function Checkout() {
         return;
       }
 
-      // 2) Crear pedidos y actualizar stock
       const pedidosCreados = [];
 
       for (const item of items) {
-        // ✅ Calcular precio convertido a la moneda seleccionada
         const precioOriginal = Number(item.precio) || 0;
         const precioConvertido = convertPrice(precioOriginal, item.moneda);
         const totalItem = precioConvertido * item.qty;
 
-        // Crear el pedido
         const { data: pedido, error: pedidoError } = await supabase
           .from("pedido")
           .insert({
             id_usuario: usuario.id_usuario,
             id_publicacion: item.id,
             cantidad: item.qty,
-            precio_unitario: precioConvertido, // ✅ Precio convertido
-            total: totalItem, // ✅ Total convertido
+            precio_unitario: precioConvertido,
+            total: totalItem,
             estado: "pendiente",
             id_direccion: selected.id_direccion,
             metodo_pago: method,
@@ -362,7 +365,6 @@ export default function Checkout() {
         if (pedidoError) throw pedidoError;
         pedidosCreados.push(pedido);
 
-        // Obtener stock actual
         const { data: pubActual, error: stockError } = await supabase
           .from("publicacion")
           .select("stock")
@@ -372,7 +374,6 @@ export default function Checkout() {
 
         const nuevoStock = pubActual.stock - item.qty;
 
-        // Si el stock llega a 0, marcar como Vendida para ocultarla del catálogo
         if (nuevoStock <= 0) {
           const { error: updateError } = await supabase
             .from("publicacion")
@@ -381,10 +382,8 @@ export default function Checkout() {
 
           if (updateError) {
             console.error("Error al marcar publicación como Vendida:", updateError);
-            // Continuar aunque falle, el pedido ya se creó
           }
         } else {
-          // Si queda stock, solo actualizar la cantidad
           const { error: updateError } = await supabase
             .from("publicacion")
             .update({ stock: nuevoStock })
@@ -394,7 +393,6 @@ export default function Checkout() {
         }
       }
 
-      // 3) Éxito - Limpiar carrito y mostrar confirmación
       clear();
       setModalType("success");
       setModalTitle("¡Pedido confirmado! 🎉");
@@ -417,7 +415,6 @@ export default function Checkout() {
     }
   };
 
-  // Usuario baneado
   if (isBanned) {
     return (
       <>
@@ -474,7 +471,6 @@ export default function Checkout() {
     );
   }
 
-  // Loading
   if (loading && !modalOpen) {
     return (
       <>
@@ -486,7 +482,6 @@ export default function Checkout() {
     );
   }
 
-  // Render principal
   return (
     <>
       <Header />
@@ -494,7 +489,6 @@ export default function Checkout() {
         <h1 className="ck-title">Finalizar compra</h1>
 
         <form className="ck-grid" onSubmit={handleSubmit}>
-          {/* Columna izquierda */}
           <section className="ck-col">
             {/* Datos del comprador */}
             <div className="ck-card">
@@ -667,7 +661,7 @@ export default function Checkout() {
           <aside className="ck-aside">
             <div className="ck-card">
               <h2 className="ck-h3">Resumen</h2>
-              {/* ✅ Indicador de moneda seleccionada */}
+              {/* ✅ Indicador de moneda corregido */}
               <div style={{ 
                 padding: "0.5rem 0.75rem", 
                 background: "#f0f9ff", 
@@ -677,15 +671,14 @@ export default function Checkout() {
                 color: "#0369a1",
                 fontWeight: 600
               }}>
-                💱 Pagando en {selectedCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
+                💱 Pagando en {paymentCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
               </div>
 
               <ul className="mini-cart">
                 {items.map((it) => {
-                  // ✅ Convertir precio a moneda seleccionada
                   const precioOriginal = Number(it.precio) || 0;
                   const precioConvertido = convertPrice(precioOriginal, it.moneda);
-                  const mostrarConversion = it.moneda !== selectedCurrency;
+                  const mostrarConversion = it.moneda !== paymentCurrency;
 
                   return (
                     <li key={it.id} className="mini-item">
@@ -697,19 +690,18 @@ export default function Checkout() {
                         <div className="mi-sub">
                           x{it.qty} · {it.categoria}
                         </div>
-                        {/* ✅ Mostrar conversión si aplica */}
                         {mostrarConversion && (
                           <div style={{ 
                             fontSize: "0.7rem", 
                             color: "#6b7280",
                             marginTop: "0.2rem" 
                           }}>
-                            {money(precioOriginal, it.moneda)} → {money(precioConvertido, selectedCurrency)}
+                            {money(precioOriginal, it.moneda)} → {money(precioConvertido, paymentCurrency)}
                           </div>
                         )}
                       </div>
                       <div className="mi-price">
-                        {money(precioConvertido * it.qty, selectedCurrency)}
+                        {money(precioConvertido * it.qty, paymentCurrency)}
                       </div>
                     </li>
                   );
@@ -719,14 +711,49 @@ export default function Checkout() {
               <div className="ck-totals">
                 <div>
                   <span>Total</span>
-                  <strong>{money(totalFinal, selectedCurrency)}</strong>
+                  <strong>{money(totalFinal, paymentCurrency)}</strong>
                 </div>
               </div>
+
+              {/* ✅ Checkbox de términos */}
+              <label style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem",
+                padding: "1rem",
+                background: "#fef3c7",
+                border: "1px solid #fcd34d",
+                borderRadius: "8px",
+                marginBottom: "1rem",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                lineHeight: "1.5"
+              }}>
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  style={{
+                    marginTop: "0.2rem",
+                    width: "18px",
+                    height: "18px",
+                    cursor: "pointer",
+                    flexShrink: 0
+                  }}
+                />
+                <span style={{ color: "#92400e" }}>
+                  <strong>Entiendo que una vez confirmado el pedido no se puede cancelar.</strong> Los productos serán procesados inmediatamente.
+                </span>
+              </label>
 
               <button
                 type="submit"
                 className="ck-submit"
-                disabled={loading}
+                disabled={loading || !acceptedTerms}
+                style={{
+                  opacity: !acceptedTerms ? 0.5 : 1,
+                  cursor: !acceptedTerms ? 'not-allowed' : 'pointer'
+                }}
               >
                 {loading ? "Procesando…" : "Pagar pedido"}
               </button>
@@ -744,7 +771,6 @@ export default function Checkout() {
         </form>
       </main>
 
-      {/* Modal de confirmación/error */}
       <CenteredModal
         open={modalOpen}
         type={modalType}
@@ -781,7 +807,6 @@ export default function Checkout() {
         {modalText}
       </CenteredModal>
 
-      {/* Modal de direcciones */}
       {usuario?.id_usuario && (
         <AddressBookModal
           open={addressOpen}

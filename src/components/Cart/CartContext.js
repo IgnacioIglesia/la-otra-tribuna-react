@@ -19,12 +19,12 @@ export function CartProvider({ children }) {
     }
   });
 
-  // ✅ Estado para moneda seleccionada
-  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+  // ✅ Estado para moneda de pago seleccionada (cómo quiere pagar el usuario)
+  const [paymentCurrency, setPaymentCurrency] = useState(() => {
     try {
-      return localStorage.getItem('selected_currency') || 'USD';
+      return localStorage.getItem('payment_currency') || null; // null = no seleccionada aún
     } catch {
-      return 'USD';
+      return null;
     }
   });
 
@@ -34,12 +34,16 @@ export function CartProvider({ children }) {
     try { localStorage.setItem(LS_KEY, JSON.stringify(items)); } catch {}
   }, [items]);
 
-  // Guardar moneda seleccionada
+  // Guardar moneda de pago seleccionada
   useEffect(() => {
     try {
-      localStorage.setItem('selected_currency', selectedCurrency);
+      if (paymentCurrency) {
+        localStorage.setItem('payment_currency', paymentCurrency);
+      } else {
+        localStorage.removeItem('payment_currency');
+      }
     } catch {}
-  }, [selectedCurrency]);
+  }, [paymentCurrency]);
 
   const findIndex = (id) => items.findIndex((it) => it.id === id);
   const isInCart = (id) => items.some((it) => it.id === id);
@@ -49,28 +53,38 @@ export function CartProvider({ children }) {
     return item ? item.qty : 0;
   };
 
-  // ✅ Función para cambiar moneda
-  const changeCurrency = (currency, rates) => {
-    setSelectedCurrency(currency);
+  // ✅ Función para cambiar moneda de pago
+  const changePaymentCurrency = (currency, rates) => {
+    setPaymentCurrency(currency);
     setExchangeRate(rates);
   };
 
-  // ✅ Función para convertir precio según moneda seleccionada
+  // ✅ Función para convertir precio según moneda de pago seleccionada
   const convertPrice = (price, itemCurrency) => {
-    if (!exchangeRate) return price;
+    // Si no hay moneda de pago seleccionada, mostrar precio original
+    if (!paymentCurrency || !exchangeRate) return price;
     
-    // Si la moneda del item es la misma que la seleccionada, no convertir
-    if (itemCurrency === selectedCurrency) return price;
+    // Si la moneda del item es la misma que la de pago, no convertir
+    if (itemCurrency === paymentCurrency) return price;
     
     // Convertir según sea necesario
-    if (selectedCurrency === 'USD' && itemCurrency === 'UYU') {
-      return price * exchangeRate.UYU_to_USD;
-    }
-    if (selectedCurrency === 'UYU' && itemCurrency === 'USD') {
+    if (paymentCurrency === 'UYU' && itemCurrency === 'USD') {
+      // Usuario quiere pagar en pesos un producto en dólares
       return price * exchangeRate.USD_to_UYU;
+    }
+    if (paymentCurrency === 'USD' && itemCurrency === 'UYU') {
+      // Usuario quiere pagar en dólares un producto en pesos
+      return price * exchangeRate.UYU_to_USD;
     }
     
     return price;
+  };
+
+  // ✅ Obtener símbolo de moneda
+  const getCurrencySymbol = (currency) => {
+    if (currency === 'USD') return 'U$D';
+    if (currency === 'UYU') return '$';
+    return '$';
   };
 
   // ✅ FUNCIÓN ADD CON VALIDACIÓN DE STOCK
@@ -235,11 +249,16 @@ export function CartProvider({ children }) {
 
   const clear = () => {
     setItems([]);
-    try { localStorage.setItem(LS_KEY, JSON.stringify([])); } catch {}
+    setPaymentCurrency(null);
+    setExchangeRate(null);
+    try { 
+      localStorage.setItem(LS_KEY, JSON.stringify([]));
+      localStorage.removeItem('payment_currency');
+    } catch {}
   };
 
-  // ✅ Total convertido a la moneda seleccionada
-  const getTotalInSelectedCurrency = () => {
+  // ✅ Total en moneda de pago seleccionada
+  const getTotalInPaymentCurrency = () => {
     return items.reduce((total, item) => {
       const precio = Number(item.precio) || 0;
       const convertedPrice = convertPrice(precio, item.moneda);
@@ -248,7 +267,7 @@ export function CartProvider({ children }) {
   };
 
   const count = items.reduce((acc, it) => acc + it.qty, 0);
-  const total = getTotalInSelectedCurrency();
+  const total = getTotalInPaymentCurrency();
 
   const openCart = () => setIsOpen(true);
   const closeCart = () => setIsOpen(false);
@@ -256,11 +275,12 @@ export function CartProvider({ children }) {
   const value = useMemo(() => ({
     isOpen, openCart, closeCart,
     items, count, total,
-    selectedCurrency,
-    changeCurrency,
+    paymentCurrency,
+    changePaymentCurrency,
     convertPrice,
+    getCurrencySymbol,
     add, remove, setQty, inc, dec, clear, isInCart, getQty
-  }), [isOpen, items, selectedCurrency, exchangeRate]);
+  }), [isOpen, items, paymentCurrency, exchangeRate]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

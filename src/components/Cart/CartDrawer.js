@@ -10,7 +10,10 @@ import "./CartDrawer.css";
 function money(n, currency = "USD") {
   const amount = Number(n) || 0;
   
-  if (currency === "USD") {
+  // ✅ Si no hay moneda seleccionada, usar USD por defecto
+  const currencyToUse = currency || "USD";
+  
+  if (currencyToUse === "USD") {
     const formatted = new Intl.NumberFormat("es-UY", {
       style: "currency",
       currency: "USD",
@@ -21,7 +24,7 @@ function money(n, currency = "USD") {
   
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
-    currency: currency,
+    currency: currencyToUse,
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -36,8 +39,8 @@ export default function CartDrawer() {
     remove, 
     clear, 
     total,
-    selectedCurrency,
-    changeCurrency,
+    paymentCurrency,        // ✅ Cambio aquí
+    changePaymentCurrency,  // ✅ Cambio aquí
     convertPrice
   } = useCart();
   
@@ -53,13 +56,13 @@ export default function CartDrawer() {
       open={isOpen}
       onClose={closeCart}
       title={`Tu carrito (${items.length})`}
-      width={420} // ✅ Un poco más ancho para acomodar el selector
+      width={420}
       footer={
         items.length > 0 && (
           <div className="cart-footer">
             <div className="cart-total">
               <span>Total:</span>
-              <strong>{money(total, selectedCurrency)}</strong>
+              <strong>{money(total, paymentCurrency)}</strong>
             </div>
             <div className="cart-actions">
               <button className="btn-clear" onClick={clear}>
@@ -93,11 +96,11 @@ export default function CartDrawer() {
         </div>
       ) : (
         <>
-          {/* ✅ Selector de moneda */}
+          {/* ✅ Selector de moneda con props correctos */}
           <div className="cart-currency-wrapper">
             <CurrencySelector
-              selectedCurrency={selectedCurrency}
-              onCurrencyChange={changeCurrency}
+              paymentCurrency={paymentCurrency}
+              onCurrencyChange={changePaymentCurrency}
               cartItems={items}
             />
           </div>
@@ -107,7 +110,7 @@ export default function CartDrawer() {
             {items.map((p) => {
               const precioOriginal = Number(p.precio) || 0;
               const precioConvertido = convertPrice(precioOriginal, p.moneda);
-              const mostrarConversion = p.moneda !== selectedCurrency;
+              const mostrarConversion = paymentCurrency && p.moneda !== paymentCurrency;
 
               return (
                 <li key={p.id} className="cart-item">
@@ -128,7 +131,7 @@ export default function CartDrawer() {
                           <polyline points="9 18 15 12 9 6"/>
                         </svg>
                         <span className="converted-currency">
-                          {money(precioConvertido, selectedCurrency)}
+                          {money(precioConvertido, paymentCurrency)}
                         </span>
                       </div>
                     )}
@@ -144,7 +147,7 @@ export default function CartDrawer() {
                         </button>
                       </div>
                       <div className="cart-price">
-                        {money(precioConvertido * p.qty, selectedCurrency)}
+                        {money(precioConvertido * p.qty, paymentCurrency)}
                       </div>
                     </div>
                   </div>
