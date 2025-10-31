@@ -1,3 +1,4 @@
+// src/pages/Checkout/Checkout.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
@@ -141,7 +142,7 @@ function CenteredModal({ open, type = "info", title, children, onClose, primaryA
    ========================= */
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, total, clear, paymentCurrency, convertPrice } = useCart(); // ✅ Corregido
+  const { items, total, clear, paymentCurrency, convertPrice, remove, setQty } = useCart(); // ⬅️ sumo remove/setQty para poder quitar
 
   const [email, setEmail] = useState("");
   const [usuario, setUsuario] = useState(null);
@@ -166,6 +167,15 @@ export default function Checkout() {
   const [modalText, setModalText] = useState("");
 
   const totalFinal = useMemo(() => total, [total]);
+
+  // ⛔ listado de ítems no disponibles (sin stock / inactivos)
+  const [unavailable, setUnavailable] = useState([]);
+
+  // handler para quitar item (usa remove o setQty según el CartContext)
+  const removeItem = (id) => {
+    if (typeof remove === "function") remove(id);
+    else if (typeof setQty === "function") setQty(id, 0);
+  };
 
   // Carga de sesión y usuario
   useEffect(() => {
@@ -248,6 +258,51 @@ export default function Checkout() {
     setCard((c) => ({ ...c, [key]: v }));
   };
 
+  // Verificar disponibilidad cada vez que cambia el carrito
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      if (!items?.length) {
+        if (isMounted) setUnavailable([]);
+        return;
+      }
+      try {
+        const ids = items.map((i) => i.id);
+        const { data: pubs, error } = await supabase
+          .from("publicacion")
+          .select("id_publicacion, titulo, stock, estado")
+          .in("id_publicacion", ids);
+
+        if (error) throw error;
+
+        const issues = [];
+        for (const it of items) {
+          const pub = pubs?.find((p) => p.id_publicacion === it.id);
+          if (!pub) {
+            issues.push({ id: it.id, titulo: it.nombre, motivo: "No encontrada" });
+            continue;
+          }
+          if (pub.estado !== "Activa") {
+            issues.push({ id: it.id, titulo: pub.titulo, motivo: "No disponible" });
+            continue;
+          }
+          if (it.qty > (pub.stock ?? 0)) {
+            issues.push({
+              id: it.id,
+              titulo: pub.titulo,
+              motivo: `Stock insuficiente (quedan ${pub.stock ?? 0})`,
+            });
+          }
+        }
+        if (isMounted) setUnavailable(issues);
+      } catch (e) {
+        console.error("Error verificando disponibilidad:", e);
+        if (isMounted) setUnavailable([]); // en error no bloqueamos preventivamente
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [items]);
+
   const notificarVendedor = async (publicacionId, cantidad, compradorNombre, idPedido) => {
     try {
       const { data: publicacion, error: pubError } = await supabase
@@ -258,11 +313,10 @@ export default function Checkout() {
   
       if (pubError) throw pubError;
   
-      // Crear notificación en la base de datos
       const { error: notifError } = await supabase
         .from("notificacion")
         .insert({
-          id_usuario: publicacion.id_usuario, // ✅ id_usuario (no id_usuario_destino)
+          id_usuario: publicacion.id_usuario,
           tipo: "venta",
           titulo: "¡Nueva venta! 🎉",
           mensaje: `${compradorNombre} compró ${cantidad} unidad(es) de "${publicacion.titulo}"`,
@@ -299,6 +353,18 @@ export default function Checkout() {
       setModalOpen(true);
       return;
     }
+
+    // ⛔ bloquear si hay ítems no disponibles
+    if (unavailable.length > 0) {
+      setModalType("error");
+      setModalTitle("Hay ítems no disponibles");
+      setModalText(
+        `No podés confirmar la compra mientras haya ítems no disponibles.\n\nRevisá:\n- ${unavailable.map(u => `${u.titulo} — ${u.motivo}`).join("\n- ")}`
+      );
+      setModalOpen(true);
+      return;
+    }
+
     if (!selected) {
       setModalType("error");
       setModalTitle("Dirección requerida");
@@ -533,6 +599,8 @@ export default function Checkout() {
     );
   }
 
+  const blockedByUnavailable = unavailable.length > 0;
+
   return (
     <>
       <Header />
@@ -712,7 +780,7 @@ export default function Checkout() {
           <aside className="ck-aside">
             <div className="ck-card">
               <h2 className="ck-h3">Resumen</h2>
-              {/* ✅ Indicador de moneda corregido */}
+              {/* Indicador de moneda */}
               <div style={{ 
                 padding: "0.5rem 0.75rem", 
                 background: "#f0f9ff", 
@@ -724,6 +792,44 @@ export default function Checkout() {
               }}>
                 💱 Pagando en {paymentCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
               </div>
+
+              {/* Aviso si hay ítems no disponibles */}
+              {blockedByUnavailable && (
+                <div role="alert" style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  color: "#991b1b",
+                  borderRadius: 8,
+                  padding: "10px 12px",
+                  marginBottom: 12
+                }}>
+                  <strong style={{ display: "block", marginBottom: 6 }}>No podés comprar todavía</strong>
+                  <div style={{ fontSize: "0.9rem" }}>
+                    Quitá o actualizá los siguientes ítems para continuar:
+                    <ul style={{ margin: "6px 0 0 18px" }}>
+                      {unavailable.map(u => (
+                        <li key={u.id}>
+                          {u.titulo} — {u.motivo}{" "}
+                          <button
+                            type="button"
+                            onClick={() => removeItem(u.id)}
+                            title="Quitar del carrito"
+                            aria-label={`Quitar ${u.titulo}`}
+                            style={{
+                              marginLeft: 6,
+                              border: "1px solid #e5e7eb",
+                              background: "#fff",
+                              borderRadius: 6,
+                              padding: "0 6px",
+                              cursor: "pointer"
+                            }}
+                          >Quitar</button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
 
               <ul className="mini-cart">
                 {items.map((it) => {
@@ -751,8 +857,41 @@ export default function Checkout() {
                           </div>
                         )}
                       </div>
-                      <div className="mi-price">
-                        {money(precioConvertido * it.qty, paymentCurrency)}
+                      <div className="mi-right">
+                        <div className="mi-price">
+                          {money(precioConvertido * it.qty, paymentCurrency)}
+                        </div>
+                        <button
+                          type="button"
+                          className="mi-remove"
+                          aria-label={`Quitar ${it.nombre} del carrito`}
+                          title="Quitar"
+                          onClick={() => removeItem(it.id)}
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 999,
+                            border: "1px solid #e5e7eb",
+                            background: "#fff",
+                            lineHeight: 1,
+                            fontSize: 18,
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            color: "#6b7280",
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = "#fee2e2";
+                            e.currentTarget.style.borderColor = "#fecaca";
+                            e.currentTarget.style.color = "#b91c1c";
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = "#fff";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
+                            e.currentTarget.style.color = "#6b7280";
+                          }}
+                        >
+                          ×
+                        </button>
                       </div>
                     </li>
                   );
@@ -766,7 +905,7 @@ export default function Checkout() {
                 </div>
               </div>
 
-              {/* ✅ Checkbox de términos */}
+              {/* Checkbox de términos */}
               <label style={{
                 display: "flex",
                 alignItems: "flex-start",
@@ -800,14 +939,26 @@ export default function Checkout() {
               <button
                 type="submit"
                 className="ck-submit"
-                disabled={loading || !acceptedTerms}
+                disabled={loading || !acceptedTerms || blockedByUnavailable || items.length === 0}
                 style={{
-                  opacity: !acceptedTerms ? 0.5 : 1,
-                  cursor: !acceptedTerms ? 'not-allowed' : 'pointer'
+                  opacity: (!acceptedTerms || blockedByUnavailable || items.length === 0) ? 0.5 : 1,
+                  cursor: (!acceptedTerms || blockedByUnavailable || items.length === 0) ? 'not-allowed' : 'pointer'
                 }}
               >
-                {loading ? "Procesando…" : "Pagar pedido"}
+                {loading
+                  ? "Procesando…"
+                  : blockedByUnavailable
+                    ? "Hay ítems no disponibles"
+                    : items.length === 0
+                      ? "Carrito vacío"
+                      : "Pagar pedido"}
               </button>
+
+              {blockedByUnavailable && (
+                <p className="muted xs" style={{ marginTop: 8, color: "#991b1b" }}>
+                  No podés confirmar la compra mientras haya ítems no disponibles.
+                </p>
+              )}
 
               <button
                 type="button"

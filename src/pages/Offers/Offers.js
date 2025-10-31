@@ -281,7 +281,7 @@ export default function Offers() {
             />
 
             <Dropdown
-              icon="💵"
+              icon="↕"
               placeholder="Elegí moneda"
               value={moneda}
               onChange={(v) => {
@@ -303,7 +303,7 @@ export default function Offers() {
             />
 
             <Dropdown
-              icon="📦"
+              icon="↕"
               placeholder="Elegí colección"
               value={coleccion}
               onChange={setColeccion}
@@ -316,7 +316,7 @@ export default function Offers() {
             />
 
             <Dropdown
-              icon="🏷️"
+              icon="↕"
               placeholder="Elegí categoría"
               value={categoria}
               onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
@@ -328,7 +328,7 @@ export default function Offers() {
             />
 
             <Dropdown
-              icon="⚽"
+              icon="↕"
               placeholder="Elegí equipo"
               value={hasCategoria ? equipo : "Todos"}
               onChange={setEquipo}
@@ -344,7 +344,7 @@ export default function Offers() {
             />
 
             <Dropdown
-              icon="👕"
+              icon="↕"
               placeholder="Elegí talle"
               value={talle}
               onChange={setTalle}

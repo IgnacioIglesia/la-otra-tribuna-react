@@ -26,8 +26,11 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ CARGAR NOTIFICACIONES DE LA BASE DE DATOS AL INICIAR
+  // ✅ CARGAR NOTIFICACIONES Y SUSCRIBIRSE A CAMBIOS EN TIEMPO REAL
   useEffect(() => {
+    let subscription = null;
+    let idUsuario = null;
+
     const cargarNotificacionesDB = async () => {
       try {
         const { data: session } = await supabase.auth.getSession();
@@ -40,12 +43,14 @@ export default function NotificationDropdown() {
           .single();
 
         if (!usuario) return;
+        
+        idUsuario = usuario.id_usuario;
 
-        // ✅ CAMBIO: usar fecha_creacion en lugar de created_at
+        // Cargar notificaciones existentes
         const { data: notifs, error } = await supabase
           .from("notificacion")
           .select("*")
-          .eq("id_usuario", usuario.id_usuario) // ✅ CAMBIO: id_usuario en lugar de id_usuario_destino
+          .eq("id_usuario", usuario.id_usuario)
           .order("fecha_creacion", { ascending: false })
           .limit(50);
 
@@ -57,7 +62,7 @@ export default function NotificationDropdown() {
             tipo: n.tipo,
             titulo: n.titulo,
             mensaje: n.mensaje,
-            fecha: n.fecha_creacion, // ✅ CAMBIO: fecha_creacion
+            fecha: n.fecha_creacion,
             leida: n.leida,
             id_pedido: n.id_pedido,
             id_publicacion: n.id_publicacion
@@ -66,12 +71,62 @@ export default function NotificationDropdown() {
           setNotifications(notificacionesFormateadas);
           localStorage.setItem("notifications", JSON.stringify(notificacionesFormateadas));
         }
+
+        // ✅ SUSCRIBIRSE A NUEVAS NOTIFICACIONES EN TIEMPO REAL
+        subscription = supabase
+          .channel('notificaciones_realtime')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notificacion',
+              filter: `id_usuario=eq.${usuario.id_usuario}`
+            },
+            (payload) => {
+              console.log('Nueva notificación recibida:', payload.new);
+              
+              const nuevaNotif = {
+                id: payload.new.id_notificacion,
+                tipo: payload.new.tipo,
+                titulo: payload.new.titulo,
+                mensaje: payload.new.mensaje,
+                fecha: payload.new.fecha_creacion,
+                leida: payload.new.leida,
+                id_pedido: payload.new.id_pedido,
+                id_publicacion: payload.new.id_publicacion
+              };
+
+              setNotifications(prev => {
+                const updated = [nuevaNotif, ...prev];
+                localStorage.setItem("notifications", JSON.stringify(updated));
+                return updated;
+              });
+
+              // Mostrar notificación del navegador (opcional)
+              if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(nuevaNotif.titulo, {
+                  body: nuevaNotif.mensaje,
+                  icon: '/favicon.ico'
+                });
+              }
+            }
+          )
+          .subscribe();
+
       } catch (error) {
         console.error("Error al cargar notificaciones:", error);
       }
     };
 
     cargarNotificacionesDB();
+
+    // Limpiar suscripción al desmontar
+    return () => {
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
+    };
   }, []);
 
   // Limpiar notificaciones antiguas de localStorage al iniciar
