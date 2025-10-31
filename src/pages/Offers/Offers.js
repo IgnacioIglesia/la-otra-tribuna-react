@@ -4,7 +4,7 @@ import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Offers.css";
-import { useFilters } from "../../context/FiltersContext"; // 👈 NUEVO
+import { useFilters } from "../../context/FiltersContext";
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 
@@ -19,7 +19,7 @@ function daysFrom(dateStr) {
 /* ===== Talles ===== */
 const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-/** Devuelve true si el producto tiene el talle seleccionado. (idéntico a Home.js) */
+/** Devuelve true si el producto tiene el talle seleccionado. */
 function matchesTalle(prodTalle, selected) {
   if (!selected || selected === "Todos") return true;
   const wanted = String(selected).toUpperCase().trim();
@@ -34,21 +34,20 @@ function mapCategoria(cat) {
 }
 
 export default function Offers() {
-  const { offersFilters, setOffersFilters } = useFilters(); // 👈 NUEVO
+  const { offersFilters, setOffersFilters } = useFilters();
 
   const [loading, setLoading] = useState(true);
   const [all, setAll] = useState([]);
   const [error, setError] = useState("");
 
-  /* ===== Filtros (copiados de Home.js) ===== */
+  /* ===== Filtros ===== */
   const [sort, setSort] = useState("default");
-  const [moneda, setMoneda] = useState("");         // "" => Todas
-  const [coleccion, setColeccion] = useState("");   // "" => Todas
-  const [categoria, setCategoria] = useState("");   // "" => Todas
+  const [moneda, setMoneda] = useState("");
+  const [coleccion, setColeccion] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [equipo, setEquipo] = useState("Todos");
-  const [talle, setTalle] = useState("");           // "" => Todos
+  const [talle, setTalle] = useState("");
 
-  /* ===== Control del dropdown abierto (para z-index del toolbar) ===== */
   const [anyDdOpen, setAnyDdOpen] = useState(false);
 
   /* ===== Data ===== */
@@ -105,11 +104,11 @@ export default function Offers() {
               img: foto,
               stock: Number(pub.stock) || 0,
               talle: pub.talle || "",
-              moneda: pub.moneda || "USD", // igual que Home.js
+              moneda: pub.moneda || "USD",
               isOffer: true,
-              precio: basePrice,               // precio base
-              precioAnterior: basePrice,       // para mostrar tachado
-              precio_oferta: offerPrice,       // precio efectivo de oferta
+              precioAnterior: basePrice,        // ✅ Precio original (para mostrar tachado)
+              precio_oferta: offerPrice,        // ✅ Precio con descuento
+              precio: offerPrice,               // ✅ CAMBIADO: Ahora precio es el de oferta
             };
           });
 
@@ -126,7 +125,6 @@ export default function Offers() {
   // Estados derivados
   const hasCategoria = categoria === "Club" || categoria === "Selección";
 
-  // categorías disponibles según moneda y colección (copiado de Home.js, adaptado al array "all")
   const categorias = useMemo(() => {
     let base = all;
     if (moneda) base = base.filter((p) => p.moneda === moneda);
@@ -137,7 +135,6 @@ export default function Offers() {
     return unique.filter((c) => allowed.includes(c));
   }, [all, coleccion, moneda]);
 
-  // equipos según moneda, colección y categoría (idéntico patrón a Home.js)
   const equipos = useMemo(() => {
     let base = all;
     if (moneda) base = base.filter((p) => p.moneda === moneda);
@@ -152,14 +149,12 @@ export default function Offers() {
     return ["Todos", ...list];
   }, [all, moneda, coleccion, categoria, hasCategoria]);
 
-  // Precio máximo según moneda seleccionada (como en Home.js, pero usando precio de oferta si existe)
   const [maxPrecio, setMaxPrecio] = useState(0);
   const maxPrecioAbsoluto = useMemo(() => {
     const base = moneda ? all.filter((p) => p.moneda === moneda) : all;
     if (!base.length) return 0;
-    return Math.max(
-      ...base.map((p) => Number(p.precio_oferta ?? p.precio) || 0)
-    );
+    const max = Math.max(...base.map((p) => Number(p.precio) || 0));
+    return max + 1; // ✅ +1 para incluir el más caro
   }, [all, moneda]);
 
   useEffect(() => {
@@ -170,7 +165,6 @@ export default function Offers() {
     ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
     : 0;
 
-  // Aplicar filtros (copiado de Home.js, agregando talle y moneda)
   const productos = useMemo(() => {
     let list = all.filter(
       (p) =>
@@ -179,19 +173,15 @@ export default function Offers() {
         (equipo === "Todos" || p.club === equipo) &&
         (moneda === "" || p.moneda === moneda) &&
         matchesTalle(p.talle, talle) &&
-        (Number(p.precio_oferta ?? p.precio) || 0) <= (Number(maxPrecio) || 0)
+        (Number(p.precio) || 0) <= (Number(maxPrecio) || 0)
     );
 
     switch (sort) {
       case "price-asc":
-        list = list.slice().sort(
-          (a, b) => (a.precio_oferta ?? a.precio) - (b.precio_oferta ?? b.precio)
-        );
+        list = list.slice().sort((a, b) => a.precio - b.precio);
         break;
       case "price-desc":
-        list = list.slice().sort(
-          (a, b) => (b.precio_oferta ?? b.precio) - (a.precio_oferta ?? a.precio)
-        );
+        list = list.slice().sort((a, b) => b.precio - a.precio);
         break;
       case "name":
         list = list.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -210,12 +200,12 @@ export default function Offers() {
     setCategoria("");
     setEquipo("Todos");
     setTalle("");
-    setMaxPrecio(maxPrecioAbsoluto || 0);
+    const newMax = all.length ? Math.max(...all.map((p) => Number(p.precio) || 0)) + 1 : 0;
+    setMaxPrecio(newMax);
     setAnyDdOpen(false);
   };
 
-  /* ===== Persistencia de filtros (rehidratar/guardar) ===== */
-  // Rehidratar una sola vez al montar (si hay snapshot previo)
+  /* ===== Persistencia de filtros ===== */
   useEffect(() => {
     if (!offersFilters) return;
     const {
@@ -236,9 +226,8 @@ export default function Offers() {
     if (_talle !== undefined) setTalle(_talle);
     if (_maxPrecio !== undefined) setMaxPrecio(_maxPrecio);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 👈 solo al montar
+  }, []);
 
-  // Guardar snapshot cada vez que cambie algún filtro
   useEffect(() => {
     setOffersFilters({
       sort, moneda, coleccion, categoria, equipo, talle, maxPrecio
@@ -274,9 +263,9 @@ export default function Offers() {
           {error && <p className="catalog-sub" role="alert">{error}</p>}
         </div>
 
-        {/* TOOLBAR — DOS LÍNEAS (copiado de Home.js -> v2) */}
+        {/* TOOLBAR — DOS LÍNEAS */}
         <div className={`filters-toolbar-v2 ${anyDdOpen ? "dd-open" : ""}`}>
-          {/* PRIMERA LÍNEA: Orden + filtros principales */}
+          {/* PRIMERA LÍNEA */}
           <div className="filter-row filter-row--main">
             <Dropdown
               icon="↕︎"
@@ -291,34 +280,30 @@ export default function Offers() {
               ]}
             />
 
-            {/* Moneda */}
             <Dropdown
-              icon="↕︎"
+              icon="💵"
               placeholder="Elegí moneda"
-              value={moneda}                               // "" => muestra el placeholder
+              value={moneda}
               onChange={(v) => {
-                const sel = v === "ALL" ? "" : v;          // mapear "ALL" -> ""
+                const sel = v === "ALL" ? "" : v;
                 setMoneda(sel);
 
-                // Resetear precio cuando cambia moneda
                 const newBase = sel ? all.filter((p) => p.moneda === sel) : all;
                 const newMax = newBase.length
-                  ? Math.max(...newBase.map((p) => Number(p.precio_oferta ?? p.precio) || 0))
+                  ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1
                   : 0;
                 setMaxPrecio(newMax);
               }}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "ALL", label: "Todas" },          // 👈 ya NO usamos "" acá
+                { value: "ALL", label: "Todas" },
                 { value: "USD", label: "USD" },
                 { value: "UYU", label: "UYU" },
               ]}
             />
 
-
-            {/* Colección */}
             <Dropdown
-              icon="↕︎"
+              icon="📦"
               placeholder="Elegí colección"
               value={coleccion}
               onChange={setColeccion}
@@ -330,9 +315,8 @@ export default function Offers() {
               ]}
             />
 
-            {/* Categoría */}
             <Dropdown
-              icon="↕︎"
+              icon="🏷️"
               placeholder="Elegí categoría"
               value={categoria}
               onChange={(v) => { setCategoria(v); setEquipo("Todos"); }}
@@ -343,9 +327,8 @@ export default function Offers() {
               ]}
             />
 
-            {/* Equipo */}
             <Dropdown
-              icon="↕︎"
+              icon="⚽"
               placeholder="Elegí equipo"
               value={hasCategoria ? equipo : "Todos"}
               onChange={setEquipo}
@@ -360,9 +343,8 @@ export default function Offers() {
               }
             />
 
-            {/* Talle */}
             <Dropdown
-              icon="↕︎"
+              icon="👕"
               placeholder="Elegí talle"
               value={talle}
               onChange={setTalle}
@@ -374,7 +356,7 @@ export default function Offers() {
             />
           </div>
 
-          {/* SEGUNDA LÍNEA: Precio y Reset */}
+          {/* SEGUNDA LÍNEA */}
           <div className="filter-row filter-row--secondary">
             <div className="price-filter" style={{ "--pct": `${pct}%` }}>
               <label className="price-label">
@@ -403,7 +385,7 @@ export default function Offers() {
               title="Restablecer filtros"
               disabled={loading || !!error}
             >
-              Restablecer
+              🔄 Restablecer
             </button>
           </div>
         </div>

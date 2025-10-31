@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFavorites } from "../Favorites/FavoritesContext";
 import { useCart } from "../Cart/CartContext";
+import { supabase } from "../../lib/supabaseClient";
 import "./NotificationDropdown.css";
 
 export default function NotificationDropdown() {
@@ -25,15 +26,64 @@ export default function NotificationDropdown() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Detectar cambios en favoritos y carrito
+  // ✅ CARGAR NOTIFICACIONES DE LA BASE DE DATOS AL INICIAR
+  useEffect(() => {
+    const cargarNotificacionesDB = async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (!session?.session?.user?.email) return;
+
+        const { data: usuario } = await supabase
+          .from("usuario")
+          .select("id_usuario")
+          .eq("email", session.session.user.email)
+          .single();
+
+        if (!usuario) return;
+
+        // ✅ CAMBIO: usar fecha_creacion en lugar de created_at
+        const { data: notifs, error } = await supabase
+          .from("notificacion")
+          .select("*")
+          .eq("id_usuario", usuario.id_usuario) // ✅ CAMBIO: id_usuario en lugar de id_usuario_destino
+          .order("fecha_creacion", { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        if (notifs && notifs.length > 0) {
+          const notificacionesFormateadas = notifs.map(n => ({
+            id: n.id_notificacion,
+            tipo: n.tipo,
+            titulo: n.titulo,
+            mensaje: n.mensaje,
+            fecha: n.fecha_creacion, // ✅ CAMBIO: fecha_creacion
+            leida: n.leida,
+            id_pedido: n.id_pedido,
+            id_publicacion: n.id_publicacion
+          }));
+
+          setNotifications(notificacionesFormateadas);
+          localStorage.setItem("notifications", JSON.stringify(notificacionesFormateadas));
+        }
+      } catch (error) {
+        console.error("Error al cargar notificaciones:", error);
+      }
+    };
+
+    cargarNotificacionesDB();
+  }, []);
+
+  // Limpiar notificaciones antiguas de localStorage al iniciar
   useEffect(() => {
     const storedNotifs = JSON.parse(localStorage.getItem("notifications") || "[]");
     
-    // Limpiar notificaciones antiguas (más de 7 días)
     const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     const cleanedNotifs = storedNotifs.filter(n => new Date(n.fecha).getTime() > sevenDaysAgo);
     
-    setNotifications(cleanedNotifs);
+    if (cleanedNotifs.length !== storedNotifs.length) {
+      localStorage.setItem("notifications", JSON.stringify(cleanedNotifs));
+    }
   }, []);
 
   // Escuchar eventos personalizados para nuevas notificaciones
@@ -68,6 +118,17 @@ export default function NotificationDropdown() {
       localStorage.setItem("notifications", JSON.stringify(updated));
       return updated;
     });
+
+    // Marcar como leída en DB si es una notificación de DB
+    if (typeof id === 'number' && id < Date.now()) {
+      supabase
+        .from("notificacion")
+        .update({ leida: true })
+        .eq("id_notificacion", id)
+        .then(({ error }) => {
+          if (error) console.error("Error al marcar como leída:", error);
+        });
+    }
   };
 
   const deleteNotification = (id, e) => {
@@ -77,6 +138,16 @@ export default function NotificationDropdown() {
       localStorage.setItem("notifications", JSON.stringify(updated));
       return updated;
     });
+
+    if (typeof id === 'number' && id < Date.now()) {
+      supabase
+        .from("notificacion")
+        .delete()
+        .eq("id_notificacion", id)
+        .then(({ error }) => {
+          if (error) console.error("Error al eliminar notificación:", error);
+        });
+    }
   };
 
   const handleNotificationClick = (notif) => {
@@ -86,7 +157,6 @@ export default function NotificationDropdown() {
 
     setIsOpen(false);
 
-    // Navegar según el tipo de notificación
     switch (notif.tipo) {
       case "venta":
         navigate("/my-sales");
@@ -94,8 +164,14 @@ export default function NotificationDropdown() {
       case "compra":
         navigate("/my-orders");
         break;
+      case "publicacion":
+        if (notif.id_publicacion) {
+          navigate(`/publication/${notif.id_publicacion}`);
+        } else {
+          navigate("/my-publications");
+        }
+        break;
       case "carrito":
-        // Si tiene id_publicacion, ir a la publicación, sino abrir carrito
         if (notif.id_publicacion) {
           navigate(`/publication/${notif.id_publicacion}`);
         } else {
@@ -103,7 +179,6 @@ export default function NotificationDropdown() {
         }
         break;
       case "favorito":
-        // Si tiene id_publicacion, ir a la publicación, sino ir a favoritos
         if (notif.id_publicacion) {
           navigate(`/publication/${notif.id_publicacion}`);
         } else {
@@ -120,6 +195,28 @@ export default function NotificationDropdown() {
       const updated = prev.map(n => ({ ...n, leida: true }));
       localStorage.setItem("notifications", JSON.stringify(updated));
       return updated;
+    });
+
+    supabase.auth.getSession().then(({ data: session }) => {
+      if (!session?.session?.user?.email) return;
+      
+      supabase
+        .from("usuario")
+        .select("id_usuario")
+        .eq("email", session.session.user.email)
+        .single()
+        .then(({ data: usuario }) => {
+          if (!usuario) return;
+          
+          supabase
+            .from("notificacion")
+            .update({ leida: true })
+            .eq("id_usuario", usuario.id_usuario) // ✅ CAMBIO
+            .eq("leida", false)
+            .then(({ error }) => {
+              if (error) console.error("Error al marcar todas como leídas:", error);
+            });
+        });
     });
   };
 
@@ -145,6 +242,7 @@ export default function NotificationDropdown() {
       case "carrito": return "🛒";
       case "favorito": return "❤️";
       case "mensaje": return "💬";
+      case "publicacion": return "✨";
       default: return "🔔";
     }
   };
@@ -213,6 +311,27 @@ export default function NotificationDropdown() {
                   setNotifications([]);
                   localStorage.setItem("notifications", JSON.stringify([]));
                   setIsOpen(false);
+                  
+                  supabase.auth.getSession().then(({ data: session }) => {
+                    if (!session?.session?.user?.email) return;
+                    
+                    supabase
+                      .from("usuario")
+                      .select("id_usuario")
+                      .eq("email", session.session.user.email)
+                      .single()
+                      .then(({ data: usuario }) => {
+                        if (!usuario) return;
+                        
+                        supabase
+                          .from("notificacion")
+                          .delete()
+                          .eq("id_usuario", usuario.id_usuario) // ✅ CAMBIO
+                          .then(({ error }) => {
+                            if (error) console.error("Error al limpiar notificaciones:", error);
+                          });
+                      });
+                  });
                 }}
                 className="clear-all-btn"
               >

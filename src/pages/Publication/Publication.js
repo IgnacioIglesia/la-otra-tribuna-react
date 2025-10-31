@@ -8,12 +8,25 @@ import "./Publication.css";
 
 const PLACEHOLDER = "https://placehold.co/1200x900?text=Camiseta";
 
-function money(n, curr = "UYU") {
+function money(n, curr = "USD") {
+  const amount = Number(n || 0);
+  
+  if (curr === "USD") {
+    const formatted = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+    
+    // Reemplazar "US$" por "U$D"
+    return formatted.replace("US$", "U$D");
+  }
+  
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: curr,
     maximumFractionDigits: 0,
-  }).format(Number(n || 0));
+  }).format(amount);
 }
 
 function initialsFrom(nombre = "", apellido = "", email = "") {
@@ -130,14 +143,19 @@ export default function Publication() {
   );
   const img = fotos.length ? fotos[0].url : PLACEHOLDER;
 
+  // ✅ AGREGAR TODAS LAS PROPIEDADES NECESARIAS
   const normalized = {
     id: pub.id_publicacion,
+    ownerId: pub.id_usuario,
     nombre: pub.titulo,
     precio: Number(pub.precio || 0),
+    moneda: pub.moneda || "USD", // ✅ AGREGADO: moneda
     img,
     club: pub.club || "",
-    categoria:
-      pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
+    categoria: pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
+    coleccion: pub.coleccion || "Actual", // ✅ AGREGADO: colección
+    stock: Number(pub.stock || 0), // ✅ AGREGADO: stock
+    talle: pub.talle || "", // ✅ AGREGADO: talle
   };
 
   return (
@@ -180,7 +198,7 @@ export default function Publication() {
               </div>
 
               <div className="pub-price">
-                {money(pub.precio, pub.moneda || "UYU")}
+                {money(pub.precio, pub.moneda || "USD")}
               </div>
 
               <div className="pub-attrs">
@@ -202,8 +220,9 @@ export default function Publication() {
                 <button
                   className="lot-btn-primary"
                   onClick={() => addToCart(normalized, 1)}
+                  disabled={!pub.stock || pub.stock <= 0}
                 >
-                  Agregar al carrito
+                  {pub.stock && pub.stock > 0 ? "Agregar al carrito" : "Sin stock"}
                 </button>
                 <button
                   className="lot-btn-secondary"

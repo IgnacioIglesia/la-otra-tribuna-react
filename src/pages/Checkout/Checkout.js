@@ -248,6 +248,38 @@ export default function Checkout() {
     setCard((c) => ({ ...c, [key]: v }));
   };
 
+  const notificarVendedor = async (publicacionId, cantidad, compradorNombre, idPedido) => {
+    try {
+      const { data: publicacion, error: pubError } = await supabase
+        .from("publicacion")
+        .select(`id_usuario, titulo`)
+        .eq("id_publicacion", publicacionId)
+        .single();
+  
+      if (pubError) throw pubError;
+  
+      // Crear notificación en la base de datos
+      const { error: notifError } = await supabase
+        .from("notificacion")
+        .insert({
+          id_usuario: publicacion.id_usuario, // ✅ id_usuario (no id_usuario_destino)
+          tipo: "venta",
+          titulo: "¡Nueva venta! 🎉",
+          mensaje: `${compradorNombre} compró ${cantidad} unidad(es) de "${publicacion.titulo}"`,
+          id_pedido: idPedido,
+          id_publicacion: publicacionId,
+          leida: false
+        });
+  
+      if (notifError) {
+        console.error("Error al crear notificación:", notifError);
+        throw notifError;
+      }
+    } catch (error) {
+      console.error("Error al notificar vendedor:", error);
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -365,6 +397,13 @@ export default function Checkout() {
         if (pedidoError) throw pedidoError;
         pedidosCreados.push(pedido);
 
+        await notificarVendedor(
+          item.id, 
+          item.qty,
+          `${usuario.nombre} ${usuario.apellido}`.trim() || "Un comprador",
+          pedido.id_pedido
+        );
+
         const { data: pubActual, error: stockError } = await supabase
           .from("publicacion")
           .select("stock")
@@ -393,6 +432,18 @@ export default function Checkout() {
         }
       }
 
+      window.dispatchEvent(
+        new CustomEvent("new-notification", { 
+          detail: {
+            tipo: "compra",
+            titulo: "Pedido confirmado",
+            mensaje: `Tu pedido de ${items.length} producto(s) fue confirmado exitosamente`,
+            fecha: new Date().toISOString(),
+            leida: false
+          }
+        })
+      );
+      
       clear();
       setModalType("success");
       setModalTitle("¡Pedido confirmado! 🎉");

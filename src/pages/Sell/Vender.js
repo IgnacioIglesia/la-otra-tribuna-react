@@ -260,6 +260,35 @@ export default function Vender() {
       ]);
       if (fotoErr) throw fotoErr;
 
+      try {
+        // Notificación local (aparece inmediatamente)
+        window.dispatchEvent(
+          new CustomEvent("new-notification", { 
+            detail: {
+              tipo: "publicacion",
+              titulo: "¡Publicación creada! ✨",
+              mensaje: `Tu publicación "${titulo}" fue creada exitosamente`,
+              id_publicacion: pub.id_publicacion,
+              fecha: new Date().toISOString(),
+              leida: false
+            }
+          })
+        );
+      
+        // Guardar en base de datos
+        await supabase.from("notificacion").insert({
+          id_usuario: id_usuario, // ✅ id_usuario (no id_usuario_destino)
+          tipo: "publicacion",
+          titulo: "¡Publicación creada! ✨",
+          mensaje: `Tu publicación "${titulo}" fue creada exitosamente`,
+          id_publicacion: pub.id_publicacion,
+          leida: false
+        });
+      } catch (notifError) {
+        // No interrumpir el flujo si falla la notificación
+        console.error("Error al crear notificación:", notifError);
+      }
+      
       // ✅ 6) ÉXITO
       const msg = ofertas
         ? "Tu publicación se guardó correctamente. Si no se vende en 30 días, entrará automáticamente en ofertas (10% OFF)."
