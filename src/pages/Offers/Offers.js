@@ -295,11 +295,13 @@ export default function Offers() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí moneda"
-              value={moneda}
+              value={moneda}                               // "" => muestra el placeholder
               onChange={(v) => {
-                setMoneda(v);
-                // Resetear precio cuando cambia moneda (igual idea que Home.js)
-                const newBase = v ? all.filter((p) => p.moneda === v) : all;
+                const sel = v === "ALL" ? "" : v;          // mapear "ALL" -> ""
+                setMoneda(sel);
+
+                // Resetear precio cuando cambia moneda
+                const newBase = sel ? all.filter((p) => p.moneda === sel) : all;
                 const newMax = newBase.length
                   ? Math.max(...newBase.map((p) => Number(p.precio_oferta ?? p.precio) || 0))
                   : 0;
@@ -307,11 +309,12 @@ export default function Offers() {
               }}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "",    label: "Todas" },
+                { value: "ALL", label: "Todas" },          // 👈 ya NO usamos "" acá
                 { value: "USD", label: "USD" },
                 { value: "UYU", label: "UYU" },
               ]}
             />
+
 
             {/* Colección */}
             <Dropdown

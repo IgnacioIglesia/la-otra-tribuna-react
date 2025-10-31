@@ -332,21 +332,26 @@ export default function Home() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí moneda"
-              value={moneda}
+              value={moneda}              // "" => muestra el placeholder
               onChange={(v) => {
-                setMoneda(v);
-                // Resetear precio cuando cambia moneda
-                const newBase = v ? rows.filter((p) => p.moneda === v) : rows;
-                const newMax = newBase.length ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1 : 0;
+                const sel = v === "ALL" ? "" : v;    // mapear "ALL" -> ""
+                setMoneda(sel);
+
+                // Resetear precio según la moneda elegida
+                const newBase = sel ? rows.filter((p) => p.moneda === sel) : rows;
+                const newMax = newBase.length
+                  ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1
+                  : 0;
                 setMaxPrecio(newMax);
               }}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "",    label: "Todas" },
+                { value: "ALL", label: "Todas" },    // 👈 ya NO usamos "" acá
                 { value: "USD", label: "USD" },
                 { value: "UYU", label: "UYU" },
               ]}
             />
+
             
             <Dropdown
               icon="↕︎"
