@@ -57,7 +57,8 @@ export default function Favorites() {
               </div>
               <h3>Tu lista está vacía</h3>
               <p>Agregá favoritos para verlos acá y decidir después.</p>
-              <Link to="/" className="btn ghost">Explorar catálogo</Link>
+              {/* ✅ Cambié el Link para que vaya directo al catálogo */}
+              <Link to="/#catalogo" className="btn ghost">Explorar catálogo</Link>
             </div>
           ) : (
             <div className="fav-grid">
