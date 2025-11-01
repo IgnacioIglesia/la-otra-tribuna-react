@@ -403,7 +403,7 @@ export default function Home() {
               title="Restablecer filtros"
               disabled={loading || !!error}
             >
-              🔄 Restablecer
+              🔄<span> Restablecer</span>
             </button>
           </div>
         </div>

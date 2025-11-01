@@ -1,5 +1,3 @@
-/* src/pages/MisVentas/MisVentas.css */
-
 /* ===== Paleta de marca ===== */
 :root {
   --brand-green: #0e5135;              /* verde exacto del logo */
@@ -27,7 +25,7 @@
   margin: 0;
 }
 
-/* Botón volver: neutro */
+/* Botón volver */
 .back-btn {
   padding: 0.5rem 1rem;
   background: #f3f4f6;
@@ -38,9 +36,7 @@
   color: #374151;
   transition: all 0.2s;
 }
-.back-btn:hover {
-  background: #e5e7eb;
-}
+.back-btn:hover { background: #e5e7eb; }
 
 .loading-state,
 .error-state {
@@ -57,31 +53,19 @@
   border: 1px solid #fecaca;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 4rem 1rem;
-}
-
-.empty-state p {
-  font-size: 1.2rem;
-  color: #6b7280;
-  margin-bottom: 1.5rem;
-}
-
-/* Botón principal */
+.empty-state { text-align: center; padding: 4rem 1rem; }
+.empty-state p { font-size: 1.2rem; color: #6b7280; margin-bottom: 1.5rem; }
 .empty-state button {
   padding: 0.75rem 1.5rem;
   background: var(--brand-green);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background .2s;
 }
-.empty-state button:hover {
-  background: var(--brand-green-hover);
-}
+.empty-state button:hover { background: var(--brand-green-hover); }
 
 /* ===== Estadísticas (KPI) ===== */
 .stats-grid {
@@ -92,48 +76,131 @@
 }
 
 .stat-card {
-  background: white;
+  position: relative;           /* para el hint */
+  background: #fff;
   padding: 1.5rem;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-
-  /* Cambios al verde del logo */
   border-left: 4px solid var(--brand-green);
-  box-shadow: 0 0 0 2px rgba(14, 81, 53, 0.12) inset,
-              0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 2px rgba(14,81,53,.12) inset, 0 1px 3px rgba(0,0,0,.1);
+  overflow: visible;            /* deja ver el tooltip */
 }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
-}
+.stat-label { font-size: .875rem; color: #6b7280; font-weight: 500; }
+.stat-value { font-size: 1.75rem; font-weight: 700; color: var(--brand-green); }
 
-.stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
+/* ===== Hints (asterisco con tooltip) — glass, fondo opaco y 100% responsive ===== */
+.kpi-hint {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 50%;
+  background: rgba(255,255,255,.70);
   color: var(--brand-green);
+  box-shadow:
+    0 0 0 1px rgba(14,81,53,.28) inset,
+    0 6px 18px rgba(16,24,40,.12);
+  cursor: help;
+  opacity: .95;
+  user-select: none;
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  z-index: 10;
+  isolation: isolate;
+}
+.kpi-hint:hover { opacity: 1; }
+
+/* Globo: SIEMPRE abajo y centrado → no se corta en bordes */
+.kpi-hint::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%) translateY(6px);
+
+  /* Fondo casi opaco + blur fuerte: tapa totalmente letras de atrás */
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+  color: var(--brand-green);
+  font-weight: 800;
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(14,81,53,.22);
+  box-shadow:
+    0 10px 28px rgba(16,24,40,.20),
+    inset 0 1px 0 rgba(255,255,255,.85);
+
+  backdrop-filter: blur(18px) saturate(130%) contrast(.98);
+  -webkit-backdrop-filter: blur(18px) saturate(130%) contrast(.98);
+
+  /* Ayuda adicional: velo interno para bloquear totalmente el fondo */
+  background-clip: padding-box;
+
+  max-width: min(92vw, 480px);
+  width: max-content;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .18s ease, transform .18s ease;
+  white-space: normal;
+  z-index: 20;
+  text-align: left;
+}
+
+/* Flecha centrada abajo del globo */
+.kpi-hint::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 2px);
+  transform: translateX(-50%) rotate(45deg);
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.92));
+  border-left: 1px solid rgba(14,81,53,.22);
+  border-top: 1px solid rgba(14,81,53,.22);
+  box-shadow: 0 2px 8px rgba(16,24,40,.12);
+  backdrop-filter: blur(18px) saturate(130%) contrast(.98);
+  -webkit-backdrop-filter: blur(18px) saturate(130%) contrast(.98);
+  opacity: 0;
+  transition: opacity .18s ease;
+  z-index: 19;
+}
+
+.kpi-hint:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+.kpi-hint:hover::before { opacity: 1; }
+
+/* Accesibilidad: sin transparencias si el usuario lo pide */
+@media (prefers-reduced-transparency: reduce) {
+  .kpi-hint::after,
+  .kpi-hint::before {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #fff;
+  }
 }
 
 /* ===== Lista de ventas ===== */
-.ventas-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
+.ventas-list { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .venta-card {
-  background: white;
+  background: #fff;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+  overflow: visible;
+  transition: box-shadow .2s;
 }
-.venta-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+.venta-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.15); }
 
 .venta-header {
   display: flex;
@@ -144,17 +211,13 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.venta-fecha {
-  font-weight: 600;
-  color: #374151;
-}
+.venta-fecha { font-weight: 600; color: #374151; }
 
-/* Los chips de estado usan los colores definidos en JS */
 .venta-estado {
-  padding: 0.375rem 0.875rem;
+  padding: .375rem .875rem;
   border-radius: 20px;
-  color: white;
-  font-size: 0.875rem;
+  color: #fff;
+  font-size: .875rem;
   font-weight: 600;
 }
 
@@ -167,160 +230,38 @@
 }
 
 .venta-img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
+  width: 120px; height: 120px; object-fit: cover;
+  border-radius: 8px; cursor: pointer; transition: transform .2s;
 }
-.venta-img:hover {
-  transform: scale(1.05);
-}
+.venta-img:hover { transform: scale(1.05); }
 
-.venta-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+.venta-info { display: flex; flex-direction: column; gap: .5rem; }
+.venta-titulo { font-size: 1.125rem; font-weight: 600; color: #1a1a1a; margin: 0; }
+.venta-club { color: #6b7280; font-size: .95rem; margin: 0; }
 
-.venta-titulo {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
-}
+.venta-detalles { display: flex; flex-direction: column; gap: .25rem; font-size: .875rem; color: #6b7280; }
 
-.venta-club {
-  color: #6b7280;
-  font-size: 0.95rem;
-  margin: 0;
-}
+.venta-comprador { border-left: 2px solid #e5e7eb; padding-left: 1rem; }
+.venta-comprador h4 { font-size: .875rem; color: #6b7280; margin: 0 0 .5rem 0; font-weight: 500; }
+.comprador-nombre { font-weight: 600; color: #1a1a1a; margin: 0 0 .25rem 0; }
+.comprador-email { color: #6b7280; font-size: .875rem; margin: 0; }
 
-.venta-detalles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.venta-comprador {
-  border-left: 2px solid #e5e7eb;
-  padding-left: 1rem;
-}
-
-.venta-comprador h4 {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
-}
-
-.comprador-nombre {
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 0.25rem 0;
-}
-
-.comprador-email {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin: 0;
-}
-
-.venta-total {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-}
-
-.total-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.total-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--brand-green);
-}
+.venta-total { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; }
+.total-label { font-size: .875rem; color: #6b7280; }
+.total-value { font-size: 1.5rem; font-weight: 700; color: var(--brand-green); }
 
 /* ===== Acciones ===== */
-.venta-actions {
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.estado-select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  background: white;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.estado-select:hover {
-  border-color: #9ca3af;
-}
-.estado-select:focus {
-  outline: none;
-  border-color: var(--brand-green);
-  box-shadow: 0 0 0 3px var(--brand-ring);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .venta-content {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .venta-img {
-    width: 100%;
-    height: 200px;
-  }
-
-  .venta-comprador {
-    border-left: none;
-    border-top: 2px solid #e5e7eb;
-    padding-left: 0;
-    padding-top: 1rem;
-  }
-
-  .venta-total {
-    align-items: flex-start;
-  }
-}
-
-/* ===== Ajuste final: precio total en verde logo ===== */
-.venta-total .total-value {
-  color: #0e5135 !important;
-}
-
-
-/* ===== Actions con dropdown glass ===== */
 .venta-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   padding: 1rem 1.5rem;
-  background: rgba(249, 250, 251, 0.8);
+  background: rgba(249,250,251,.8);
   border-top: 1px solid #e5e7eb;
   border-radius: 0 0 12px 12px;
   backdrop-filter: blur(4px);
 }
 
-/* Ajustes visuales del botón glass dentro de Mis Ventas */
 .venta-actions .venta-dd .dd-btn {
   border-radius: 14px;
   padding: 10px 14px;
@@ -328,7 +269,6 @@
   justify-content: space-between;
   border-color: rgba(14,81,53,.18);
 }
-
 .venta-actions .venta-dd .dd-btn:hover {
   box-shadow: 0 10px 28px rgba(14,81,53,.12), inset 0 1px 0 rgba(255,255,255,.8);
 }
@@ -339,43 +279,122 @@
   .venta-actions .venta-dd .dd-btn { width: 100%; }
 }
 
-
-/* Permitir que el menú del dropdown se vea fuera de la card */
-.venta-card {
-  overflow: visible;              /* antes estaba hidden */
-}
-
-/* Asegura que el contenedor de acciones forme su propio stacking context */
-.venta-actions {
-  position: relative;             /* nuevo */
-  z-index: 5;                     /* nuevo */
-}
-
-/* Refuerzos por si algún CSS global los pisa */
+.venta-card { overflow: visible; }
+.venta-actions { position: relative; z-index: 5; }
 .venta-actions .dd { position: relative; z-index: 10; }
 .venta-actions .dd-menu {
-  position: fixed !important;     /* ya lo seteás inline, esto lo refuerza */
+  position: fixed !important;
   z-index: 10000 !important;
   pointer-events: auto;
 }
 
-/* ===== Tarjeta especial para USD (igual a la de pesos) ===== */
+/* ===== Tarjeta especial para USD ===== */
 .stat-card-usd {
-    /* Anula el estilo azul anterior y usa el mismo look de .stat-card */
-    background: #fff;
-    border: none;
-    border-left: 4px solid var(--brand-green);
-    box-shadow:
-      0 0 0 2px rgba(14,81,53,0.12) inset,
-      0 1px 3px rgba(0,0,0,0.1);
-    /* .stat-card ya define padding, radios y layout */
+  background: #fff;
+  border: none;
+  border-left: 4px solid var(--brand-green);
+  box-shadow: 0 0 0 2px rgba(14,81,53,.12) inset, 0 1px 3px rgba(0,0,0,.1);
+}
+.stat-card-usd .stat-label { color: #6b7280; font-weight: 500; }
+.stat-card-usd .stat-value { color: var(--brand-green); }
+
+/* ===== Responsive general ===== */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .venta-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
-  
-  .stat-card-usd .stat-label {
-    color: #6b7280;       /* igual que .stat-label */
-    font-weight: 500;
+  .venta-img { width: 100%; height: 200px; }
+  .venta-comprador { border-left: none; border-top: 2px solid #e5e7eb; padding-left: 0; padding-top: 1rem; }
+  .venta-total { align-items: flex-start; }
+}
+
+/* ===== Alineación específica de tooltips ===== */
+/* USD: abrir hacia abajo-izquierda (anclar borde derecho del globo al punto) */
+.stats-grid .stat-card-usd .kpi-hint::after {
+  left: auto;              /* anulamos centrado */
+  right: 0;                /* pegado al punto por su derecha */
+  transform: translateY(6px); /* pequeña animación vertical */
+  max-width: min(46vw, 520px);
+  text-align: left;
+}
+.stats-grid .stat-card-usd .kpi-hint::before {
+  left: auto;
+  right: 12px;             /* flecha cerca del punto */
+  top: calc(100% + 2px);
+  transform: rotate(45deg);
+}
+
+/* UYU: mantener abajo centrado (no hace falta extra si ya lo tenés, esto es por claridad) */
+.stats-grid .stat-card:not(.stat-card-usd) .kpi-hint::after {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(6px);
+  max-width: min(92vw, 480px);
+}
+.stats-grid .stat-card:not(.stat-card-usd) .kpi-hint::before {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* Mobile: siempre centrados para evitar cortes en cualquier card */
+@media (max-width: 768px) {
+  .stats-grid .stat-card .kpi-hint::after {
+    left: 50% !important;
+    right: auto !important;
+    top: calc(100% + 10px);
+    transform: translateX(-50%) translateY(0) !important;
+    max-width: min(92vw, 380px);
   }
-  
-  .stat-card-usd .stat-value {
-    color: var(--brand-green);  /* igual que .stat-value */
+  .stats-grid .stat-card .kpi-hint::before {
+    left: calc(50% - 5px) !important;
+    right: auto !important;
+    top: calc(100% + 2px);
+    transform: rotate(45deg) !important;
   }
+}
+/* ===== FIX: el tooltip de USD abre hacia abajo-izquierda y nunca se corta ===== */
+.stats-grid .stat-card.stat-card-usd .kpi-hint::after {
+  /* anclar el borde derecho del globo al punto */
+  left: auto !important;
+  right: 0 !important;
+
+  /* abrir hacia abajo (ya lo hace en la base) y sólo moverse verticalmente */
+  transform: translateY(6px) !important;
+
+  /* límites: quepa siempre en el viewport */
+  max-width: min(520px, calc(100vw - 24px)) !important;
+
+  /* por si hay palabras largas */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.stats-grid .stat-card.stat-card-usd .kpi-hint::before {
+  /* flecha alineada con el punto, abajo y a la derecha */
+  left: auto !important;
+  right: 12px !important;
+  top: calc(100% + 2px) !important;
+  transform: rotate(45deg) !important;
+}
+
+/* Mobile: en ≤768px, ambos (UYU y USD) centrados abajo para mayor robustez */
+@media (max-width: 768px) {
+  .stats-grid .stat-card .kpi-hint::after {
+    left: 50% !important;
+    right: auto !important;
+    top: calc(100% + 10px) !important;
+    transform: translateX(-50%) translateY(0) !important;
+    max-width: min(92vw, 380px) !important;
+  }
+  .stats-grid .stat-card .kpi-hint::before {
+    left: calc(50% - 5px) !important;
+    right: auto !important;
+    top: calc(100% + 2px) !important;
+    transform: rotate(45deg) !important;
+  }
+}
+

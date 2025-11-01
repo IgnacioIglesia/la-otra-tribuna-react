@@ -92,7 +92,7 @@
 
 /* Botón reset */
 .btn-reset-filters {
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1rem;
   background: #f3f4f6;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -103,6 +103,9 @@
   transition: all 0.2s;
   white-space: nowrap;
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .btn-reset-filters:hover:not(:disabled) {
@@ -177,7 +180,16 @@
 
   .btn-reset-filters {
     margin-left: 0;
-    min-width: 130px;
+    min-width: auto;
+    max-width: 48px;
+    padding: 0.625rem;
+    font-size: 1.25rem;
+    justify-content: center;
+  }
+
+  /* Ocultar el texto en móvil, solo mostrar emoji */
+  .btn-reset-filters span {
+    display: none;
   }
 
   /* Reducir padding del catálogo en móvil */
@@ -202,7 +214,9 @@
   }
 
   .btn-reset-filters {
-    min-width: 120px;
+    min-width: auto;
+    max-width: 44px;
+    padding: 0.5rem;
   }
 }
 

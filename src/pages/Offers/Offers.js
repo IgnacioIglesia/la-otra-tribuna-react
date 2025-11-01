@@ -334,7 +334,7 @@ export default function Offers() {
               title="Restablecer filtros"
               disabled={loading || !!error}
             >
-              🔄 Restablecer
+              🔄<span> Restablecer</span>
             </button>
           </div>
         </div>

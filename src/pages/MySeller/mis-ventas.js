@@ -1,4 +1,3 @@
-// src/pages/MisVentas/MisVentas.js
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
@@ -34,6 +33,14 @@ function money(n, currency = "UYU") {
     currency: "UYU",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+// ✅ Texto del tooltip en cada total
+function kpiTip(currency) {
+  if (currency === "USD") {
+    return "Este total incluye únicamente ventas cobradas en USD. No se convierte a UYU ni se suma con el total en UYU.";
+  }
+  return "Este total incluye únicamente ventas cobradas en UYU. No se convierte a USD ni se suma con el total en USD.";
 }
 
 export default function MisVentas() {
@@ -198,7 +205,7 @@ export default function MisVentas() {
     }
   };
 
-  // ✅ Estadísticas separadas por moneda (igual enfoque que MisPedidos)
+  // ✅ Estadísticas separadas por moneda
   const estadisticas = ventas.reduce(
     (acc, v) => {
       if (v.moneda === "USD") acc.totalUSD += v.total;
@@ -241,6 +248,7 @@ export default function MisVentas() {
             <div className="stats-grid">
               {/* Total UYU */}
               <div className="stat-card">
+                <span className="kpi-hint" aria-label={kpiTip("UYU")} data-tip={kpiTip("UYU")}>＊</span>
                 <span className="stat-label">Total Vendido (UYU)</span>
                 <span className="stat-value">{money(estadisticas.totalUYU, "UYU")}</span>
               </div>
@@ -248,6 +256,7 @@ export default function MisVentas() {
               {/* Total USD (solo si hay ventas en USD) */}
               {estadisticas.totalUSD > 0 && (
                 <div className="stat-card stat-card-usd">
+                  <span className="kpi-hint" aria-label={kpiTip("USD")} data-tip={kpiTip("USD")}>＊</span>
                   <span className="stat-label">Total Vendido (USD)</span>
                   <span className="stat-value">{money(estadisticas.totalUSD, "USD")}</span>
                 </div>
