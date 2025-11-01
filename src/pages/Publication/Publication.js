@@ -48,7 +48,7 @@ export default function Publication() {
   const [seller, setSeller] = useState(null);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState("");
-  const [imgLoaded, setImgLoaded] = useState(false); // 👈 para el fade-in / blur
+  const [imgLoaded, setImgLoaded] = useState(false); // fade-in / blur
 
   const isFav = useMemo(
     () => favItems.some((x) => x.id === Number(id)),
@@ -64,10 +64,10 @@ export default function Publication() {
       setImgLoaded(false);
 
       try {
-        // 1) Publicación + fotos
+        // Publicación + fotos (SIN url_thumb)
         const { data, error: e1 } = await supabase
           .from("publicacion")
-          .select("*, foto (url, orden_foto, url_thumb)")
+          .select("*, foto (url, orden_foto)")
           .eq("id_publicacion", id)
           .maybeSingle();
 
@@ -77,7 +77,7 @@ export default function Publication() {
           return;
         }
 
-        // 2) Vendedor (sin email por privacidad)
+        // Vendedor (sin email por privacidad)
         let sellerData = null;
         let verified = false;
 
@@ -90,7 +90,6 @@ export default function Publication() {
 
           sellerData = u || null;
 
-          // 3) Verificación de identidad
           if (u?.id_usuario) {
             const { data: verif } = await supabase
               .from("verificacion_identidad")
@@ -147,18 +146,18 @@ export default function Publication() {
     (a, b) => (a.orden_foto || 0) - (b.orden_foto || 0)
   );
   const raw = fotos.length ? fotos[0].url : PLACEHOLDER;
-  const rawThumb = fotos.length ? (fotos[0].url_thumb || fotos[0].url) : PLACEHOLDER;
 
-  // Servimos WebP (si URL admite query params / Supabase Storage)
+  // LQIP a partir de la misma URL (ancho chico + calidad baja). Si tu storage no soporta
+  // transformaciones, igual funciona (mismo URL) y el blur evita el flash.
+  const imgLqip = ensureWebP(raw, { width: 320, quality: 45 });
   const img = ensureWebP(raw, { width: 960, quality: 78 });
-  const imgThumb = ensureWebP(rawThumb, { width: 480, quality: 70 });
 
   const normalized = {
     id: pub.id_publicacion,
     nombre: pub.titulo,
     precio: Number(pub.precio || 0),
     img,
-    imgThumb,
+    imgThumb: imgLqip,
     club: pub.club || "",
     categoria:
       pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
@@ -176,13 +175,13 @@ export default function Publication() {
             {/* ===== IMAGEN ===== */}
             <div
               className={`pub-media ${imgLoaded ? "is-ready" : ""}`}
-              style={{ "--blur-bg": `url("${imgThumb}")` }}
+              style={{ "--blur-bg": `url("${imgLqip}")` }}
             >
               <picture>
-                {/* Preferimos WebP (thumb + grande) */}
+                {/* Preferimos WebP (LQIP + grande) */}
                 <source
                   type="image/webp"
-                  srcSet={`${imgThumb} 480w, ${img} 960w`}
+                  srcSet={`${imgLqip} 480w, ${img} 960w`}
                   sizes="(max-width: 640px) 100vw, 720px"
                 />
                 {/* Fallback */}
@@ -190,7 +189,6 @@ export default function Publication() {
                   className="pub-img"
                   src={img}
                   alt={pub.titulo}
-                  /* Pedimos YA para evitar el flash */
                   loading="eager"
                   fetchpriority="high"
                   decoding="async"

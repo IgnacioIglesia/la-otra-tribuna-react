@@ -24,7 +24,7 @@
   height: clamp(360px, 56vw, 560px);
   border-radius: 14px;
   overflow: hidden;
-  /* Fondo claro para evitar el “flash” negro */
+  /* Fondo claro (evita el flash negro) */
   background: #f3f4f6;
   display: flex;
   align-items: center;
@@ -32,7 +32,7 @@
   padding: 0;
 }
 
-/* Usamos el thumbnail como fondo desenfocado mientras carga */
+/* LQIP: usamos el "imgThumb" generado (misma URL con width/calidad) como fondo borroso */
 .pub-media::before {
   content: "";
   position: absolute;
@@ -46,7 +46,7 @@
   transition: opacity 220ms ease;
 }
 
-/* Cuando la imagen grande está lista, escondemos el blur */
+/* Cuando la imagen grande está lista, ocultamos el blur */
 .pub-media.is-ready::before { opacity: 0; }
 
 /* Imagen con fade-in */
@@ -76,27 +76,6 @@
   cursor: pointer;
 }
 .fav-chip.is-active { color: #e11; }
-
-/* Controles de zoom (si los usás más adelante) */
-.zoom-controls{
-  position:absolute;
-  right:10px;
-  bottom:10px;
-  display:flex;
-  gap:8px;
-}
-.zoom-btn{
-  width:36px;height:36px;border-radius:999px;
-  background:#ffffffcc;
-  border:1px solid #e5e7eb;
-  display:inline-flex;align-items:center;justify-content:center;
-  cursor:pointer;
-  color:#0b0f13;
-  transition: background 120ms ease, transform 120ms ease;
-  backdrop-filter: blur(4px);
-}
-.zoom-btn:hover{ background:#fff; transform: translateY(-1px); }
-.zoom-btn.reset{ width:36px; }
 
 /* ===== INFO COLUMNA DERECHA ===== */
 .pub-info .back {
@@ -182,10 +161,6 @@
   font-size: 13px;
 }
 
-/* Descripción */
-.pub-desc-title{ margin: 14px 0 6px; font-weight: 700; }
-.pub-desc{ white-space: pre-wrap; color:#111827; }
-
 /* ===== SELLER CARD ===== */
 .seller-card {
   margin-top: 16px;
@@ -217,9 +192,8 @@
   align-items: center;
   gap: 4px;
 }
-.seller-sub  { color: #6b7280; font-size: 13px; }
 
-/* Enlace del vendedor sin romper layout */
+/* Enlace del vendedor */
 .seller-link{
   background: none;
   border: 0;
@@ -234,9 +208,8 @@
   transition: color 0.2s;
 }
 .seller-link:hover .seller-name{ color: #064e3b; }
-.seller-link .seller-sub{ color: #6b7280; font-size: 13px; }
 
-/* Badge de verificación */
+/* Verificación */
 .verified-badge {
   filter: drop-shadow(0 1px 2px rgba(59, 130, 246, 0.3));
   transition: transform 0.2s;
