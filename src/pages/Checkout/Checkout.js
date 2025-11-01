@@ -1,5 +1,5 @@
 // src/pages/Checkout/Checkout.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header/Header";
 import { useCart } from "../../components/Cart/CartContext";
@@ -13,7 +13,7 @@ import "./Checkout.css";
 const money = (n, currency = "USD") => {
   const amount = Number(n) || 0;
   const currencyToUse = currency || "USD";
-  
+
   if (currencyToUse === "USD") {
     const formatted = new Intl.NumberFormat("es-UY", {
       style: "currency",
@@ -22,7 +22,7 @@ const money = (n, currency = "USD") => {
     }).format(amount);
     return formatted.replace("US$", "U$D");
   }
-  
+
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: currencyToUse,
@@ -142,7 +142,7 @@ function CenteredModal({ open, type = "info", title, children, onClose, primaryA
    ========================= */
 export default function Checkout() {
   const navigate = useNavigate();
-  const { items, total, clear, paymentCurrency, convertPrice, remove, setQty } = useCart(); // ⬅️ sumo remove/setQty para poder quitar
+  const { items, total, clear, paymentCurrency, convertPrice, remove, setQty } = useCart();
 
   const [email, setEmail] = useState("");
   const [usuario, setUsuario] = useState(null);
@@ -156,9 +156,15 @@ export default function Checkout() {
 
   const [method, setMethod] = useState("card");
   const [card, setCard] = useState({ name: "", number: "", exp: "", cvc: "" });
-  
-  // ✅ Estado para el checkbox de términos
+
+  // ✅ Términos + Transferencia (comprobante)
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [transferFile, setTransferFile] = useState(null);
+  const [transferPreview, setTransferPreview] = useState(null);
+  const [uploadingProof, setUploadingProof] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedProof, setUploadedProof] = useState(null); // { url, path, name }
+  const fileInputRef = useRef(null);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -168,10 +174,9 @@ export default function Checkout() {
 
   const totalFinal = useMemo(() => total, [total]);
 
-  // ⛔ listado de ítems no disponibles (sin stock / inactivos)
+  // ⛔ listado de ítems no disponibles
   const [unavailable, setUnavailable] = useState([]);
 
-  // handler para quitar item (usa remove o setQty según el CartContext)
   const removeItem = (id) => {
     if (typeof remove === "function") remove(id);
     else if (typeof setQty === "function") setQty(id, 0);
@@ -258,7 +263,7 @@ export default function Checkout() {
     setCard((c) => ({ ...c, [key]: v }));
   };
 
-  // Verificar disponibilidad cada vez que cambia el carrito
+  // Verificar disponibilidad
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -297,7 +302,7 @@ export default function Checkout() {
         if (isMounted) setUnavailable(issues);
       } catch (e) {
         console.error("Error verificando disponibilidad:", e);
-        if (isMounted) setUnavailable([]); // en error no bloqueamos preventivamente
+        if (isMounted) setUnavailable([]);
       }
     })();
     return () => { isMounted = false; };
@@ -310,9 +315,9 @@ export default function Checkout() {
         .select(`id_usuario, titulo`)
         .eq("id_publicacion", publicacionId)
         .single();
-  
+
       if (pubError) throw pubError;
-  
+
       const { error: notifError } = await supabase
         .from("notificacion")
         .insert({
@@ -324,7 +329,7 @@ export default function Checkout() {
           id_publicacion: publicacionId,
           leida: false
         });
-  
+
       if (notifError) {
         console.error("Error al crear notificación:", notifError);
         throw notifError;
@@ -333,11 +338,69 @@ export default function Checkout() {
       console.error("Error al notificar vendedor:", error);
     }
   };
-  
+
+  // ====== Soporte de comprobante (transferencia)
+  const handleProofChange = (e) => {
+    const f = e.target.files?.[0] || null;
+    setTransferFile(f);
+    setUploadedProof(null);
+    setUploadProgress(0);
+    if (f && f.type.startsWith("image/")) {
+      const url = URL.createObjectURL(f);
+      setTransferPreview(url);
+    } else {
+      setTransferPreview(null);
+    }
+  };
+
+  const removeProof = () => {
+    setTransferFile(null);
+    setTransferPreview(null);
+    setUploadedProof(null);
+    setUploadProgress(0);
+    setUploadingProof(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  async function uploadComprobante(userId) {
+    if (!transferFile) return null;
+
+    // bucket sugerido: 'comprobantes'
+    const bucket = supabase.storage.from("comprobantes");
+    const ts = Date.now();
+    const safeName = transferFile.name?.replace(/[^\w.\-]+/g, "_") || `comprobante_${ts}`;
+    const path = `${userId}/${ts}_${safeName}`;
+
+    // (Supabase no expone progreso real del upload)
+    setUploadingProof(true);
+    setUploadProgress(20);
+
+    const { error: upErr } = await bucket.upload(path, transferFile, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: transferFile.type || undefined,
+    });
+
+    if (upErr) {
+      setUploadingProof(false);
+      throw upErr;
+    }
+
+    setUploadProgress(80);
+
+    const { data: pub } = bucket.getPublicUrl(path);
+    const url = pub?.publicUrl || null;
+
+    setUploadProgress(100);
+    setUploadingProof(false);
+    const result = { url, path, name: safeName };
+    setUploadedProof(result);
+    return result;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ Validar términos aceptados
     if (!acceptedTerms) {
       setModalType("error");
       setModalTitle("Términos requeridos");
@@ -354,7 +417,6 @@ export default function Checkout() {
       return;
     }
 
-    // ⛔ bloquear si hay ítems no disponibles
     if (unavailable.length > 0) {
       setModalType("error");
       setModalTitle("Hay ítems no disponibles");
@@ -372,6 +434,8 @@ export default function Checkout() {
       setModalOpen(true);
       return;
     }
+
+    // Validaciones según método
     if (method === "card") {
       const err = validateCard(card);
       if (err) {
@@ -381,7 +445,16 @@ export default function Checkout() {
         setModalOpen(true);
         return;
       }
+    } else if (method === "transfer") {
+      if (!transferFile && !uploadedProof) {
+        setModalType("error");
+        setModalTitle("Comprobante requerido");
+        setModalText("Subí una imagen o PDF del comprobante de la transferencia para poder confirmar el pedido.");
+        setModalOpen(true);
+        return;
+      }
     }
+
     if (!usuario?.id_usuario) {
       setModalType("error");
       setModalTitle("Usuario no identificado");
@@ -393,6 +466,7 @@ export default function Checkout() {
     try {
       setLoading(true);
 
+      // Verificación de stock justo antes
       const stockChecks = await Promise.all(
         items.map(async (item) => {
           const { data: pub, error } = await supabase
@@ -414,28 +488,29 @@ export default function Checkout() {
       );
 
       const sinStock = stockChecks.filter(
-        (check) =>
-          check.cantidadSolicitada > check.stockDisponible ||
-          check.estado !== "Activa"
+        (check) => check.cantidadSolicitada > check.stockDisponible || check.estado !== "Activa"
       );
 
       if (sinStock.length > 0) {
         const mensajes = sinStock.map(
           (item) =>
             `• ${item.titulo}: ${
-              item.estado !== "Activa"
-                ? "No disponible"
-                : `Solo quedan ${item.stockDisponible} unidad(es)`
+              item.estado !== "Activa" ? "No disponible" : `Solo quedan ${item.stockDisponible} unidad(es)`
             }`
         );
         setModalType("error");
         setModalTitle("Stock insuficiente");
-        setModalText(
-          `No hay stock suficiente para:\n${mensajes.join("\n")}\n\nActualizá tu carrito.`
-        );
+        setModalText(`No hay stock suficiente para:\n${mensajes.join("\n")}\n\nActualizá tu carrito.`);
         setModalOpen(true);
         setLoading(false);
         return;
+      }
+
+      // Subir comprobante si corresponde
+      let proof = uploadedProof;
+      if (method === "transfer" && !proof) {
+        proof = await uploadComprobante(usuario.id_usuario);
+        if (!proof?.url) throw new Error("No se pudo obtener la URL del comprobante.");
       }
 
       const pedidosCreados = [];
@@ -456,6 +531,8 @@ export default function Checkout() {
             estado: "pendiente",
             id_direccion: selected.id_direccion,
             metodo_pago: method,
+            comprobante_url: proof?.url || null,
+            comprobante_nombre: proof?.name || null,
           })
           .select()
           .single();
@@ -464,12 +541,13 @@ export default function Checkout() {
         pedidosCreados.push(pedido);
 
         await notificarVendedor(
-          item.id, 
+          item.id,
           item.qty,
           `${usuario.nombre} ${usuario.apellido}`.trim() || "Un comprador",
           pedido.id_pedido
         );
 
+        // Actualizar stock
         const { data: pubActual, error: stockError } = await supabase
           .from("publicacion")
           .select("stock")
@@ -484,22 +562,18 @@ export default function Checkout() {
             .from("publicacion")
             .update({ stock: 0, estado: "Vendida" })
             .eq("id_publicacion", item.id);
-
-          if (updateError) {
-            console.error("Error al marcar publicación como Vendida:", updateError);
-          }
+          if (updateError) console.error("Error al marcar publicación como Vendida:", updateError);
         } else {
           const { error: updateError } = await supabase
             .from("publicacion")
             .update({ stock: nuevoStock })
             .eq("id_publicacion", item.id);
-          
           if (updateError) throw updateError;
         }
       }
 
       window.dispatchEvent(
-        new CustomEvent("new-notification", { 
+        new CustomEvent("new-notification", {
           detail: {
             tipo: "compra",
             titulo: "Pedido confirmado",
@@ -509,14 +583,14 @@ export default function Checkout() {
           }
         })
       );
-      
+
       clear();
+      removeProof();
+
       setModalType("success");
       setModalTitle("¡Pedido confirmado! 🎉");
       setModalText(
-        `Se ${pedidosCreados.length === 1 ? "creó" : "crearon"} ${
-          pedidosCreados.length
-        } pedido(s).\n\nPodrás ver el estado de tu${pedidosCreados.length > 1 ? 's' : ''} pedido${pedidosCreados.length > 1 ? 's' : ''} en "Mis Pedidos".`
+        `Se ${pedidosCreados.length === 1 ? "creó" : "crearon"} ${pedidosCreados.length} pedido(s).\n\nRecordá que la acreditación por transferencia puede demorar hasta 24 h hábiles.`
       );
       setModalOpen(true);
     } catch (error) {
@@ -600,6 +674,7 @@ export default function Checkout() {
   }
 
   const blockedByUnavailable = unavailable.length > 0;
+  const transferNeedsProof = method === "transfer" && !uploadedProof && !transferFile;
 
   return (
     <>
@@ -766,7 +841,72 @@ export default function Checkout() {
                         <div>Titular: La Otra Tribuna</div>
                         <div>Referencia: tu email ({email})</div>
                       </div>
-                      <p className="muted xs">
+
+                      {/* ===== Uploader (comprobante) ===== */}
+                      <div className="uploader">
+                        <label className="u-label">
+                          Comprobante de transferencia <span className="req">*</span>
+                        </label>
+
+                        <label className={`u-drop ${transferNeedsProof ? "u-error" : ""}`}>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*,application/pdf"
+                            onChange={handleProofChange}
+                          />
+                          <div className="u-cta">
+                            <div className="u-icon">📎</div>
+                            <div>
+                              <strong>Arrastrá y soltá</strong> o <u>elegí un archivo</u><br />
+                              <span className="muted xs">JPG, PNG o PDF — máx. 10 MB</span>
+                            </div>
+                          </div>
+                        </label>
+
+                        {(transferFile || uploadedProof) && (
+                          <div className="u-file">
+                            <div className="u-thumb">
+                              {transferPreview ? (
+                                <img src={transferPreview} alt="Comprobante" />
+                              ) : (
+                                <div className="u-generic">PDF</div>
+                              )}
+                            </div>
+                            <div className="u-meta">
+                              <div className="u-name">
+                                {uploadedProof?.name || transferFile?.name}
+                              </div>
+
+                              {uploadingProof ? (
+                                <div className="u-progress">Subiendo… {uploadProgress}%</div>
+                              ) : uploadedProof ? (
+                                <div className="u-ok">Comprobante cargado ✔</div>
+                              ) : (
+                                <div className="muted xs">Listo para subir al confirmar</div>
+                              )}
+                            </div>
+
+                            {/* botón eliminar */}
+                            <button
+                              type="button"
+                              className="u-remove"
+                              onClick={removeProof}
+                              title="Eliminar comprobante"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+
+                        {transferNeedsProof && (
+                          <div className="u-help-error">
+                            Debés adjuntar el comprobante para finalizar el pedido.
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="muted xs" style={{ marginTop: 8 }}>
                         Confirmaremos tu pago dentro de 24 h hábiles.
                       </p>
                     </div>
@@ -780,11 +920,11 @@ export default function Checkout() {
           <aside className="ck-aside">
             <div className="ck-card">
               <h2 className="ck-h3">Resumen</h2>
-              {/* Indicador de moneda */}
-              <div style={{ 
-                padding: "0.5rem 0.75rem", 
-                background: "#f0f9ff", 
-                borderRadius: "6px", 
+
+              <div style={{
+                padding: "0.5rem 0.75rem",
+                background: "#f0f9ff",
+                borderRadius: "6px",
                 marginBottom: "1rem",
                 fontSize: "0.85rem",
                 color: "#0369a1",
@@ -793,7 +933,6 @@ export default function Checkout() {
                 💱 Pagando en {paymentCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
               </div>
 
-              {/* Aviso si hay ítems no disponibles */}
               {blockedByUnavailable && (
                 <div role="alert" style={{
                   background: "#fef2f2",
@@ -848,10 +987,10 @@ export default function Checkout() {
                           x{it.qty} · {it.categoria}
                         </div>
                         {mostrarConversion && (
-                          <div style={{ 
-                            fontSize: "0.7rem", 
+                          <div style={{
+                            fontSize: "0.7rem",
                             color: "#6b7280",
-                            marginTop: "0.2rem" 
+                            marginTop: "0.2rem"
                           }}>
                             {money(precioOriginal, it.moneda)} → {money(precioConvertido, paymentCurrency)}
                           </div>
@@ -906,32 +1045,13 @@ export default function Checkout() {
               </div>
 
               {/* Checkbox de términos */}
-              <label style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "0.75rem",
-                padding: "1rem",
-                background: "#fef3c7",
-                border: "1px solid #fcd34d",
-                borderRadius: "8px",
-                marginBottom: "1rem",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                lineHeight: "1.5"
-              }}>
+              <label className="ck-terms">
                 <input
                   type="checkbox"
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  style={{
-                    marginTop: "0.2rem",
-                    width: "18px",
-                    height: "18px",
-                    cursor: "pointer",
-                    flexShrink: 0
-                  }}
                 />
-                <span style={{ color: "#92400e" }}>
+                <span>
                   <strong>Entiendo que una vez confirmado el pedido no se puede cancelar.</strong> Los productos serán procesados inmediatamente.
                 </span>
               </label>
@@ -939,10 +1059,27 @@ export default function Checkout() {
               <button
                 type="submit"
                 className="ck-submit"
-                disabled={loading || !acceptedTerms || blockedByUnavailable || items.length === 0}
+                disabled={
+                  loading ||
+                  !acceptedTerms ||
+                  blockedByUnavailable ||
+                  items.length === 0 ||
+                  (method === "transfer" && !transferFile && !uploadedProof) ||
+                  uploadingProof
+                }
                 style={{
-                  opacity: (!acceptedTerms || blockedByUnavailable || items.length === 0) ? 0.5 : 1,
-                  cursor: (!acceptedTerms || blockedByUnavailable || items.length === 0) ? 'not-allowed' : 'pointer'
+                  opacity:
+                    (!acceptedTerms ||
+                      blockedByUnavailable ||
+                      items.length === 0 ||
+                      (method === "transfer" && !transferFile && !uploadedProof) ||
+                      uploadingProof) ? 0.5 : 1,
+                  cursor:
+                    (!acceptedTerms ||
+                      blockedByUnavailable ||
+                      items.length === 0 ||
+                      (method === "transfer" && !transferFile && !uploadedProof) ||
+                      uploadingProof) ? "not-allowed" : "pointer"
                 }}
               >
                 {loading
@@ -951,7 +1088,9 @@ export default function Checkout() {
                     ? "Hay ítems no disponibles"
                     : items.length === 0
                       ? "Carrito vacío"
-                      : "Pagar pedido"}
+                      : method === "transfer" && (transferNeedsProof || uploadingProof)
+                        ? "Adjuntá el comprobante"
+                        : "Pagar pedido"}
               </button>
 
               {blockedByUnavailable && (
