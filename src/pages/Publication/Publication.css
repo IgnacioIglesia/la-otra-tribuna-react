@@ -17,29 +17,50 @@
   gap: 24px;
 }
 
-/* ===== MEDIA: tamaño consistente ===== */
+/* ===== MEDIA: tamaño consistente + LQIP + fade-in ===== */
 .pub-media {
   position: relative;
   width: 100%;
   height: clamp(360px, 56vw, 560px);
   border-radius: 14px;
   overflow: hidden;
-  background: #0b0f13;
+  /* Fondo claro para evitar el “flash” negro */
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
 }
 
+/* Usamos el thumbnail como fondo desenfocado mientras carga */
+.pub-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--blur-bg);
+  background-size: cover;
+  background-position: 50% 50%;
+  filter: blur(14px);
+  transform: scale(1.05);
+  opacity: 0.7;
+  transition: opacity 220ms ease;
+}
+
+/* Cuando la imagen grande está lista, escondemos el blur */
+.pub-media.is-ready::before { opacity: 0; }
+
+/* Imagen con fade-in */
 .pub-media img.pub-img {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
   object-position: 50% 50%;
-  will-change: transform, object-position;
-  transition: transform 120ms ease-out, object-position 120ms ease-out;
+  will-change: opacity;
+  opacity: 0;
+  transition: opacity 220ms ease;
 }
+.pub-media.is-ready img.pub-img { opacity: 1; }
 
 /* Chip favorito */
 .fav-chip {
@@ -56,7 +77,7 @@
 }
 .fav-chip.is-active { color: #e11; }
 
-/* Controles de zoom */
+/* Controles de zoom (si los usás más adelante) */
 .zoom-controls{
   position:absolute;
   right:10px;
@@ -220,10 +241,7 @@
   filter: drop-shadow(0 1px 2px rgba(59, 130, 246, 0.3));
   transition: transform 0.2s;
 }
-
-.seller-link:hover .verified-badge {
-  transform: scale(1.1);
-}
+.seller-link:hover .verified-badge { transform: scale(1.1); }
 
 /* ===== EMPTY / ERROR ===== */
 .empty {

@@ -48,6 +48,7 @@ export default function Publication() {
   const [seller, setSeller] = useState(null);
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState("");
+  const [imgLoaded, setImgLoaded] = useState(false); // 👈 para el fade-in / blur
 
   const isFav = useMemo(
     () => favItems.some((x) => x.id === Number(id)),
@@ -60,12 +61,13 @@ export default function Publication() {
     (async () => {
       setLoading(true);
       setError("");
+      setImgLoaded(false);
 
       try {
-        // 1) Publicación + fotos (sin url_thumb para evitar errores si no existe la columna)
+        // 1) Publicación + fotos
         const { data, error: e1 } = await supabase
           .from("publicacion")
-          .select("*, foto (url, orden_foto)")
+          .select("*, foto (url, orden_foto, url_thumb)")
           .eq("id_publicacion", id)
           .maybeSingle();
 
@@ -88,7 +90,7 @@ export default function Publication() {
 
           sellerData = u || null;
 
-          // 3) Verificar si el vendedor está verificado
+          // 3) Verificación de identidad
           if (u?.id_usuario) {
             const { data: verif } = await supabase
               .from("verificacion_identidad")
@@ -145,10 +147,9 @@ export default function Publication() {
     (a, b) => (a.orden_foto || 0) - (b.orden_foto || 0)
   );
   const raw = fotos.length ? fotos[0].url : PLACEHOLDER;
-  // fallback por si más adelante agregás url_thumb a la tabla (o si alguna fila ya lo tiene)
   const rawThumb = fotos.length ? (fotos[0].url_thumb || fotos[0].url) : PLACEHOLDER;
 
-  // ✨ Servimos siempre WebP (si la URL admite query params / Supabase Storage)
+  // Servimos WebP (si URL admite query params / Supabase Storage)
   const img = ensureWebP(raw, { width: 960, quality: 78 });
   const imgThumb = ensureWebP(rawThumb, { width: 480, quality: 70 });
 
@@ -173,7 +174,10 @@ export default function Publication() {
         <section className="pub-card">
           <div className="pub-layout">
             {/* ===== IMAGEN ===== */}
-            <div className="pub-media">
+            <div
+              className={`pub-media ${imgLoaded ? "is-ready" : ""}`}
+              style={{ "--blur-bg": `url("${imgThumb}")` }}
+            >
               <picture>
                 {/* Preferimos WebP (thumb + grande) */}
                 <source
@@ -186,13 +190,16 @@ export default function Publication() {
                   className="pub-img"
                   src={img}
                   alt={pub.titulo}
-                  loading="lazy"
+                  /* Pedimos YA para evitar el flash */
+                  loading="eager"
+                  fetchpriority="high"
                   decoding="async"
-                  fetchpriority="low"
                   width="720"
                   height="900"
+                  onLoad={() => setImgLoaded(true)}
                   onError={(e) => {
                     e.currentTarget.src = PLACEHOLDER;
+                    setImgLoaded(true);
                   }}
                 />
               </picture>
