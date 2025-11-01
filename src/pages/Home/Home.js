@@ -39,13 +39,12 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [showHero, setShowHero] = useState(
-    !(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo")
-  );
+  // ✅ Determinar si debe mostrarse el hero SOLO al inicio
+  const wantsCatalog = location.hash === "#catalogo" || location.state?.scrollTo === "catalogo";
+  const [showHero, setShowHero] = useState(!wantsCatalog);
   
-  useEffect(() => {
-   setShowHero(!(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"));
-  }, [location.hash, location.state]);
+  // ✅ Referencia para saber si ya se scrolleó
+  const hasScrolledRef = useRef(false);
 
   /* ===== Session ===== */
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -114,34 +113,48 @@ export default function Home() {
     return () => { alive = false; };
   }, [currentUserId]);
 
-  /* ===== Scroll suave al catálogo ===== */
+  /* ===== Scroll suave al catálogo - MEJORADO ===== */
   useEffect(() => {
-    const wantsCatalog = location.hash === "#catalogo" || location.state?.scrollTo === "catalogo";
-    if (!wantsCatalog || loading) return;
+    // Si no quiere ir al catálogo o ya scrolleamos, no hacer nada
+    if (!wantsCatalog || hasScrolledRef.current) return;
+    
+    // Esperar a que termine de cargar
+    if (loading) return;
 
     const scrollToCatalog = () => {
       const el = document.getElementById("catalogo");
       if (!el) return false;
+      
       const header = document.getElementById("siteHeader");
       const headerHeight = header?.getBoundingClientRect().height || 0;
       const y = el.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 20);
+      
       window.scrollTo({ top: y, behavior: "smooth" });
       return true;
     };
 
+    // Limpiar el state si viene de navigate
     if (location.state?.scrollTo) {
       navigate(location.pathname + location.hash, { replace: true, state: {} });
     }
 
+    // Intentar scrollear después de que el DOM se estabilice
     const timeoutId = setTimeout(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const ok = scrollToCatalog();
-          if (!ok) {
+          const success = scrollToCatalog();
+          
+          if (success) {
+            hasScrolledRef.current = true;
+          } else {
+            // Reintentar si no se encontró el elemento
             let attempts = 0;
-            const id = setInterval(() => {
+            const intervalId = setInterval(() => {
               attempts++;
-              if (scrollToCatalog() || attempts >= 30) clearInterval(id);
+              if (scrollToCatalog() || attempts >= 20) {
+                clearInterval(intervalId);
+                hasScrolledRef.current = true;
+              }
             }, 100);
           }
         });
@@ -149,17 +162,33 @@ export default function Home() {
     }, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [loading, location.state, location.hash, location.pathname, navigate]);
+  }, [loading, wantsCatalog, location.state, location.hash, location.pathname, navigate]);
+
+  // ✅ Resetear hasScrolledRef cuando cambia la ubicación
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [location.pathname, location.hash]);
 
   /* ===== Hero rotativo ===== */
   const [idx, setIdx] = useState(0);
   const [prevIdx, setPrevIdx] = useState(null);
-  useEffect(() => { HERO_IMGS.forEach((src) => { const i = new Image(); i.src = src; }); }, []);
+  
+  useEffect(() => { 
+    HERO_IMGS.forEach((src) => { 
+      const i = new Image(); 
+      i.src = src; 
+    }); 
+  }, []);
+  
   useEffect(() => {
     if (!showHero) return;
-    const id = setInterval(() => { setPrevIdx(idx); setIdx((i) => (i + 1) % HERO_IMGS.length); }, 8000);
+    const id = setInterval(() => { 
+      setPrevIdx(idx); 
+      setIdx((i) => (i + 1) % HERO_IMGS.length); 
+    }, 8000);
     return () => clearInterval(id);
   }, [idx, showHero]);
+  
   const dirClass = (idx % 2 === 0) ? "dir-left" : "dir-right";
 
   /* ===== Filtros (SIN precio) ===== */
@@ -262,7 +291,7 @@ export default function Home() {
     <>
       <Header />
 
-      {/* HERO */}
+      {/* HERO - Solo se muestra si NO viene directo al catálogo */}
       {showHero && (
         <section className="hero">
           {prevIdx !== null && <div className="hero-bg prev" style={{ backgroundImage: `url(${HERO_IMGS[prevIdx]})` }} />}
