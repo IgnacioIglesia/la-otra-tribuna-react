@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import HeaderSimplif from "../../components/HeaderSimplif/HeaderSimplif";
+import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Vender.css";
 
@@ -277,7 +278,7 @@ export default function Vender() {
       
         // Guardar en base de datos
         await supabase.from("notificacion").insert({
-          id_usuario: id_usuario, // ✅ id_usuario (no id_usuario_destino)
+          id_usuario: id_usuario,
           tipo: "publicacion",
           titulo: "¡Publicación creada! ✨",
           mensaje: `Tu publicación "${titulo}" fue creada exitosamente`,
@@ -285,7 +286,6 @@ export default function Vender() {
           leida: false
         });
       } catch (notifError) {
-        // No interrumpir el flujo si falla la notificación
         console.error("Error al crear notificación:", notifError);
       }
       
@@ -541,45 +541,58 @@ export default function Vender() {
           {/* Moneda */}
           <div className="field">
             <label>Moneda</label>
-            <select value={form.moneda} onChange={update("moneda")}>
-              <option>UYU</option>
-              <option>USD</option>
-            </select>
+            <Dropdown
+              value={form.moneda}
+              onChange={(v) => setForm((p) => ({ ...p, moneda: v }))}
+              options={[
+                { value: "UYU", label: "UYU" },
+                { value: "USD", label: "USD" },
+              ]}
+            />
           </div>
 
           {/* Condición */}
           <div className="field">
             <label>Condición</label>
-            <select value={form.condicion} onChange={update("condicion")}>
-              <option>Nuevo</option>
-              <option>Usado</option>
-            </select>
+            <Dropdown
+              value={form.condicion}
+              onChange={(v) => setForm((p) => ({ ...p, condicion: v }))}
+              options={[
+                { value: "Nuevo", label: "Nuevo" },
+                { value: "Usado", label: "Usado" },
+              ]}
+            />
           </div>
 
           {/* Autenticidad */}
           <div className="field">
             <label>Autenticidad</label>
-            <select
+            <Dropdown
               value={form.autenticidad}
-              onChange={update("autenticidad")}
-            >
-              <option>Original</option>
-              <option>Réplica</option>
-            </select>
+              onChange={(v) => setForm((p) => ({ ...p, autenticidad: v }))}
+              options={[
+                { value: "Original", label: "Original" },
+                { value: "Réplica", label: "Réplica" },
+              ]}
+            />
           </div>
 
           {/* Talle */}
           <div className="field">
             <label>Talle</label>
-            <select value={form.talle} onChange={update("talle")}>
-              <option>XS</option>
-              <option>S</option>
-              <option>M</option>
-              <option>L</option>
-              <option>XL</option>
-              <option>XXL</option>
-              <option>XXXL</option>
-            </select>
+            <Dropdown
+              value={form.talle}
+              onChange={(v) => setForm((p) => ({ ...p, talle: v }))}
+              options={[
+                { value: "XS", label: "XS" },
+                { value: "S", label: "S" },
+                { value: "M", label: "M" },
+                { value: "L", label: "L" },
+                { value: "XL", label: "XL" },
+                { value: "XXL", label: "XXL" },
+                { value: "XXXL", label: "XXXL" },
+              ]}
+            />
           </div>
 
           {/* Stock */}
@@ -599,7 +612,7 @@ export default function Vender() {
           {/* Categoría (Club / Selección) */}
           <div className="field">
             <label>Categoría</label>
-            <div className="category-options">
+            <div className="glass-toggle">
               <button
                 type="button"
                 className={form.tipo === "Club" ? "active" : ""}
@@ -620,7 +633,7 @@ export default function Vender() {
           {/* Colección (Actual / Retro) */}
           <div className="field">
             <label>Colección</label>
-            <div className="category-options">
+            <div className="glass-toggle">
               <button
                 type="button"
                 className={form.coleccion === "Actual" ? "active" : ""}

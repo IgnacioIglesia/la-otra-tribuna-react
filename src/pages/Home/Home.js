@@ -5,7 +5,7 @@ import ProductGrid from "../../components/ProductGrid/ProductGrid";
 import Dropdown from "../../components/Dropdown/Dropdown";
 import { supabase } from "../../lib/supabaseClient";
 import "./Home.css";
-import { useFilters } from "../../context/FiltersContext"; // 👈 NUEVO
+import { useFilters } from "../../context/FiltersContext";
 
 /* ===== Utils ===== */
 function daysFrom(dateStr) {
@@ -35,15 +35,14 @@ function matchesTalle(prodTalle, selected) {
 }
 
 export default function Home() {
-  const { homeFilters, setHomeFilters } = useFilters(); // 👈 NUEVO
+  const { homeFilters, setHomeFilters } = useFilters();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Al montar, si venís con #catalogo o state, ocultá hero; si no, mostralo
   const [showHero, setShowHero] = useState(
     !(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo")
   );
-  // Cada vez que cambia el hash/state, recalculá
+  
   useEffect(() => {
    setShowHero(!(location.hash === "#catalogo" || location.state?.scrollTo === "catalogo"));
   }, [location.hash, location.state]);
@@ -163,20 +162,13 @@ export default function Home() {
   }, [idx, showHero]);
   const dirClass = (idx % 2 === 0) ? "dir-left" : "dir-right";
 
-  /* ===== Filtros ===== */
+  /* ===== Filtros (SIN precio) ===== */
   const [sort, setSort] = useState("default");
-  const [moneda, setMoneda] = useState("");         // "" => Todas
-  const [coleccion, setColeccion] = useState("");   // "" => Todas
-  const [categoria, setCategoria] = useState("");   // "" => Todas
+  const [moneda, setMoneda] = useState("");
+  const [coleccion, setColeccion] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [equipo, setEquipo] = useState("Todos");
-  const [talle, setTalle] = useState("");           // "" => Todos
-
-  // ✅ Detectar si hay mezcla de monedas
-  const hayMezclaMonedas = useMemo(() => {
-    if (moneda) return false; // Si ya filtró por moneda, no hay mezcla
-    const monedasUnicas = new Set(rows.map(p => p.moneda));
-    return monedasUnicas.size > 1;
-  }, [rows, moneda]);
+  const [talle, setTalle] = useState("");
 
   const hasCategoria = categoria === "Club" || categoria === "Selección";
 
@@ -206,22 +198,7 @@ export default function Home() {
     return ["Todos", ...list];
   }, [rows, moneda, coleccion, categoria, hasCategoria]);
 
-  // precio máximo según moneda seleccionada
-  const [maxPrecio, setMaxPrecio] = useState(0);
-  const maxPrecioAbsoluto = useMemo(() => {
-    const base = moneda ? rows.filter((p) => p.moneda === moneda) : rows;
-    if (!base.length) return 0;
-    const max = Math.max(...base.map((p) => Number(p.precio) || 0));
-    return max + 1; // ✅ Agregar 1 para incluir el producto más caro
-  }, [rows, moneda]);
-  
-  useEffect(() => { 
-    if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto); 
-  }, [maxPrecioAbsoluto]);
-  
-  const pct = maxPrecioAbsoluto ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100)) : 0;
-
-  // aplicar filtros
+  // aplicar filtros (SIN filtro de precio)
   const productos = useMemo(() => {
     let list = rows.filter(
       (p) =>
@@ -229,8 +206,7 @@ export default function Home() {
         (coleccion === "" || coleccion === "Todas" || p.coleccion === coleccion) &&
         (categoria === "" || categoria === "Todos" || p.categoria === categoria) &&
         (equipo === "Todos" || p.club === equipo) &&
-        matchesTalle(p.talle, talle) &&
-        (Number(p.precio) || 0) <= (Number(maxPrecio) || 0)
+        matchesTalle(p.talle, talle)
     );
 
     switch (sort) {
@@ -240,7 +216,7 @@ export default function Home() {
       default: break;
     }
     return list;
-  }, [rows, moneda, coleccion, categoria, equipo, talle, maxPrecio, sort]);
+  }, [rows, moneda, coleccion, categoria, equipo, talle, sort]);
 
   const [anyDdOpen, setAnyDdOpen] = useState(false);
 
@@ -251,13 +227,10 @@ export default function Home() {
     setCategoria("");
     setEquipo("Todos");
     setTalle("");
-    const newMax = rows.length ? Math.max(...rows.map((p) => Number(p.precio) || 0)) + 1 : 0;
-    setMaxPrecio(newMax);
     setAnyDdOpen(false);
   };
 
-  /* ===== Persistencia de filtros (rehidratar/guardar) ===== */
-  // Rehidratar una sola vez al montar (si hay snapshot previo)
+  /* ===== Persistencia de filtros ===== */
   useEffect(() => {
     if (!homeFilters) return;
     const {
@@ -266,8 +239,7 @@ export default function Home() {
       coleccion: _coleccion,
       categoria: _categoria,
       equipo: _equipo,
-      talle: _talle,
-      maxPrecio: _maxPrecio
+      talle: _talle
     } = homeFilters;
 
     if (_sort !== undefined) setSort(_sort);
@@ -276,16 +248,14 @@ export default function Home() {
     if (_categoria !== undefined) setCategoria(_categoria);
     if (_equipo !== undefined) setEquipo(_equipo);
     if (_talle !== undefined) setTalle(_talle);
-    if (_maxPrecio !== undefined) setMaxPrecio(_maxPrecio);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // 👈 solo al montar
+  }, []);
 
-  // Guardar snapshot cada vez que cambie algún filtro
   useEffect(() => {
     setHomeFilters({
-      sort, moneda, coleccion, categoria, equipo, talle, maxPrecio
+      sort, moneda, coleccion, categoria, equipo, talle
     });
-  }, [sort, moneda, coleccion, categoria, equipo, talle, maxPrecio, setHomeFilters]);
+  }, [sort, moneda, coleccion, categoria, equipo, talle, setHomeFilters]);
 
   /* ===== Render ===== */
   return (
@@ -312,10 +282,9 @@ export default function Home() {
           {!loading && !error && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* FILTROS EN DOS LÍNEAS */}
-        <div className={`filters-toolbar-v2 ${anyDdOpen ? "dd-open" : ""}`}>
-          {/* PRIMERA LÍNEA: Ordenamiento y Filtros principales */}
-          <div className="filter-row filter-row--main">
+        {/* FILTROS EN UNA LÍNEA */}
+        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
+          <div className="filters-single-row">
             <Dropdown
               icon="↕︎"
               value={sort}
@@ -332,26 +301,18 @@ export default function Home() {
             <Dropdown
               icon="↕︎"
               placeholder="Elegí moneda"
-              value={moneda}              // "" => muestra el placeholder
+              value={moneda}
               onChange={(v) => {
-                const sel = v === "ALL" ? "" : v;    // mapear "ALL" -> ""
+                const sel = v === "ALL" ? "" : v;
                 setMoneda(sel);
-
-                // Resetear precio según la moneda elegida
-                const newBase = sel ? rows.filter((p) => p.moneda === sel) : rows;
-                const newMax = newBase.length
-                  ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1
-                  : 0;
-                setMaxPrecio(newMax);
               }}
               onOpenChange={setAnyDdOpen}
               options={[
-                { value: "ALL", label: "Todas" },    // 👈 ya NO usamos "" acá
+                { value: "ALL", label: "Todas" },
                 { value: "USD", label: "USD" },
                 { value: "UYU", label: "UYU" },
               ]}
             />
-
             
             <Dropdown
               icon="↕︎"
@@ -405,29 +366,6 @@ export default function Home() {
                 ...SIZES.map((s) => ({ value: s, label: s })),
               ]}
             />
-          </div>
-
-          {/* SEGUNDA LÍNEA: Precio y Reset */}
-          <div className="filter-row filter-row--secondary">
-            <div className="price-filter" style={{ "--pct": `${pct}%` }}>
-              <label className="price-label">
-                Precio máx.: 
-                <span className="price-value">
-                  {moneda === "USD" ? "U$D" : moneda === "UYU" ? "$" : "$"}
-                  {" "}{Number(maxPrecio || 0).toLocaleString("es-UY")}
-                </span>
-              </label>
-              <input
-                type="range"
-                className="price-slider"
-                min="0"
-                max={maxPrecioAbsoluto || 0}
-                step="1"
-                value={maxPrecio || 0}
-                onChange={(e) => setMaxPrecio(Number(e.target.value))}
-                aria-label="Precio máximo"
-              />
-            </div>
 
             <button
               className="btn-reset-filters"
@@ -436,7 +374,7 @@ export default function Home() {
               title="Restablecer filtros"
               disabled={loading || !!error}
             >
-               Restablecer
+              🔄 Restablecer
             </button>
           </div>
         </div>

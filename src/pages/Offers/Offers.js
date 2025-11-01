@@ -40,7 +40,7 @@ export default function Offers() {
   const [all, setAll] = useState([]);
   const [error, setError] = useState("");
 
-  /* ===== Filtros ===== */
+  /* ===== Filtros (SIN precio) ===== */
   const [sort, setSort] = useState("default");
   const [moneda, setMoneda] = useState("");
   const [coleccion, setColeccion] = useState("");
@@ -106,9 +106,9 @@ export default function Offers() {
               talle: pub.talle || "",
               moneda: pub.moneda || "USD",
               isOffer: true,
-              precioAnterior: basePrice,        // ✅ Precio original (para mostrar tachado)
-              precio_oferta: offerPrice,        // ✅ Precio con descuento
-              precio: offerPrice,               // ✅ CAMBIADO: Ahora precio es el de oferta
+              precioAnterior: basePrice,
+              precio_oferta: offerPrice,
+              precio: offerPrice,
             };
           });
 
@@ -149,22 +149,6 @@ export default function Offers() {
     return ["Todos", ...list];
   }, [all, moneda, coleccion, categoria, hasCategoria]);
 
-  const [maxPrecio, setMaxPrecio] = useState(0);
-  const maxPrecioAbsoluto = useMemo(() => {
-    const base = moneda ? all.filter((p) => p.moneda === moneda) : all;
-    if (!base.length) return 0;
-    const max = Math.max(...base.map((p) => Number(p.precio) || 0));
-    return max + 1; // ✅ +1 para incluir el más caro
-  }, [all, moneda]);
-
-  useEffect(() => {
-    if (maxPrecioAbsoluto > 0) setMaxPrecio(maxPrecioAbsoluto);
-  }, [maxPrecioAbsoluto]);
-
-  const pct = maxPrecioAbsoluto
-    ? Math.max(0, Math.min(100, (maxPrecio / maxPrecioAbsoluto) * 100))
-    : 0;
-
   const productos = useMemo(() => {
     let list = all.filter(
       (p) =>
@@ -172,8 +156,7 @@ export default function Offers() {
         (categoria === "" || categoria === "Todos" || p.categoria === categoria) &&
         (equipo === "Todos" || p.club === equipo) &&
         (moneda === "" || p.moneda === moneda) &&
-        matchesTalle(p.talle, talle) &&
-        (Number(p.precio) || 0) <= (Number(maxPrecio) || 0)
+        matchesTalle(p.talle, talle)
     );
 
     switch (sort) {
@@ -191,7 +174,7 @@ export default function Offers() {
     }
 
     return list;
-  }, [all, coleccion, categoria, equipo, talle, maxPrecio, sort, moneda]);
+  }, [all, coleccion, categoria, equipo, talle, sort, moneda]);
 
   const resetFilters = () => {
     setSort("default");
@@ -200,8 +183,6 @@ export default function Offers() {
     setCategoria("");
     setEquipo("Todos");
     setTalle("");
-    const newMax = all.length ? Math.max(...all.map((p) => Number(p.precio) || 0)) + 1 : 0;
-    setMaxPrecio(newMax);
     setAnyDdOpen(false);
   };
 
@@ -214,8 +195,7 @@ export default function Offers() {
       coleccion: _coleccion,
       categoria: _categoria,
       equipo: _equipo,
-      talle: _talle,
-      maxPrecio: _maxPrecio
+      talle: _talle
     } = offersFilters;
 
     if (_sort !== undefined) setSort(_sort);
@@ -224,15 +204,14 @@ export default function Offers() {
     if (_categoria !== undefined) setCategoria(_categoria);
     if (_equipo !== undefined) setEquipo(_equipo);
     if (_talle !== undefined) setTalle(_talle);
-    if (_maxPrecio !== undefined) setMaxPrecio(_maxPrecio);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     setOffersFilters({
-      sort, moneda, coleccion, categoria, equipo, talle, maxPrecio
+      sort, moneda, coleccion, categoria, equipo, talle
     });
-  }, [sort, moneda, coleccion, categoria, equipo, talle, maxPrecio, setOffersFilters]);
+  }, [sort, moneda, coleccion, categoria, equipo, talle, setOffersFilters]);
 
   return (
     <>
@@ -263,10 +242,9 @@ export default function Offers() {
           {error && <p className="catalog-sub" role="alert">{error}</p>}
         </div>
 
-        {/* TOOLBAR — DOS LÍNEAS */}
-        <div className={`filters-toolbar-v2 ${anyDdOpen ? "dd-open" : ""}`}>
-          {/* PRIMERA LÍNEA */}
-          <div className="filter-row filter-row--main">
+        {/* FILTROS EN UNA LÍNEA */}
+        <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
+          <div className="filters-single-row">
             <Dropdown
               icon="↕︎"
               value={sort}
@@ -287,12 +265,6 @@ export default function Offers() {
               onChange={(v) => {
                 const sel = v === "ALL" ? "" : v;
                 setMoneda(sel);
-
-                const newBase = sel ? all.filter((p) => p.moneda === sel) : all;
-                const newMax = newBase.length
-                  ? Math.max(...newBase.map((p) => Number(p.precio) || 0)) + 1
-                  : 0;
-                setMaxPrecio(newMax);
               }}
               onOpenChange={setAnyDdOpen}
               options={[
@@ -354,29 +326,6 @@ export default function Offers() {
                 ...SIZES.map((s) => ({ value: s, label: s })),
               ]}
             />
-          </div>
-
-          {/* SEGUNDA LÍNEA */}
-          <div className="filter-row filter-row--secondary">
-            <div className="price-filter" style={{ "--pct": `${pct}%` }}>
-              <label className="price-label">
-                Precio máx.:
-                <span className="price-value">
-                  {moneda === "USD" ? "U$D" : moneda === "UYU" ? "$" : "$"}{" "}
-                  {Number(maxPrecio || 0).toLocaleString("es-UY")}
-                </span>
-              </label>
-              <input
-                type="range"
-                className="price-slider"
-                min="0"
-                max={maxPrecioAbsoluto || 0}
-                step="1"
-                value={maxPrecio || 0}
-                onChange={(e) => setMaxPrecio(Number(e.target.value))}
-                aria-label="Precio máximo"
-              />
-            </div>
 
             <button
               className="btn-reset-filters"

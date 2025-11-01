@@ -8,30 +8,33 @@ import "./Publication.css";
 
 const PLACEHOLDER = "https://placehold.co/1200x900?text=Camiseta";
 
-function money(n, curr = "USD") {
-  const amount = Number(n || 0);
-  
-  if (curr === "USD") {
-    const formatted = new Intl.NumberFormat("es-UY", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    }).format(amount);
-    
-    // Reemplazar "US$" por "U$D"
-    return formatted.replace("US$", "U$D");
-  }
-  
+/* ===== Utils ===== */
+function money(n, curr = "UYU") {
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: curr,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(Number(n || 0));
 }
 
 function initialsFrom(nombre = "", apellido = "", email = "") {
   const ini = (nombre?.trim()?.[0] || "") + (apellido?.trim()?.[0] || "");
   return (ini || email?.[0] || "?").toUpperCase();
+}
+
+/** Añade params de transformación (format/webp, width, quality) sin romper URLs ya con query */
+function ensureWebP(url, { width, quality = 75 } = {}) {
+  if (!url) return url;
+  try {
+    const hasQuery = url.includes("?");
+    const params = new URLSearchParams();
+    params.set("format", "webp");
+    if (width) params.set("width", String(width));
+    if (quality) params.set("quality", String(quality));
+    return url + (hasQuery ? "&" : "?") + params.toString();
+  } catch {
+    return url;
+  }
 }
 
 export default function Publication() {
@@ -59,7 +62,7 @@ export default function Publication() {
       setError("");
 
       try {
-        // 1) Publicación + fotos
+        // 1) Publicación + fotos (sin url_thumb para evitar errores si no existe la columna)
         const { data, error: e1 } = await supabase
           .from("publicacion")
           .select("*, foto (url, orden_foto)")
@@ -141,21 +144,25 @@ export default function Publication() {
   const fotos = (pub.foto || []).sort(
     (a, b) => (a.orden_foto || 0) - (b.orden_foto || 0)
   );
-  const img = fotos.length ? fotos[0].url : PLACEHOLDER;
+  const raw = fotos.length ? fotos[0].url : PLACEHOLDER;
+  // fallback por si más adelante agregás url_thumb a la tabla (o si alguna fila ya lo tiene)
+  const rawThumb = fotos.length ? (fotos[0].url_thumb || fotos[0].url) : PLACEHOLDER;
 
-  // ✅ AGREGAR TODAS LAS PROPIEDADES NECESARIAS
+  // ✨ Servimos siempre WebP (si la URL admite query params / Supabase Storage)
+  const img = ensureWebP(raw, { width: 960, quality: 78 });
+  const imgThumb = ensureWebP(rawThumb, { width: 480, quality: 70 });
+
   const normalized = {
     id: pub.id_publicacion,
-    ownerId: pub.id_usuario,
     nombre: pub.titulo,
     precio: Number(pub.precio || 0),
-    moneda: pub.moneda || "USD", // ✅ AGREGADO: moneda
     img,
+    imgThumb,
     club: pub.club || "",
-    categoria: pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
-    coleccion: pub.coleccion || "Actual", // ✅ AGREGADO: colección
-    stock: Number(pub.stock || 0), // ✅ AGREGADO: stock
-    talle: pub.talle || "", // ✅ AGREGADO: talle
+    categoria:
+      pub.categoria === "Seleccion" ? "Selección" : pub.categoria || "Club",
+    moneda: pub.moneda || "UYU",
+    talle: pub.talle || "",
   };
 
   return (
@@ -167,13 +174,29 @@ export default function Publication() {
           <div className="pub-layout">
             {/* ===== IMAGEN ===== */}
             <div className="pub-media">
-              <img
-                src={img}
-                alt={pub.titulo}
-                onError={(e) => {
-                  e.currentTarget.src = PLACEHOLDER;
-                }}
-              />
+              <picture>
+                {/* Preferimos WebP (thumb + grande) */}
+                <source
+                  type="image/webp"
+                  srcSet={`${imgThumb} 480w, ${img} 960w`}
+                  sizes="(max-width: 640px) 100vw, 720px"
+                />
+                {/* Fallback */}
+                <img
+                  className="pub-img"
+                  src={img}
+                  alt={pub.titulo}
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
+                  width="720"
+                  height="900"
+                  onError={(e) => {
+                    e.currentTarget.src = PLACEHOLDER;
+                  }}
+                />
+              </picture>
+
               <button
                 className={`fav-chip ${isFav ? "is-active" : ""}`}
                 onClick={() => toggleFav(normalized)}
@@ -198,7 +221,7 @@ export default function Publication() {
               </div>
 
               <div className="pub-price">
-                {money(pub.precio, pub.moneda || "USD")}
+                {money(pub.precio, pub.moneda || "UYU")}
               </div>
 
               <div className="pub-attrs">
@@ -220,9 +243,8 @@ export default function Publication() {
                 <button
                   className="lot-btn-primary"
                   onClick={() => addToCart(normalized, 1)}
-                  disabled={!pub.stock || pub.stock <= 0}
                 >
-                  {pub.stock && pub.stock > 0 ? "Agregar al carrito" : "Sin stock"}
+                  Agregar al carrito
                 </button>
                 <button
                   className="lot-btn-secondary"
@@ -238,7 +260,7 @@ export default function Publication() {
                 <span>🔁 Devoluciones simples</span>
               </div>
 
-              {/* Descripción (si hay) */}
+              {/* Descripción */}
               {pub.descripcion && (
                 <div style={{ marginTop: 18 }}>
                   <h3 style={{ margin: "0 0 6px", fontWeight: 700 }}>
@@ -254,18 +276,13 @@ export default function Publication() {
               <section className="seller-card">
                 <div className="seller-left">
                   <div className="avatar">
-                    {initialsFrom(
-                      seller?.nombre,
-                      seller?.apellido
-                    )}
+                    {initialsFrom(seller?.nombre, seller?.apellido)}
                   </div>
                   <div>
                     <button
                       className="seller-link"
                       onClick={() => navigate(`/seller/${seller?.id_usuario}`)}
-                      aria-label={`Ver publicaciones de ${
-                        seller?.nombre || ""
-                      }`}
+                      aria-label={`Ver publicaciones de ${seller?.nombre || ""}`}
                     >
                       <div className="seller-name">
                         {seller?.nombre || "Usuario"}
@@ -294,7 +311,6 @@ export default function Publication() {
                           </svg>
                         )}
                       </div>
-                      {/* Eliminado: email visible */}
                     </button>
                   </div>
                 </div>
