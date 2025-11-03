@@ -1,150 +1,237 @@
+/* ================================
+   ESTILOS REGISTRO (VERDE INSTITUCIONAL)
+   ================================ */
+
 /* ===== Fondo general ===== */
 .auth-wrap {
-    min-height: calc(100vh - 140px);
-    background: #f6f7f9;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 48px 16px 64px;
-  }
-  
-  /* ===== Tarjeta ===== */
+  min-height: calc(100vh - 140px);
+  background: #f6f7f9;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px 64px;
+}
+
+/* ===== Tarjeta ===== */
+.auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
+  padding: 32px 28px 36px;
+}
+
+/* ===== Logo ===== */
+.auth-logo {
+  display: block;
+  height: 100px;
+  width: auto;
+  margin: 0 auto 16px;
+  object-fit: contain;
+}
+
+/* ===== Título ===== */
+.auth-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1b1b1f;
+}
+
+/* ===== Formulario ===== */
+.auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.field input,
+.field select {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #004225; /* Verde institucional */
+  box-shadow: 0 0 0 3px rgba(0, 66, 37, 0.15);
+}
+
+/* ===== Error ===== */
+.err {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+/* ===== Links ===== */
+.auth-card a {
+  color: #004225;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-card a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Indicador de pasos ===== */
+.step-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #e5e7eb;
+}
+
+.step-track.is-active {
+  background: #004225;
+}
+
+/* ===== Botones ===== */
+.actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  height: 44px;
+  padding: 0 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+/* Botón primario (verde) */
+.btn-primary,
+.auth-card button[type="submit"] {
+  background: #004225;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 66, 37, 0.2);
+}
+
+.btn-primary:hover,
+.auth-card button[type="submit"]:hover {
+  background: #063c22; /* Hover verde más oscuro */
+  transform: translateY(-1px);
+}
+
+/* Botón deshabilitado */
+.btn[disabled],
+.auth-card button[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botón fantasma */
+.btn-ghost {
+  background: transparent;
+  color: #004225;
+  border: 1px solid #004225;
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 66, 37, 0.05);
+}
+
+/* ===== Términos ===== */
+.terms {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.terms a {
+  color: #004225;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ===== Alternativa inferior ===== */
+.auth-alt {
+  margin-top: 18px;
+  text-align: center;
+  color: #475569;
+}
+
+.auth-alt a {
+  color: #004225;
+  font-weight: 700;
+}
+
+/* ===== Overlay (modal) ===== */
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.overlay-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.overlay-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+}
+
+.overlay-card p {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.overlay-card .overlay-btn {
+  padding: 0.75rem 2rem;
+  background: #004225;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.overlay-card .overlay-btn:hover {
+  background: #063c22;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 520px) {
   .auth-card {
-    width: 100%;
-    max-width: 520px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
-    padding: 32px 28px 36px;
+    padding: 22px;
   }
-  
-  /* ===== Logo ===== */
-  .auth-logo {
-    display: block;
-    height: 100px;           /* tamaño ideal */
-    width: auto;
-    margin: 0 auto 16px;    /* centrado y con espacio inferior */
-    object-fit: contain;
-  }
-  
-  /* ===== Título ===== */
-  .auth-title {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1b1b1f;
-  }
-  
-  /* ===== Formulario ===== */
-  .auth-form {
-    display: grid;
-    gap: 14px;
-  }
-  
-  .field {
-    display: grid;
-    gap: 6px;
-  }
-  
-  .field span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #334155;
-  }
-  
-  .field input,
-  .field select {
-    height: 42px;
-    padding: 0 12px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 14px;
-    background: #fff;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
-  }
-  
-  .field input:focus,
-  .field select:focus {
-    outline: none;
-    border-color: #004225;
-    box-shadow: 0 0 0 3px rgba(0, 66, 37, 0.15);
-  }
-  
-  /* ===== Error ===== */
-  .err {
-    color: #b91c1c;
-    font-size: 12px;
-  }
-  
-  /* ===== Términos ===== */
-  .terms {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #475569;
-    line-height: 1.4;
-  }
-  
-  .terms a {
-    color: #004225;
-    font-weight: 600;
-    text-decoration: underline;
-  }
-  
-  /* ===== Botones ===== */
-  .actions-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 16px;
-  }
-  
-  .btn {
-    border: none;
-    border-radius: 10px;
-    height: 44px;
-    padding: 0 18px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease;
-  }
-  
-  .btn-primary {
-    background: #004225;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 66, 37, 0.2);
-  }
-  
-  .btn-primary:hover {
-    background: #063c22;
-    transform: translateY(-1px);
-  }
-  
-  .btn-ghost {
-    background: transparent;
-    color: #004225;
-    border: 1px solid #004225;
-  }
-  
-  .btn-ghost:hover {
-    background: rgba(0, 66, 37, 0.05);
-  }
-  
-  /* ===== Alternativa inferior ===== */
-  .auth-alt {
-    margin-top: 18px;
-    text-align: center;
-    color: #475569;
-  }
-  
-  .auth-alt a {
-    color: #004225;
-    font-weight: 700;
-  }
-  
-  /* ===== Responsive ===== */
-  @media (max-width: 520px) {
-    .auth-card {
-      padding: 22px;
-    }
-  }
+}
