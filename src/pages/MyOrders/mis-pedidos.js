@@ -89,9 +89,10 @@ export default function MisPedidos() {
 
             let vendedor = null;
             if (pub?.id_usuario) {
+              // ⛔️ dejamos de traer el email
               const { data: vendData } = await supabase
                 .from("usuario")
-                .select("nombre, apellido, email")
+                .select("nombre, apellido")
                 .eq("id_usuario", pub.id_usuario)
                 .maybeSingle();
               vendedor = vendData || null;
@@ -124,7 +125,7 @@ export default function MisPedidos() {
               vendedor: {
                 nombre:
                   `${vendedor?.nombre || ""} ${vendedor?.apellido || ""}`.trim() || "Vendedor",
-                email: vendedor?.email || "",
+                // email eliminado del objeto para la UI
               },
             };
           })
@@ -178,7 +179,6 @@ export default function MisPedidos() {
         ) : (
           <>
             <div className="stats-grid">
-              {/* Total UYU + hint */}
               <div className="stat-card">
                 <span className="stat-label">Total Gastado (UYU)</span>
                 <span className="stat-value">{money(estadisticas.totalUYU, "UYU")}</span>
@@ -188,7 +188,6 @@ export default function MisPedidos() {
                 >*</span>
               </div>
 
-              {/* Total USD + hint (solo si hay USD) */}
               {estadisticas.totalUSD > 0 && (
                 <div className="stat-card stat-card-usd">
                   <span className="stat-label">Total Gastado (USD)</span>
@@ -272,7 +271,7 @@ export default function MisPedidos() {
                       <div className="pedido-vendedor">
                         <h4>Vendedor</h4>
                         <p className="vendedor-nombre">{pedido.vendedor.nombre}</p>
-                        <p className="vendedor-email">{pedido.vendedor.email}</p>
+                        {/* email oculto */}
                       </div>
 
                       <div className="pedido-total">

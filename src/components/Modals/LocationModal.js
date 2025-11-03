@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { UY_DEPARTAMENTOS, UY_CIUDADES_SUGERIDAS } from "../../utilities/uy-depts";
+import Dropdown from "../Dropdown/Dropdown";
 import "./Modal.css";
 
 export default function LocationModal({
@@ -11,6 +12,7 @@ export default function LocationModal({
 }) {
   const [departamento, setDepartamento] = useState("");
   const [ciudad, setCiudad] = useState("");
+  const [isAnyDropdownOpen, setIsAnyDropdownOpen] = useState(false);
 
   // Inicializar valores si había una selección guardada
   useEffect(() => {
@@ -32,11 +34,17 @@ export default function LocationModal({
     };
   }, [isOpen, onClose]);
 
-  // Filtrar ciudades según el depto
-  const ciudadesDisponibles = useMemo(
-    () => (departamento ? UY_CIUDADES_SUGERIDAS[departamento] || [] : []),
-    [departamento]
+  // Preparar opciones para los dropdowns
+  const deptoOptions = useMemo(
+    () => UY_DEPARTAMENTOS.map(d => ({ value: d, label: d })),
+    []
   );
+
+  const ciudadOptions = useMemo(() => {
+    if (!departamento) return [];
+    const ciudades = UY_CIUDADES_SUGERIDAS[departamento] || [];
+    return ciudades.map(c => ({ value: c, label: c }));
+  }, [departamento]);
 
   if (!isOpen) return null;
 
@@ -46,10 +54,21 @@ export default function LocationModal({
     onClose();
   };
 
+  const handleDeptoChange = (value) => {
+    setDepartamento(value);
+    setCiudad(""); // reset ciudad cuando cambia departamento
+  };
+
+  // NO cerrar el modal si hay un dropdown abierto
+  const handleBackdropClick = (e) => {
+    if (isAnyDropdownOpen) return;
+    onClose();
+  };
+
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div
-        className="modal-card"
+        className="modal-card modal-location"
         role="dialog"
         aria-modal="true"
         aria-labelledby="loc-modal-title"
@@ -73,53 +92,33 @@ export default function LocationModal({
 
         <div className="location-form">
           {/* Departamento */}
-          <label className="form-group">
-            <span>Departamento *</span>
-            <select
+          <div className="form-group">
+            <label>Departamento *</label>
+            <Dropdown
+              placeholder="Elegir departamento…"
               value={departamento}
-              onChange={(e) => {
-                setDepartamento(e.target.value);
-                setCiudad(""); // reset ciudad cuando cambia departamento
-              }}
-            >
-              <option value="" disabled>
-                Elegir departamento…
-              </option>
-              {UY_DEPARTAMENTOS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={deptoOptions}
+              onChange={handleDeptoChange}
+              onOpenChange={setIsAnyDropdownOpen}
+            />
+          </div>
 
           {/* Ciudad */}
-          <label className="form-group">
-            <span>Ciudad *</span>
-            <select
+          <div className="form-group">
+            <label>Ciudad *</label>
+            <Dropdown
+              placeholder={
+                !departamento
+                  ? "Elegí primero un departamento"
+                  : "Elegir ciudad…"
+              }
               value={ciudad}
-              onChange={(e) => setCiudad(e.target.value)}
+              options={ciudadOptions}
+              onChange={setCiudad}
               disabled={!departamento}
-            >
-              {!departamento && (
-                <option value="">
-                  Elegí primero un departamento
-                </option>
-              )}
-              {departamento && (
-                <>
-                  <option value="" disabled>
-                    Elegir ciudad…
-                  </option>
-                  {ciudadesDisponibles.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </>
-              )}
-            </select>
-          </label>
+              onOpenChange={setIsAnyDropdownOpen}
+            />
+          </div>
         </div>
 
         <div className="modal-actions">

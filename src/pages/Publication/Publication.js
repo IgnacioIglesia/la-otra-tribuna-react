@@ -10,11 +10,20 @@ const PLACEHOLDER = "https://placehold.co/1200x900?text=Camiseta";
 
 /* ===== Utils ===== */
 function money(n, curr = "UYU") {
+  const amount = Number(n || 0);
+  if (curr === "USD") {
+    const formatted = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(amount);
+    return formatted.replace("US$", "U$D");
+  }
   return new Intl.NumberFormat("es-UY", {
     style: "currency",
-    currency: curr,
+    currency: "UYU",
     maximumFractionDigits: 0,
-  }).format(Number(n || 0));
+  }).format(amount);
 }
 
 function initialsFrom(nombre = "", apellido = "", email = "") {
@@ -64,7 +73,7 @@ export default function Publication() {
       setImgLoaded(false);
 
       try {
-        // Publicación + fotos (SIN url_thumb)
+        // Publicación + fotos
         const { data, error: e1 } = await supabase
           .from("publicacion")
           .select("*, foto (url, orden_foto)")
@@ -77,7 +86,7 @@ export default function Publication() {
           return;
         }
 
-        // Vendedor (sin email por privacidad)
+        // Vendedor (sin email)
         let sellerData = null;
         let verified = false;
 
@@ -147,8 +156,6 @@ export default function Publication() {
   );
   const raw = fotos.length ? fotos[0].url : PLACEHOLDER;
 
-  // LQIP a partir de la misma URL (ancho chico + calidad baja). Si tu storage no soporta
-  // transformaciones, igual funciona (mismo URL) y el blur evita el flash.
   const imgLqip = ensureWebP(raw, { width: 320, quality: 45 });
   const img = ensureWebP(raw, { width: 960, quality: 78 });
 
@@ -178,13 +185,11 @@ export default function Publication() {
               style={{ "--blur-bg": `url("${imgLqip}")` }}
             >
               <picture>
-                {/* Preferimos WebP (LQIP + grande) */}
                 <source
                   type="image/webp"
                   srcSet={`${imgLqip} 480w, ${img} 960w`}
                   sizes="(max-width: 640px) 100vw, 720px"
                 />
-                {/* Fallback */}
                 <img
                   className="pub-img"
                   src={img}
@@ -265,7 +270,6 @@ export default function Publication() {
                 <span>🔁 Devoluciones simples</span>
               </div>
 
-              {/* Descripción */}
               {pub.descripcion && (
                 <div style={{ marginTop: 18 }}>
                   <h3 style={{ margin: "0 0 6px", fontWeight: 700 }}>
@@ -277,7 +281,6 @@ export default function Publication() {
                 </div>
               )}
 
-              {/* SELLER */}
               <section className="seller-card">
                 <div className="seller-left">
                   <div className="avatar">

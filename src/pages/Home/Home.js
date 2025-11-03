@@ -19,6 +19,12 @@ function mapCategoria(cat) {
   return cat === "Seleccion" ? "Selección" : cat;
 }
 
+// 👉 helper para ordenar alfabéticamente (es-ES) y sin duplicados
+const uniqueSorted = (arr) =>
+  Array.from(new Set(arr.filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b, "es", { sensitivity: "base" })
+  );
+
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 const HERO_IMGS = ["/assets/fondo2.png", "/assets/fondo3.png", "/assets/fondo7.png", "/assets/fondo9.png", "/assets/fondo10.png", "/assets/fondo11.png", "/assets/fondo12.png"];
 
@@ -39,11 +45,8 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Determinar si debe mostrarse el hero SOLO al inicio
   const wantsCatalog = location.hash === "#catalogo" || location.state?.scrollTo === "catalogo";
   const [showHero, setShowHero] = useState(!wantsCatalog);
-  
-  // ✅ Referencia para saber si ya se scrolleó
   const hasScrolledRef = useRef(false);
 
   /* ===== Session ===== */
@@ -113,41 +116,32 @@ export default function Home() {
     return () => { alive = false; };
   }, [currentUserId]);
 
-  /* ===== Scroll suave al catálogo - MEJORADO ===== */
+  /* ===== Scroll suave al catálogo ===== */
   useEffect(() => {
-    // Si no quiere ir al catálogo o ya scrolleamos, no hacer nada
     if (!wantsCatalog || hasScrolledRef.current) return;
-    
-    // Esperar a que termine de cargar
     if (loading) return;
 
     const scrollToCatalog = () => {
       const el = document.getElementById("catalogo");
       if (!el) return false;
-      
       const header = document.getElementById("siteHeader");
       const headerHeight = header?.getBoundingClientRect().height || 0;
       const y = el.getBoundingClientRect().top + window.pageYOffset - (headerHeight + 20);
-      
       window.scrollTo({ top: y, behavior: "smooth" });
       return true;
     };
 
-    // Limpiar el state si viene de navigate
     if (location.state?.scrollTo) {
       navigate(location.pathname + location.hash, { replace: true, state: {} });
     }
 
-    // Intentar scrollear después de que el DOM se estabilice
     const timeoutId = setTimeout(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const success = scrollToCatalog();
-          
           if (success) {
             hasScrolledRef.current = true;
           } else {
-            // Reintentar si no se encontró el elemento
             let attempts = 0;
             const intervalId = setInterval(() => {
               attempts++;
@@ -164,31 +158,17 @@ export default function Home() {
     return () => clearTimeout(timeoutId);
   }, [loading, wantsCatalog, location.state, location.hash, location.pathname, navigate]);
 
-  // ✅ Resetear hasScrolledRef cuando cambia la ubicación
-  useEffect(() => {
-    hasScrolledRef.current = false;
-  }, [location.pathname, location.hash]);
+  useEffect(() => { hasScrolledRef.current = false; }, [location.pathname, location.hash]);
 
   /* ===== Hero rotativo ===== */
   const [idx, setIdx] = useState(0);
   const [prevIdx, setPrevIdx] = useState(null);
-  
-  useEffect(() => { 
-    HERO_IMGS.forEach((src) => { 
-      const i = new Image(); 
-      i.src = src; 
-    }); 
-  }, []);
-  
+  useEffect(() => { HERO_IMGS.forEach((src) => { const i = new Image(); i.src = src; }); }, []);
   useEffect(() => {
     if (!showHero) return;
-    const id = setInterval(() => { 
-      setPrevIdx(idx); 
-      setIdx((i) => (i + 1) % HERO_IMGS.length); 
-    }, 8000);
+    const id = setInterval(() => { setPrevIdx(idx); setIdx((i) => (i + 1) % HERO_IMGS.length); }, 8000);
     return () => clearInterval(id);
   }, [idx, showHero]);
-  
   const dirClass = (idx % 2 === 0) ? "dir-left" : "dir-right";
 
   /* ===== Filtros (SIN precio) ===== */
@@ -206,24 +186,23 @@ export default function Home() {
     let base = rows;
     if (moneda) base = base.filter((p) => p.moneda === moneda);
     if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
-    
     const unique = Array.from(new Set(base.map((p) => p.categoria).filter(Boolean)));
     const allowed = ["Club", "Selección"];
     return unique.filter((c) => allowed.includes(c));
   }, [rows, coleccion, moneda]);
 
-  // equipos (depende de moneda, colección y categoría)
+  // 👉 equipos (clubs o selecciones) ORDENADOS ALFABÉTICAMENTE
   const equipos = useMemo(() => {
     let base = rows;
     if (moneda) base = base.filter((p) => p.moneda === moneda);
     if (coleccion && coleccion !== "Todas") base = base.filter((p) => p.coleccion === coleccion);
 
     if (!hasCategoria) {
-      const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
+      const list = uniqueSorted(base.map((p) => p.club));
       return ["Todos", ...list];
     }
     base = base.filter((p) => p.categoria === categoria);
-    const list = Array.from(new Set(base.map((p) => p.club).filter(Boolean)));
+    const list = uniqueSorted(base.map((p) => p.club));
     return ["Todos", ...list];
   }, [rows, moneda, coleccion, categoria, hasCategoria]);
 
@@ -281,9 +260,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setHomeFilters({
-      sort, moneda, coleccion, categoria, equipo, talle
-    });
+    setHomeFilters({ sort, moneda, coleccion, categoria, equipo, talle });
   }, [sort, moneda, coleccion, categoria, equipo, talle, setHomeFilters]);
 
   /* ===== Render ===== */
@@ -291,7 +268,7 @@ export default function Home() {
     <>
       <Header />
 
-      {/* HERO - Solo se muestra si NO viene directo al catálogo */}
+      {/* HERO */}
       {showHero && (
         <section className="hero">
           {prevIdx !== null && <div className="hero-bg prev" style={{ backgroundImage: `url(${HERO_IMGS[prevIdx]})` }} />}
@@ -311,7 +288,7 @@ export default function Home() {
           {!loading && !error && <p className="catalog-sub">Resultados: {productos.length}</p>}
         </div>
 
-        {/* FILTROS EN UNA LÍNEA */}
+        {/* FILTROS */}
         <div className={`filters-toolbar ${anyDdOpen ? "dd-open" : ""}`}>
           <div className="filters-single-row">
             <Dropdown
@@ -326,15 +303,12 @@ export default function Home() {
                 { value: "name",       label: "Nombre (A–Z)" },
               ]}
             />
-            
+
             <Dropdown
               icon="↕︎"
               placeholder="Elegí moneda"
               value={moneda}
-              onChange={(v) => {
-                const sel = v === "ALL" ? "" : v;
-                setMoneda(sel);
-              }}
+              onChange={(v) => { const sel = v === "ALL" ? "" : v; setMoneda(sel); }}
               onOpenChange={setAnyDdOpen}
               options={[
                 { value: "ALL", label: "Todas" },
@@ -342,7 +316,7 @@ export default function Home() {
                 { value: "UYU", label: "UYU" },
               ]}
             />
-            
+
             <Dropdown
               icon="↕︎"
               placeholder="Elegí colección"
@@ -355,7 +329,7 @@ export default function Home() {
                 { value: "Retro",  label: "Retro" },
               ]}
             />
-            
+
             <Dropdown
               icon="↕"
               placeholder="Elegí categoría"
@@ -367,7 +341,7 @@ export default function Home() {
                 ...categorias.map((c) => ({ value: c, label: c })),
               ]}
             />
-            
+
             <Dropdown
               icon="↕︎"
               placeholder="Elegí equipo"
@@ -383,7 +357,7 @@ export default function Home() {
                 )
               }
             />
-            
+
             <Dropdown
               icon="↕︎"
               placeholder="Elegí talle"
