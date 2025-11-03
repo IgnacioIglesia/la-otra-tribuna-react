@@ -1,6 +1,7 @@
-// MobileDrawer.js
+// src/components/Drawer/MobileDrawer.jsx
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import SearchBar from "../SearchBar/SearchBar";
 import "./MobileDrawer.css";
 
 export default function MobileDrawer({ open, onClose, items = [] }) {
@@ -34,6 +35,12 @@ export default function MobileDrawer({ open, onClose, items = [] }) {
           <span>Menú</span>
           <button onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
+
+        {/* Buscador en el drawer */}
+        <div className="drawer-search">
+          <SearchBar />
+        </div>
+
         <ul className="drawer-list">
           {items.map((it) => (
             <li key={it.href}>

@@ -4,13 +4,21 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import "./SearchBar.css";
 
-// Formateo de moneda
-const money = (n = 0) =>
-  new Intl.NumberFormat("es-UY", {
+// Formateo de moneda según el tipo
+const money = (precio, moneda = "USD") => {
+  if (moneda === "USD") {
+    return new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(Number(precio) || 0);
+  }
+  return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: "UYU",
     maximumFractionDigits: 0,
-  }).format(Number(n) || 0);
+  }).format(Number(precio) || 0);
+};
 
 // Normaliza texto para resaltar resultados
 const normalize = (s = "") =>
@@ -62,7 +70,7 @@ const useSearchHistory = () => {
   return { history, addToHistory, clearHistory, removeFromHistory };
 };
 
-// Mapear categoría como en tu Home
+// Mapear categoría como en Home
 function mapCategoria(cat) {
   if (!cat) return "Club";
   return cat === "Seleccion" ? "Selección" : cat;
@@ -122,7 +130,7 @@ export default function SearchBar() {
     try {
       console.log("Buscando:", term);
       
-      // PRIMERO: Intentar con la función RPC
+      // Intentar con la función RPC
       const { data, error } = await supabase.rpc("buscar_publicaciones", {
         p_q: term,
         p_limit: 8,
@@ -130,59 +138,26 @@ export default function SearchBar() {
 
       if (error) {
         console.error("Error en RPC buscar_publicaciones:", error);
-        // Si falla, intentar con la función simple
-        const { data: simpleData, error: simpleError } = await supabase.rpc("buscar_publicaciones_simple", {
-          search_term: term
-        });
-
-        if (simpleError) {
-          console.error("Error en RPC simple:", simpleError);
-          throw simpleError;
-        }
-
-        // Mapear datos de la función simple
-        const formattedData = (simpleData || []).map(item => ({
-          id_publicacion: item.id_publicacion,
-          nombre: item.titulo,
-          precio: Number(item.precio) || 0,
-          club: item.club || "",
-          categoria: item.categoria,
-          img: item.imagen || "/assets/placeholder.png",
-          es_oferta: false
-        }));
-
-        console.log("Resultados con función simple:", formattedData);
-        setResults(formattedData);
-      } else {
-        console.log("Resultados con función principal:", data);
-        setResults(data || []);
-      }
-
-      setOpen(true);
-      setActiveIdx(-1);
-    } catch (e) {
-      console.error("Error completo en búsqueda:", e);
-      
-      // FALLBACK FINAL: Query directa
-      try {
-        console.log("Intentando búsqueda directa final...");
-        const { data, error } = await supabase
+        // Fallback a query directa
+        const { data: directData, error: directError } = await supabase
           .from("publicacion")
           .select("*, foto (url, orden_foto)")
           .eq("estado", "Activa")
+          .gt("stock", 0)
           .or(`titulo.ilike.%${term}%,club.ilike.%${term}%`)
           .order("id_publicacion", { ascending: false })
           .limit(8);
 
-        if (error) throw error;
+        if (directError) throw directError;
 
-        const formattedData = (data || []).map(pub => {
+        const formattedData = (directData || []).map(pub => {
           const primeraFoto = pub.foto && pub.foto.length ? pub.foto[0].url : null;
 
           return {
             id_publicacion: pub.id_publicacion,
             nombre: pub.titulo,
             precio: Number(pub.precio) || 0,
+            moneda: pub.moneda || "USD",
             club: pub.club || "",
             categoria: mapCategoria(pub.categoria),
             img: primeraFoto || "/assets/placeholder.png",
@@ -192,13 +167,22 @@ export default function SearchBar() {
 
         console.log("Resultados con query directa:", formattedData);
         setResults(formattedData);
-        setOpen(true);
-        setActiveIdx(-1);
-      } catch (finalError) {
-        console.error("Error en búsqueda final:", finalError);
-        setResults([]);
-        setOpen(true);
+      } else {
+        console.log("Resultados con función principal:", data);
+        // Asegurarse de que cada resultado tenga moneda
+        const formattedData = (data || []).map(item => ({
+          ...item,
+          moneda: item.moneda || "USD" // Por defecto USD si no está definido
+        }));
+        setResults(formattedData);
       }
+
+      setOpen(true);
+      setActiveIdx(-1);
+    } catch (e) {
+      console.error("Error en búsqueda:", e);
+      setResults([]);
+      setOpen(true);
     } finally {
       setLoading(false);
     }
@@ -261,13 +245,16 @@ export default function SearchBar() {
         break;
       case "Enter":
         e.preventDefault();
+        // Si hay un ítem seleccionado con las flechas, ir a ese ítem
         if (activeIdx >= 0 && activeIdx < itemCount) {
           if (showHistory) {
             handleSearch(history[activeIdx]);
           } else {
             goTo(results[activeIdx].id_publicacion);
           }
-        } else if (q.trim()) {
+        } 
+        // Si no hay selección, siempre ir a la página de resultados
+        else if (q.trim()) {
           handleSearch(q);
         }
         break;
@@ -285,10 +272,12 @@ export default function SearchBar() {
       console.error("ID de publicación no válido");
       return;
     }
+    if (q.trim()) {
+      addToHistory(q);
+    }
     setOpen(false);
     setQ("");
     setActiveIdx(-1);
-    addToHistory(q);
     navigate(`/publication/${id}`);
   };
 
@@ -500,7 +489,7 @@ export default function SearchBar() {
                   </div>
                   
                   <div className="result-price">
-                    {money(r.precio)}
+                    {money(r.precio, r.moneda)}
                   </div>
                 </button>
               ))}

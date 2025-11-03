@@ -1,3 +1,4 @@
+/* src/components/Drawer/MobileDrawer.css */
 :root{
   --ring:#e5e7eb;
   --bg:#fff;
@@ -52,6 +53,37 @@
   border-bottom:1px solid var(--ring);
   font-weight:600;
 }
+
+/* Contenedor del buscador */
+.drawer-search {
+  padding: 16px;
+  border-bottom: 1px solid var(--ring);
+  background: #f9fafb;
+}
+
+/* Ajustar el SearchBar dentro del drawer */
+.drawer-search .search-bar {
+  max-width: 100%;
+}
+
+.drawer-search .search-input-container {
+  height: 42px;
+  padding: 6px 12px;
+}
+
+.drawer-search .search-input {
+  font-size: 14px;
+}
+
+.drawer-search .search-input::placeholder {
+  font-size: 14px;
+}
+
+/* Ajustar el dropdown de resultados en el drawer */
+.drawer-search .search-results-panel {
+  max-height: 300px; /* Más pequeño en móvil */
+}
+
 .drawer-list{
   list-style:none;
   margin:0;
@@ -71,14 +103,54 @@
   cursor: pointer;
   text-align: left;
   width: 100%;
+  font-size: 15px;
+  transition: background 0.15s ease;
 }
 
 .drawer-link:hover{ 
   background:#f6f6f7; 
 }
 
+/* Cerrar button */
+.drawer-head button {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.drawer-head button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
 /* Reduce motion para accesibilidad */
 @media (prefers-reduced-motion: reduce){
   .drawer-backdrop,
   .drawer-panel{ transition: none; }
+}
+
+/* Ajustes específicos para pantallas muy pequeñas */
+@media (max-width: 360px) {
+  .drawer-panel {
+    width: 90%;
+    max-width: 300px;
+  }
+
+  .drawer-search {
+    padding: 12px;
+  }
+
+  .drawer-head {
+    padding: 12px;
+  }
+
+  .drawer-link {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
 }

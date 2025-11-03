@@ -1,5 +1,6 @@
 // src/components/Favorites/FavoritesDrawer.js
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import Drawer from "../Drawer/Drawer";
 import { useFavorites } from "./FavoritesContext";
 import "./FavoritesDrawer.css";
@@ -7,15 +8,33 @@ import "./FavoritesDrawer.css";
 const PLACEHOLDER =
   "https://placehold.co/80x80?text=Foto&font=inter&background=EEE&foreground=999";
 
-const formatPrice = (value) =>
-  new Intl.NumberFormat("es-UY", {
+/* Formatea moneda respetando USD -> U$D */
+function money(n, curr = "UYU") {
+  const amount = Number(n || 0);
+  if (curr === "USD") {
+    return new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    })
+      .format(amount)
+      .replace("US$", "U$D");
+  }
+  return new Intl.NumberFormat("es-UY", {
     style: "currency",
     currency: "UYU",
     maximumFractionDigits: 0,
-  }).format(Number(value || 0));
+  }).format(amount);
+}
 
 export default function FavoritesDrawer() {
   const { isOpen, closeFavorites, items, remove, clear } = useFavorites();
+  const navigate = useNavigate();
+
+  const goTo = (id) => {
+    closeFavorites();
+    navigate(`/publication/${id}`);
+  };
 
   return (
     <Drawer
@@ -38,7 +57,6 @@ export default function FavoritesDrawer() {
     >
       {items.length === 0 ? (
         <div className="fav-empty">
-          {/* SVG inline: nunca “rompe” */}
           <svg
             className="fav-empty-ic"
             width="96"
@@ -62,7 +80,17 @@ export default function FavoritesDrawer() {
       ) : (
         <ul className="fav-list">
           {items.map((p) => (
-            <li key={p.id} className="fav-item">
+            <li
+              key={p.id}
+              className="fav-item"
+              role="button"
+              tabIndex={0}
+              onClick={() => goTo(p.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") goTo(p.id);
+              }}
+              title="Ver publicación"
+            >
               <img
                 src={p.img || PLACEHOLDER}
                 alt={p.nombre}
@@ -79,12 +107,15 @@ export default function FavoritesDrawer() {
                 <div className="fav-meta">
                   {(p.club || "—")} • {p.categoria}
                 </div>
-                <div className="fav-price">{formatPrice(p.precio)}</div>
+                <div className="fav-price">{money(p.precio, p.moneda || "UYU")}</div>
               </div>
 
               <button
                 className="fav-remove"
-                onClick={() => remove(p.id)}
+                onClick={(e) => {
+                  e.stopPropagation(); // 👈 no navegar
+                  remove(p.id);
+                }}
                 aria-label="Quitar de favoritos"
                 title="Quitar"
               >

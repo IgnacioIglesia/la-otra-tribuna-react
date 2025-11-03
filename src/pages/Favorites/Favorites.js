@@ -7,12 +7,24 @@ import "./Favorites.css";
 
 const PLACEHOLDER = "https://placehold.co/600x750?text=Camiseta";
 
-const money = (n = 0, cur = "UYU") =>
-  new Intl.NumberFormat("es-UY", {
+/* Formatea respetando USD -> U$D */
+function money(n = 0, cur = "UYU") {
+  const amount = Number(n) || 0;
+  if (cur === "USD") {
+    return new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    })
+      .format(amount)
+      .replace("US$", "U$D");
+  }
+  return new Intl.NumberFormat("es-UY", {
     style: "currency",
-    currency: cur,
+    currency: "UYU",
     maximumFractionDigits: 0,
-  }).format(Number(n) || 0);
+  }).format(amount);
+}
 
 export default function Favorites() {
   const navigate = useNavigate();
@@ -50,22 +62,31 @@ export default function Favorites() {
             <div className="fav-empty">
               <div className="empty-illus" aria-hidden>
                 <svg width="96" height="96" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 3h2l.4 2M7 13h9l3-7H6.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="9" cy="19" r="1.5" fill="currentColor"/>
-                  <circle cx="17" cy="19" r="1.5" fill="currentColor"/>
+                  <path
+                    d="M3 3h2l.4 2M7 13h9l3-7H6.4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="9" cy="19" r="1.5" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.5" fill="currentColor" />
                 </svg>
               </div>
               <h3>Tu lista está vacía</h3>
               <p>Agregá favoritos para verlos acá y decidir después.</p>
-              {/* ✅ Cambié el Link para que vaya directo al catálogo */}
-              <Link to="/#catalogo" className="btn ghost">Explorar catálogo</Link>
+              <Link to="/#catalogo" className="btn ghost">
+                Explorar catálogo
+              </Link>
             </div>
           ) : (
             <div className="fav-grid">
               {items.map((p) => {
                 const img = p.img || PLACEHOLDER;
                 const nombre = p.nombre || "Publicación";
-                const price = p.precio != null ? money(p.precio) : null;
+                const moneda = p.moneda || "UYU";
+                const price =
+                  p.precio != null ? money(p.precio, moneda) : null;
 
                 return (
                   <article key={p.id} className="fav-item">
@@ -78,7 +99,9 @@ export default function Favorites() {
                       <img
                         src={img}
                         alt={nombre}
-                        onError={(e) => { e.currentTarget.src = PLACEHOLDER; }}
+                        onError={(e) => {
+                          e.currentTarget.src = PLACEHOLDER;
+                        }}
                       />
                     </button>
 
@@ -110,6 +133,7 @@ export default function Favorites() {
                               nombre: p.nombre,
                               img,
                               precio: p.precio,
+                              moneda,             // 👈 llevar la moneda real al carrito
                               club: p.club,
                               categoria: p.categoria,
                             },
@@ -120,7 +144,10 @@ export default function Favorites() {
                         Agregar al carrito
                       </button>
 
-                      <button className="btn danger" onClick={() => remove(p.id)}>
+                      <button
+                        className="btn danger"
+                        onClick={() => remove(p.id)}
+                      >
                         Quitar
                       </button>
 

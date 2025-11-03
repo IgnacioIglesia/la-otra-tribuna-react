@@ -1,128 +1,88 @@
 /* ====== Contenedor vacío ====== */
-.fav-empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: #555;
-  }
-  .fav-empty-img {
-    width: 90px;
-    opacity: 0.7;
-    margin-bottom: 16px;
-  }
-  .fav-empty-title {
-    font-weight: 600;
-    font-size: 16px;
-    margin-bottom: 4px;
-  }
-  .fav-empty-sub {
-    font-size: 14px;
-    opacity: 0.7;
-  }
-  
-  /* ====== Lista de productos ====== */
-  .fav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  
-  .fav-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    background: #fafafa;
-    border: 1px solid #eee;
-    transition: background 0.2s ease;
-  }
-  .fav-item:hover {
-    background: #f1f1f1;
-  }
-  
-  .fav-thumb {
-    width: 68px;
-    height: 68px;
-    object-fit: cover;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-  }
-  
-  .fav-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .fav-name {
-    font-weight: 600;
-    font-size: 15px;
-    color: #1a1a1a;
-    margin-bottom: 2px;
-  }
-  .fav-meta {
-    font-size: 13px;
-    color: #666;
-  }
-  .fav-price {
-    font-weight: 700;
-    font-size: 14px;
-    color: #00833e;
-    margin-top: 4px;
-  }
-  
-  .fav-remove {
-    background: none;
-    border: none;
-    font-size: 18px;
-    color: #999;
-    cursor: pointer;
-    transition: color 0.2s;
-  }
-  .fav-remove:hover {
-    color: #d33;
-  }
-  
-  /* ====== Footer ====== */
-  .fav-footer {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    padding-top: 10px;
-  }
-  
-  .fav-footer .btn-clear {
-    background: #f3f4f6;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 14px;
-    color: #444;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .fav-footer .btn-clear:hover {
-    background: #e5e7eb;
-  }
-  
-  .fav-footer .btn-primary {
-    background: #063c22;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .fav-footer .btn-primary:hover {
-    background: #063c22;
-  }
-
-.fav-empty { text-align:center; padding:60px 20px; color:#555; }
+.fav-empty { text-align: center; padding: 60px 20px; color: #555; }
+.fav-empty-img { width: 90px; opacity: 0.7; margin-bottom: 16px; }
+.fav-empty-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+.fav-empty-sub { font-size: 14px; opacity: 0.7; }
 .fav-empty-ic { color:#9aa3af; margin-bottom:16px; }
-.fav-empty-title { font-weight:600; font-size:16px; margin-bottom:4px; }
-.fav-empty-sub { font-size:14px; opacity:.8; }
+
+/* ====== Lista de productos ====== */
+.fav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  transition: background 0.2s ease, box-shadow .2s ease;
+  cursor: pointer;
+}
+.fav-item:hover { background: #f1f1f1; }
+.fav-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14,81,53,.18);
+}
+
+.fav-thumb {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.fav-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.fav-name { font-weight: 600; font-size: 15px; color: #1a1a1a; margin-bottom: 2px; }
+.fav-meta { font-size: 13px; color: #666; }
+.fav-price { font-weight: 700; font-size: 14px; color: #00833e; margin-top: 4px; }
+
+.fav-remove {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.fav-remove:hover { color: #d33; }
+
+/* ====== Footer ====== */
+.fav-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding-top: 10px;
+}
+
+.fav-footer .btn-clear {
+  background: #f3f4f6;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.fav-footer .btn-clear:hover { background: #e5e7eb; }
+
+.fav-footer .btn-primary {
+  background: #063c22;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.fav-footer .btn-primary:hover { background: #063c22; }
