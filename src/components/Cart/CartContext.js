@@ -1,6 +1,6 @@
 // src/components/Cart/CartContext.js
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // 👈 agregado
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../ToastNotification/ToastNotification";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -9,8 +9,8 @@ const LS_KEY = "lot_cart_v1";
 
 export function CartProvider({ children }) {
   const { showToast } = useToast();
-  const navigate = useNavigate();   // 👈 agregado
-  const location = useLocation();   // 👈 agregado
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -23,10 +23,9 @@ export function CartProvider({ children }) {
     }
   });
 
-  // ✅ Estado para moneda de pago seleccionada (cómo quiere pagar el usuario)
   const [paymentCurrency, setPaymentCurrency] = useState(() => {
     try {
-      return localStorage.getItem("payment_currency") || null; // null = no seleccionada aún
+      return localStorage.getItem("payment_currency") || null;
     } catch {
       return null;
     }
@@ -40,7 +39,6 @@ export function CartProvider({ children }) {
     } catch {}
   }, [items]);
 
-  // Guardar moneda de pago seleccionada
   useEffect(() => {
     try {
       if (paymentCurrency) {
@@ -59,41 +57,31 @@ export function CartProvider({ children }) {
     return item ? item.qty : 0;
   };
 
-  // ✅ Función para cambiar moneda de pago
   const changePaymentCurrency = (currency, rates) => {
     setPaymentCurrency(currency);
     setExchangeRate(rates);
   };
 
-  // ✅ Función para convertir precio según moneda de pago seleccionada
   const convertPrice = (price, itemCurrency) => {
-    // Si no hay moneda de pago seleccionada, mostrar precio original
     if (!paymentCurrency || !exchangeRate) return price;
-
-    // Si la moneda del item es la misma que la de pago, no convertir
     if (itemCurrency === paymentCurrency) return price;
 
-    // Convertir según sea necesario
     if (paymentCurrency === "UYU" && itemCurrency === "USD") {
-      // Usuario quiere pagar en pesos un producto en dólares
       return price * exchangeRate.USD_to_UYU;
     }
     if (paymentCurrency === "USD" && itemCurrency === "UYU") {
-      // Usuario quiere pagar en dólares un producto en pesos
       return price * exchangeRate.UYU_to_USD;
     }
 
     return price;
   };
 
-  // ✅ Obtener símbolo de moneda
   const getCurrencySymbol = (currency) => {
     if (currency === "USD") return "U$D";
     if (currency === "UYU") return "$";
     return "$";
   };
 
-  // 👉 Guard: exigir sesión antes de agregar al carrito
   const ensureLoggedIn = async () => {
     try {
       const { data } = await supabase.auth.getSession();
@@ -111,11 +99,9 @@ export function CartProvider({ children }) {
     }
   };
 
-  // ✅ FUNCIÓN ADD CON VALIDACIÓN DE LOGIN + STOCK
   const add = async (product, qty = 1) => {
     if (!product?.id) return { success: false, mensaje: "Producto inválido" };
 
-    // 🚧 Bloqueo por sesión
     const ok = await ensureLoggedIn();
     if (!ok) return { success: false, mensaje: "Requiere iniciar sesión" };
 
@@ -286,7 +272,6 @@ export function CartProvider({ children }) {
     } catch {}
   };
 
-  // ✅ Total en moneda de pago seleccionada
   const getTotalInPaymentCurrency = () => {
     return items.reduce((total, item) => {
       const precio = Number(item.precio) || 0;
@@ -322,14 +307,12 @@ export function CartProvider({ children }) {
       isInCart,
       getQty,
     }),
-    // (dejé las deps como las tenías)
     [isOpen, items, paymentCurrency, exchangeRate]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
-// ✅ EXPORTAR useCart
 export function useCart() {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error("useCart debe usarse dentro de CartProvider");

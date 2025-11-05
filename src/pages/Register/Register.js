@@ -470,7 +470,26 @@ export default function Register() {
                   }}
                 />
                 <span style={{ fontSize: "0.9rem", color: "#004225", lineHeight: "1.5" }}>
-                  Acepto los <Link to="/terms" style={{ color: "#004225", textDecoration: "none", fontWeight: 600 }}>Términos y Condiciones</Link> y la <Link to="/privacy" style={{ color: "#004225", textDecoration: "none", fontWeight: 600 }}>Política de Privacidad</Link>
+                  Acepto los{" "}
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}   // ← no altera el checkbox
+                    style={{ color: "#004225", textDecoration: "underline", fontWeight: 600 }}
+                  >
+                    Términos y Condiciones
+                  </a>{" "}
+                  y la{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}   // ← no altera el checkbox
+                    style={{ color: "#004225", textDecoration: "underline", fontWeight: 600 }}
+                  >
+                    Política de Privacidad
+                  </a>
                 </span>
               </label>
 

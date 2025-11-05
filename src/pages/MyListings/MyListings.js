@@ -518,14 +518,6 @@ export default function MyListings() {
                   options={[{ value: "Original", label: "Original" }, { value: "Réplica", label: "Réplica" }]}
                 />
               </div>
-              <div>
-                <label className="label">Estado</label>
-                <Dropdown
-                  value={form.estado || "Activa"}
-                  onChange={(v) => setForm((f) => ({ ...f, estado: v }))}
-                  options={[{ value: "Activa", label: "Activa" }, { value: "Vendida", label: "Vendida" }]}
-                />
-              </div>
             </div>
 
             <label className="checkbox">
