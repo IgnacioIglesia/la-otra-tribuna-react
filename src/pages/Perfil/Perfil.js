@@ -5,7 +5,7 @@ import HeaderSimplif from "../../components/HeaderSimplif/HeaderSimplif";
 import AddressBookModal from "../Checkout/components/AddressBookModal";
 import "./Perfil.css";
 
-const KYC_BUCKET = "verificaciones"; // 👈 cambia si tu bucket tiene otro nombre
+const KYC_BUCKET = "verificaciones";
 
 function initialsFrom(nombre = "", apellido = "", email = "") {
   const n = (nombre || "").trim().split(/\s+/)[0] || "";
@@ -13,6 +13,25 @@ function initialsFrom(nombre = "", apellido = "", email = "") {
   const ini = (n[0] || "") + (a[0] || "");
   return (ini || (email[0] || "?")).toUpperCase();
 }
+
+// Validación de contraseña mejorada
+const validatePassword = (password) => {
+  const minLength = 8;
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  const errors = [];
+  if (password.length < minLength) errors.push(`Mínimo ${minLength} caracteres`);
+  if (!hasUpperCase) errors.push("Una letra mayúscula");
+  if (!hasNumber) errors.push("Un número");
+  if (!hasSymbol) errors.push("Un símbolo especial");
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
 
 export default function Perfil() {
   // sesión
@@ -34,11 +53,14 @@ export default function Perfil() {
   const [addrModalOpen, setAddrModalOpen] = useState(false);
 
   // seguridad: password
-  const [pwd, setPwd] = useState({ current: "", next: "", confirm: "" });
+  const [pwdMode, setPwdMode] = useState("form"); // "form" | "request-sent"
+  const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [pwdLoading, setPwdLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // verificación identidad (KYC)
-  const [kyc, setKyc] = useState(null); // {id_verificacion, estado, url_foto, enviado_at, verificado_at}
+  const [kyc, setKyc] = useState(null);
   const [kycFile, setKycFile] = useState(null);
   const [kycLoading, setKycLoading] = useState(false);
 
@@ -49,7 +71,6 @@ export default function Perfil() {
   }, []);
 
   const ensureUsuario = useCallback(async (authUser) => {
-    // Busca por id_auth; si no existe, inserta con metadata
     const { data: u, error } = await supabase
       .from("usuario")
       .select("id_usuario,nombre,apellido,email,id_auth")
@@ -167,28 +188,75 @@ export default function Perfil() {
     }
   };
 
-  // cambiar contraseña
-  const handleChangePassword = async (e) => {
+  // NUEVO: Solicitar cambio de contraseña (envía email)
+  const handleRequestPasswordChange = async (e) => {
     e.preventDefault();
-    if (!pwd.next || pwd.next.length < 6) {
-      alert("La nueva contraseña debe tener al menos 6 caracteres.");
+    
+    if (!email) {
+      alert("No se pudo obtener tu email.");
       return;
     }
+
+    setPwdLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/perfil`,
+      });
+
+      if (error) throw error;
+
+      setPwdMode("request-sent");
+      window.dispatchEvent(
+        new CustomEvent("toast", {
+          detail: { text: "Email enviado. Revisá tu bandeja de entrada." },
+        })
+      );
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo enviar el email: " + (err?.message || ""));
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  // NUEVO: Actualizar contraseña (cuando vienen del email)
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+
+    if (!pwd.next || pwd.next.length < 8) {
+      alert("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
     if (pwd.next !== pwd.confirm) {
       alert("Las contraseñas no coinciden.");
       return;
     }
-    // Supabase v2: con sesión válida se puede updateUser({password})
+
+    // Validar requisitos
+    const validation = validatePassword(pwd.next);
+    if (!validation.isValid) {
+      alert(`La contraseña debe tener:\n• ${validation.errors.join("\n• ")}`);
+      return;
+    }
+
+    setPwdLoading(true);
+
     try {
-      setPwdLoading(true);
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: pwd.next,
       });
+
       if (error) throw error;
 
-      setPwd({ current: "", next: "", confirm: "" });
+      setPwd({ next: "", confirm: "" });
+      setPwdMode("form");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+
       window.dispatchEvent(
-        new CustomEvent("toast", { detail: { text: "Contraseña actualizada" } })
+        new CustomEvent("toast", { detail: { text: "Contraseña actualizada exitosamente" } })
       );
     } catch (err) {
       console.error(err);
@@ -197,6 +265,20 @@ export default function Perfil() {
       setPwdLoading(false);
     }
   };
+
+  // Detectar si están en modo reset (vinieron desde el email)
+  useEffect(() => {
+    const checkResetMode = async () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get("type");
+      
+      if (type === "recovery") {
+        setPwdMode("update");
+      }
+    };
+
+    checkResetMode();
+  }, []);
 
   // subir/verificar identidad
   const onPickKycFile = (e) => {
@@ -224,7 +306,6 @@ export default function Perfil() {
       const { data: pub } = supabase.storage.from(KYC_BUCKET).getPublicUrl(path);
       const url_foto = pub?.publicUrl;
 
-      // inserta nueva solicitud (o reemplaza si querés)
       const payload = {
         id_usuario: idUsuario,
         url_foto,
@@ -392,43 +473,120 @@ export default function Perfil() {
           {/* Cambiar contraseña */}
           <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
             <strong style={{ fontSize: 14 }}>Cambiar contraseña</strong>
-            <form
-              onSubmit={handleChangePassword}
-              className="grid-2"
-              style={{ alignItems: "end" }}
-            >
-              <div className="field">
-                <label htmlFor="pwd-new">Nueva contraseña</label>
-                <input
-                  id="pwd-new"
-                  type="password"
-                  value={pwd.next}
-                  onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
-                  placeholder="Mínimo 6 caracteres"
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="pwd-confirm">Confirmar contraseña</label>
-                <input
-                  id="pwd-confirm"
-                  type="password"
-                  value={pwd.confirm}
-                  onChange={(e) =>
-                    setPwd((p) => ({ ...p, confirm: e.target.value }))
-                  }
-                  placeholder="Repetí la contraseña"
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
-              <div className="actions-row" style={{ gridColumn: "1/-1" }}>
-                <button className="btn primary" disabled={pwdLoading}>
-                  {pwdLoading ? "Actualizando..." : "Actualizar contraseña"}
+
+            {pwdMode === "form" && (
+              <form onSubmit={handleRequestPasswordChange} style={{ display: "grid", gap: 12 }}>
+                <p className="note muted" style={{ margin: 0 }}>
+                  Para cambiar tu contraseña, te enviaremos un email de verificación. Hacé clic en el enlace del email para continuar.
+                </p>
+                <div className="actions-row" style={{ justifyContent: "flex-start" }}>
+                  <button className="btn primary" disabled={pwdLoading || !email}>
+                    {pwdLoading ? "Enviando..." : "Solicitar cambio de contraseña"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {pwdMode === "request-sent" && (
+              <div className="password-info-box">
+                <div style={{ display: "flex", alignItems: "start", gap: 12 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
+                    <circle cx="12" cy="12" r="10" fill="#dcfce7" stroke="#16a34a" strokeWidth="2"/>
+                    <path d="M12 8v4m0 4h.01" stroke="#16a34a" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <div>
+                    <strong style={{ color: "#166534", display: "block", marginBottom: 4 }}>
+                      Email enviado
+                    </strong>
+                    <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+                      Revisá tu bandeja de entrada. El enlace expira en 1 hora.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  className="btn"
+                  onClick={() => setPwdMode("form")}
+                  style={{ marginTop: 12, width: "fit-content" }}
+                >
+                  Volver
                 </button>
               </div>
-            </form>
+            )}
+
+            {pwdMode === "update" && (
+              <form onSubmit={handleUpdatePassword} className="grid-2" style={{ alignItems: "end" }}>
+                <div className="field">
+                  <label htmlFor="pwd-new">Nueva contraseña</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      id="pwd-new"
+                      type={showPassword ? "text" : "password"}
+                      value={pwd.next}
+                      onChange={(e) => setPwd((p) => ({ ...p, next: e.target.value }))}
+                      placeholder="Mínimo 8 caracteres"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? "👁️" : "👁️‍🗨️"}
+                    </button>
+                  </div>
+                  <div className="password-requirements">
+                    <small className="muted">
+                      • Mínimo 8 caracteres<br />
+                      • Una mayúscula<br />
+                      • Un número<br />
+                      • Un símbolo especial
+                    </small>
+                  </div>
+                </div>
+                <div className="field">
+                  <label htmlFor="pwd-confirm">Confirmar contraseña</label>
+                  <div className="password-input-wrapper">
+                    <input
+                      id="pwd-confirm"
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={pwd.confirm}
+                      onChange={(e) => setPwd((p) => ({ ...p, confirm: e.target.value }))}
+                      placeholder="Repetí la contraseña"
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+                    </button>
+                  </div>
+                </div>
+                <div className="actions-row" style={{ gridColumn: "1/-1", gap: 10 }}>
+                  <button className="btn primary" disabled={pwdLoading}>
+                    {pwdLoading ? "Actualizando..." : "Actualizar contraseña"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => {
+                      setPwdMode("form");
+                      setPwd({ next: "", confirm: "" });
+                      setShowPassword(false);
+                      setShowConfirmPassword(false);
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
           <hr style={{ border: 0, borderTop: "1px dashed #e5e7eb", margin: "12px 0 16px" }} />
@@ -519,6 +677,53 @@ export default function Perfil() {
           © {new Date().getFullYear()} La Otra Tribuna.
         </footer>
       </main>
+
+      <style>{`
+        .password-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .password-input-wrapper input {
+          padding-right: 48px;
+        }
+
+        .toggle-password {
+          position: absolute;
+          right: 12px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 20px;
+          padding: 4px 8px;
+          opacity: 0.6;
+          transition: opacity 0.2s;
+        }
+
+        .toggle-password:hover {
+          opacity: 1;
+        }
+
+        .password-requirements {
+          padding: 10px 12px;
+          background-color: #f8fafc;
+          border-radius: 6px;
+          border-left: 3px solid #004225;
+          margin-top: 4px;
+        }
+
+        .password-requirements small {
+          line-height: 1.6;
+        }
+
+        .password-info-box {
+          padding: 16px;
+          background-color: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 8px;
+        }
+      `}</style>
 
       {/* Modal de Direcciones */}
       {addrModalOpen && idUsuario && (
