@@ -12,29 +12,35 @@ export default function Authenticity() {
           <header className="authn-header">
             <h1>Autenticidad & Garantía</h1>
             <p className="lead">
-              Cómo verificamos, qué te pedimos al publicar y qué cobertura tenés
-              como comprador.
+              Cómo se publica, qué control aplica La Otra Tribuna y qué cobertura
+              tenés como comprador.
             </p>
           </header>
 
           <section className="authn-section">
-            <h3>¿Cómo verificamos una camiseta?</h3>
+            <h3>¿Qué control hacemos sobre las publicaciones?</h3>
             <ul>
               <li>
-                <strong>Fotos obligatorias:</strong> frontal, dorsal, etiqueta
-                interna, holograma o patch, detalle de sponsors.
+                <strong>Foto obligatoria:</strong> una sola foto que muestre la
+                camiseta completa, con buena luz y fondo neutro, sin filtros.
               </li>
               <li>
-                <strong>Detalles de fabricación:</strong> tipo de tejido,
-                costuras, tipografías, escudos y parches.
+                <strong>Datos claros al publicar:</strong> el vendedor debe indicar
+                si la camiseta es <strong>original</strong> o <strong>réplica</strong>,
+                y describir el estado real de la prenda.
               </li>
               <li>
-                <strong>Coincidencia temporada/modelo:</strong> contrastamos con
-                catálogos oficiales y referencias públicas.
+                <strong>Usuarios verificados:</strong> para publicar o comprar se
+                requiere registro con <strong>email</strong> y{" "}
+                <strong>cédula</strong>, lo que aporta trazabilidad y mayor
+                seguridad.
               </li>
               <li>
-                <strong>Revisión comunitaria:</strong> los usuarios pueden
-                reportar dudas; nuestro equipo revisa en 24–48 h.
+                <strong>Control del equipo:</strong> si detectamos imágenes falsas,
+                robadas o publicaciones mal clasificadas (por ejemplo, réplica como
+                original), podemos <strong>corregir</strong>,{" "}
+                <strong>pausar</strong> o <strong>dar de baja</strong> la
+                publicación.
               </li>
             </ul>
           </section>
@@ -44,11 +50,11 @@ export default function Authenticity() {
             <ul>
               <li>
                 Se permiten <strong>réplicas</strong> siempre que estén{" "}
-                <strong>marcadas</strong> como tal al publicar.
+                <strong>claramente indicadas</strong> como tales al publicar.
               </li>
               <li>
-                Las publicaciones mal clasificadas pueden ser pausadas o
-                removidas.
+                Las publicaciones mal clasificadas pueden ser <strong>pausadas</strong>{" "}
+                o <strong>removidas</strong>.
               </li>
             </ul>
           </section>
@@ -57,13 +63,14 @@ export default function Authenticity() {
             <h3>Protección al comprador</h3>
             <ul>
               <li>
-                Si el ítem recibido <strong>no coincide</strong> con lo
-                publicado, podés solicitar <strong>devolución</strong>.
+                Si lo recibido <strong>no coincide</strong> con lo publicado (estado,
+                talle, modelo, original vs réplica), podés solicitar{" "}
+                <strong>revisión y posible devolución</strong> dentro del plazo
+                establecido.
               </li>
               <li>
                 Pagos procesados con intermediarios seguros y{" "}
-                <strong>liberación</strong> al vendedor cuando confirmás
-                recepción.
+                <strong>liberación</strong> al vendedor cuando confirmás recepción.
               </li>
             </ul>
           </section>
@@ -71,19 +78,22 @@ export default function Authenticity() {
           <section className="authn-section">
             <h3>Consejos rápidos para publicar</h3>
             <ul>
-              <li>Fotos con buena luz, fondo neutro, sin filtros.</li>
               <li>
-                Mostrá número de serie/holograma (si lo tuviera) y estado real
-                (manchas, roturas, desgaste).
+                Subí <strong>una foto</strong> con buena luz que muestre la prenda
+                completa.
               </li>
               <li>
-                Especificá <strong>talle, medidas</strong> y si es{" "}
-                <strong>jugador o fan</strong>.
+                Describí con honestidad el <strong>estado real</strong> (desgaste,
+                manchas, roturas o detalles).
+              </li>
+              <li>
+                Especificá <strong>talle</strong>, <strong>medidas</strong> y si es{" "}
+                <strong>jugador</strong> o <strong>fan</strong> (si aplica).
               </li>
             </ul>
           </section>
         </article>
       </main>
-    </>
-  );
+    </>
+  );
 }
