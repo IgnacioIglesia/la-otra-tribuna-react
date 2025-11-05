@@ -19,6 +19,7 @@ export default function Register() {
     apellido: "",
     email: "",
     password: "",
+    confirmPassword: "",
     accept: false,
     pais: "Uruguay",
     departamento: "",
