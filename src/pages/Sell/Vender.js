@@ -23,7 +23,7 @@ export default function Vender() {
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [sessionEmail, setSessionEmail] = useState("");
-  
+
   // 🔒 Estados de verificación
   const [userStatus, setUserStatus] = useState({
     verified: false,
@@ -41,13 +41,17 @@ export default function Vender() {
     condicion: "Nuevo",
     autenticidad: "Original",
     talle: "M",
-    tipo: "Club",
-    coleccion: "Actual",
+    // 🔴 Ahora SIN preselección
+    tipo: "",
+    coleccion: "",
     estado: "Activa",
     ofertas: false,
     imagen: null,
     stock: 1,
   });
+
+  // Para marcar errores visuales en los toggles cuando intentan enviar
+  const [triedSubmit, setTriedSubmit] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [preview, setPreview] = useState("");
@@ -145,7 +149,10 @@ export default function Vender() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    
+
+    // Marcar que intentó enviar (activa mensajes en los toggles)
+    setTriedSubmit(true);
+
     // Doble verificación antes de publicar
     if (!userStatus.canPublish) {
       alert("No tienes permisos para publicar.");
@@ -174,8 +181,15 @@ export default function Vender() {
         stock,
       } = form;
 
+      // ✅ Validaciones obligatorias (incluye categoría y colección)
       if (!equipo || !titulo || !precio || !imagen) {
         alert("Completá equipo, título, precio y subí una imagen.");
+        setSubmitting(false);
+        return;
+      }
+
+      if (!tipo || !coleccion) {
+        alert("Elegí la categoría (Club/Selección) y la colección (Actual/Retro).");
         setSubmitting(false);
         return;
       }
@@ -262,33 +276,33 @@ export default function Vender() {
       if (fotoErr) throw fotoErr;
 
       try {
-        // Notificación local (aparece inmediatamente)
+        // Notificación local
         window.dispatchEvent(
-          new CustomEvent("new-notification", { 
+          new CustomEvent("new-notification", {
             detail: {
               tipo: "publicacion",
               titulo: "¡Publicación creada! ✨",
               mensaje: `Tu publicación "${titulo}" fue creada exitosamente`,
               id_publicacion: pub.id_publicacion,
               fecha: new Date().toISOString(),
-              leida: false
-            }
+              leida: false,
+            },
           })
         );
-      
-        // Guardar en base de datos
+
+        // Guardar en base
         await supabase.from("notificacion").insert({
           id_usuario: id_usuario,
           tipo: "publicacion",
           titulo: "¡Publicación creada! ✨",
           mensaje: `Tu publicación "${titulo}" fue creada exitosamente`,
           id_publicacion: pub.id_publicacion,
-          leida: false
+          leida: false,
         });
       } catch (notifError) {
         console.error("Error al crear notificación:", notifError);
       }
-      
+
       // ✅ 6) ÉXITO
       const msg = ofertas
         ? "Tu publicación se guardó correctamente. Si no se vende en 30 días, entrará automáticamente en ofertas (10% OFF)."
@@ -347,21 +361,26 @@ export default function Vender() {
     return (
       <>
         <HeaderSimplif />
-        <div className="sell-wrap" style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center",
-          minHeight: "80vh",
-          padding: "2rem"
-        }}>
-          <div style={{
-            background: "white",
+        <div
+          className="sell-wrap"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "80vh",
             padding: "2rem",
-            borderRadius: "0.75rem",
-            maxWidth: "500px",
-            textAlign: "center",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-          }}>
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "2rem",
+              borderRadius: "0.75rem",
+              maxWidth: "500px",
+              textAlign: "center",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
             <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🚫</div>
             <h2 style={{ margin: "0 0 1rem", color: "#dc2626" }}>
               Cuenta suspendida
@@ -382,7 +401,7 @@ export default function Vender() {
                 border: "none",
                 borderRadius: "0.5rem",
                 cursor: "pointer",
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               Volver al inicio
@@ -398,29 +417,41 @@ export default function Vender() {
     return (
       <>
         <HeaderSimplif />
-        <div className="sell-wrap" style={{ 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center",
-          minHeight: "80vh",
-          padding: "2rem"
-        }}>
-          <div style={{
-            background: "white",
+        <div
+          className="sell-wrap"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: "80vh",
             padding: "2rem",
-            borderRadius: "0.75rem",
-            maxWidth: "500px",
-            textAlign: "center",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
-          }}>
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "2rem",
+              borderRadius: "0.75rem",
+              maxWidth: "500px",
+              textAlign: "center",
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
             <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>🔒</div>
             <h2 style={{ margin: "0 0 1rem", color: "#f59e0b" }}>
               Verificación requerida
             </h2>
             <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
-              Para publicar productos, primero debes verificar tu identidad subiendo una foto de tu cédula.
+              Para publicar productos, primero debes verificar tu identidad
+              subiendo una foto de tu cédula.
             </p>
-            <p style={{ fontSize: "0.875rem", color: "#9ca3af", marginBottom: "1.5rem" }}>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "#9ca3af",
+                marginBottom: "1.5rem",
+              }}
+            >
               Una vez aprobada tu verificación, podrás publicar sin límites.
             </p>
             <button
@@ -432,7 +463,7 @@ export default function Vender() {
                 border: "none",
                 borderRadius: "0.5rem",
                 cursor: "pointer",
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               Ir a verificar mi identidad
@@ -444,6 +475,9 @@ export default function Vender() {
   }
 
   // ✅ PUEDE PUBLICAR
+  const invalidTipo = triedSubmit && !form.tipo;
+  const invalidColeccion = triedSubmit && !form.coleccion;
+
   return (
     <>
       <HeaderSimplif />
@@ -461,7 +495,7 @@ export default function Vender() {
       >
         <div className="bg-overlay" />
 
-        <form className="sell-card" onSubmit={handleSubmit}>
+        <form className="sell-card" onSubmit={handleSubmit} noValidate>
           <div className="card-head">
             <img
               src="/assets/imagen.png"
@@ -475,12 +509,7 @@ export default function Vender() {
           <div className="field">
             <label>Imagen de la publicación</label>
             <label className="upload-box">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                hidden
-              />
+              <input type="file" accept="image/*" onChange={handleImage} hidden />
               {preview ? (
                 <img src={preview} alt="Vista previa" className="preview" />
               ) : (
@@ -612,7 +641,11 @@ export default function Vender() {
           {/* Categoría (Club / Selección) */}
           <div className="field">
             <label>Categoría</label>
-            <div className="glass-toggle">
+            <div
+              className={`glass-toggle ${invalidTipo ? "error" : ""}`}
+              role="group"
+              aria-label="Elegir categoría"
+            >
               <button
                 type="button"
                 className={form.tipo === "Club" ? "active" : ""}
@@ -628,12 +661,19 @@ export default function Vender() {
                 Selección
               </button>
             </div>
+            {invalidTipo && (
+              <span className="hint-error">Elegí una opción.</span>
+            )}
           </div>
 
           {/* Colección (Actual / Retro) */}
           <div className="field">
             <label>Colección</label>
-            <div className="glass-toggle">
+            <div
+              className={`glass-toggle ${invalidColeccion ? "error" : ""}`}
+              role="group"
+              aria-label="Elegir colección"
+            >
               <button
                 type="button"
                 className={form.coleccion === "Actual" ? "active" : ""}
@@ -649,6 +689,9 @@ export default function Vender() {
                 Retro
               </button>
             </div>
+            {invalidColeccion && (
+              <span className="hint-error">Elegí una opción.</span>
+            )}
           </div>
 
           {/* Ofertas automáticas */}

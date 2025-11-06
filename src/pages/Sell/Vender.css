@@ -101,7 +101,7 @@
 }
 
 /* ================================
-   GLASS TOGGLE - Estilo moderno para botones de categoría
+   GLASS TOGGLE
 ==================================*/
 .glass-toggle {
   display: flex;
@@ -145,13 +145,21 @@
   transform: translateY(1px);
 }
 
+/* Estado de error visual para toggles requeridos */
+.glass-toggle.error {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 2px #dc26261a;
+}
+
+.hint-error {
+  color: #dc2626;
+  font-size: 12px;
+}
+
 /* ================================
    DROPDOWN en el formulario
 ==================================*/
-.field .dd {
-  width: 100%;
-}
-
+.field .dd { width: 100%; }
 .field .dd-btn {
   width: 100%;
   justify-content: space-between;
@@ -180,9 +188,7 @@
   accent-color: #0e5135;
 }
 
-.checkbox span {
-  flex: 1;
-}
+.checkbox span { flex: 1; }
 
 /* ================================
    BOTÓN PRIMARY
@@ -213,10 +219,7 @@
   transition: opacity 0.3s ease;
 }
 
-.btn.primary:hover::before {
-  opacity: 1;
-}
-
+.btn.primary:hover::before { opacity: 1; }
 .btn.primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(14,81,53,0.3), inset 0 1px 0 rgba(255,255,255,.3);
@@ -237,23 +240,14 @@
 /* ================================
    HELPER TEXT
 ==================================*/
-.helper {
-  font-size: 12px;
-  margin-top: -2px;
-}
-
-.helper.muted {
-  color: #9ca3af;
-}
+.helper { font-size: 12px; margin-top: -2px; }
+.helper.muted { color: #9ca3af; }
 
 /* ================================
    RESPONSIVE
 ==================================*/
 @media (max-width: 600px) {
-  .sell-card {
-    padding: 20px;
-  }
-  
+  .sell-card { padding: 20px; }
   .glass-toggle button {
     padding: 9px 12px;
     font-size: 13px;
@@ -301,40 +295,12 @@
   justify-content: center;
 }
 
-.success-icon {
-  width: 28px;
-  height: 28px;
-  color: #16a34a;
-  transform: scale(.9);
-  animation: grow .22s ease-out forwards;
-}
-
-.success-title {
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.success-text {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.success-sub {
-  color: #6b7280;
-  font-size: 13px;
-}
+.success-icon { width: 28px; height: 28px; color: #16a34a; transform: scale(.9); animation: grow .22s ease-out forwards; }
+.success-title { font-weight: 700; font-size: 18px; }
+.success-text { color: #6b7280; font-size: 14px; }
+.success-sub  { color: #6b7280; font-size: 13px; }
 
 /* ===== Animaciones ===== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-@keyframes pop {
-  from { transform: scale(.96); opacity: .9; }
-  to   { transform: scale(1); opacity: 1; }
-}
-
-@keyframes grow {
-  to { transform: scale(1); }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { transform: scale(.96); opacity: .9; } to { transform: scale(1); opacity: 1; } }
+@keyframes grow { to { transform: scale(1); } }

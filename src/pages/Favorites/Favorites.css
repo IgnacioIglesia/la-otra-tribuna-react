@@ -172,24 +172,19 @@
   /* ===== Responsive ===== */
   @media (max-width: 640px) {
     .fav-item {
-      grid-template-columns: 72px 1fr;  /* miniatura más chica en móvil */
-      grid-template-areas:
-        "thumb info"
-        "actions actions";
-      align-items: start;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
     }
   
-    .fav-item .thumb,
-    .fav-item .thumb img {
-      width: 72px;
-      height: 72px;
-      border-radius: 10px;
+    .fav-item .thumb {
+      margin-bottom: 8px;
     }
   
     .fav-actions {
-      grid-area: actions;
-      justify-content: flex-start;
-      margin-top: 8px;
+      width: 100%;
+      max-width: 320px;
     }
   
     .fav-actions .btn,
