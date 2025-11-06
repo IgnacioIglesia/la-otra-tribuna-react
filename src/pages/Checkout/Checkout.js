@@ -30,6 +30,19 @@ const money = (n, currency = "USD") => {
   }).format(amount);
 };
 
+// ✅ NUEVO: Calcular costo de envío según departamento de la dirección
+const calculateShipping = (address, currency) => {
+  if (!address || !address.departamento) return 0;
+  
+  const isMontevideo = address.departamento.toLowerCase() === 'montevideo';
+  
+  if (currency === 'USD') {
+    return isMontevideo ? 5 : 7;
+  } else {
+    return isMontevideo ? 180 : 250;
+  }
+};
+
 const onlyDigits = (s) => (s || "").replace(/\D+/g, "");
 
 const formatCardNumber = (v) => {
@@ -157,24 +170,31 @@ export default function Checkout() {
   const [method, setMethod] = useState("card");
   const [card, setCard] = useState({ name: "", number: "", exp: "", cvc: "" });
 
-  // ✅ Términos + Transferencia (comprobante)
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [transferFile, setTransferFile] = useState(null);
   const [transferPreview, setTransferPreview] = useState(null);
   const [uploadingProof, setUploadingProof] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedProof, setUploadedProof] = useState(null); // { url, path, name }
+  const [uploadedProof, setUploadedProof] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("info");
   const [modalTitle, setModalTitle] = useState("");
   const [modalText, setModalText] = useState("");
 
-  const totalFinal = useMemo(() => total, [total]);
+  // ✅ ACTUALIZADO: Calcular envío basado en la dirección seleccionada
+  const shippingCost = useMemo(
+    () => calculateShipping(selected, paymentCurrency),
+    [selected, paymentCurrency]
+  );
 
-  // ⛔ listado de ítems no disponibles
+  // ✅ ACTUALIZADO: Total incluye envío
+  const totalFinal = useMemo(
+    () => total + shippingCost,
+    [total, shippingCost]
+  );
+
   const [unavailable, setUnavailable] = useState([]);
 
   const removeItem = (id) => {
@@ -182,7 +202,6 @@ export default function Checkout() {
     else if (typeof setQty === "function") setQty(id, 0);
   };
 
-  // Carga de sesión y usuario
   useEffect(() => {
     (async () => {
       try {
@@ -263,7 +282,6 @@ export default function Checkout() {
     setCard((c) => ({ ...c, [key]: v }));
   };
 
-  // Verificar disponibilidad
   useEffect(() => {
     let isMounted = true;
     (async () => {
@@ -339,7 +357,6 @@ export default function Checkout() {
     }
   };
 
-  // ====== Soporte de comprobante (transferencia)
   const handleProofChange = (e) => {
     const f = e.target.files?.[0] || null;
     setTransferFile(f);
@@ -365,13 +382,11 @@ export default function Checkout() {
   async function uploadComprobante(userId) {
     if (!transferFile) return null;
 
-    // bucket sugerido: 'comprobantes'
     const bucket = supabase.storage.from("comprobantes");
     const ts = Date.now();
     const safeName = transferFile.name?.replace(/[^\w.\-]+/g, "_") || `comprobante_${ts}`;
     const path = `${userId}/${ts}_${safeName}`;
 
-    // (Supabase no expone progreso real del upload)
     setUploadingProof(true);
     setUploadProgress(20);
 
@@ -520,6 +535,7 @@ export default function Checkout() {
         const precioConvertido = convertPrice(precioOriginal, item.moneda);
         const totalItem = precioConvertido * item.qty;
 
+        // ✅ ACTUALIZADO: Incluir costo de envío en el pedido
         const { data: pedido, error: pedidoError } = await supabase
           .from("pedido")
           .insert({
@@ -533,6 +549,8 @@ export default function Checkout() {
             metodo_pago: method,
             comprobante_url: proof?.url || null,
             comprobante_nombre: proof?.name || null,
+            costo_envio: shippingCost,
+            departamento_envio: selected.departamento
           })
           .select()
           .single();
@@ -887,7 +905,6 @@ export default function Checkout() {
                               )}
                             </div>
 
-                            {/* botón eliminar */}
                             <button
                               type="button"
                               className="u-remove"
@@ -932,6 +949,49 @@ export default function Checkout() {
               }}>
                 💱 Pagando en {paymentCurrency === 'USD' ? 'Dólares (U$D)' : 'Pesos (UYU)'}
               </div>
+
+              {/* ✅ NUEVO: Mostrar información de envío */}
+              {selected ? (
+                <div style={{
+                  padding: "0.75rem",
+                  background: "#f0fdf4",
+                  borderRadius: "8px",
+                  marginBottom: "1rem",
+                  border: "1px solid #86efac"
+                }}>
+                  <div style={{ 
+                    fontSize: "0.85rem", 
+                    fontWeight: 600, 
+                    color: "#166534",
+                    marginBottom: "0.25rem"
+                  }}>
+                    📍 Envío a: {selected.ciudad}, {selected.departamento}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#15803d" }}>
+                    Costo: {money(shippingCost, paymentCurrency)}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: "0.75rem",
+                  background: "#fef2f2",
+                  borderRadius: "8px",
+                  marginBottom: "1rem",
+                  border: "1px solid #fecaca"
+                }}>
+                  <div style={{ 
+                    fontSize: "0.85rem", 
+                    fontWeight: 600, 
+                    color: "#991b1b",
+                    marginBottom: "0.25rem"
+                  }}>
+                    ⚠️ Dirección no seleccionada
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#b91c1c" }}>
+                    Agregá una dirección para calcular el envío
+                  </div>
+                </div>
+              )}
 
               {blockedByUnavailable && (
                 <div role="alert" style={{
@@ -1037,10 +1097,30 @@ export default function Checkout() {
                 })}
               </ul>
 
+              {/* ✅ ACTUALIZADO: Mostrar subtotal, envío y total */}
               <div className="ck-totals">
                 <div>
-                  <span>Total</span>
-                  <strong>{money(totalFinal, paymentCurrency)}</strong>
+                  <span>Subtotal</span>
+                  <strong>{money(total, paymentCurrency)}</strong>
+                </div>
+                <div>
+                  <span>Envío</span>
+                  <strong>
+                    {selected 
+                      ? money(shippingCost, paymentCurrency)
+                      : "Agregá dirección"
+                    }
+                  </strong>
+                </div>
+                <div style={{ 
+                  borderTop: "2px solid #e5e7eb", 
+                  paddingTop: "0.75rem",
+                  marginTop: "0.5rem"
+                }}>
+                  <span style={{ fontSize: "1.1rem" }}>Total</span>
+                  <strong style={{ fontSize: "1.3rem" }}>
+                    {money(totalFinal, paymentCurrency)}
+                  </strong>
                 </div>
               </div>
 

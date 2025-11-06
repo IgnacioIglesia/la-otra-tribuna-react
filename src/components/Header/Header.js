@@ -24,36 +24,31 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Navega o scrollea según dónde estés
   const goToCatalog = () => {
     if (location.pathname === "/") {
-      // Ya estoy en Home → scrolleo directo con hash
       window.location.hash = "#catalogo";
     } else {
-      // Vengo de otra página → navego con state
       navigate("/", { state: { scrollTo: "catalogo" } });
     }
   };
 
   const goToHome = () => {
     if (location.pathname !== "/") {
-      navigate("/");                // venías de otra ruta → ir a Home
+      navigate("/");
       return;
     }
-    // ya estás en Home → limpiar hash y subir
     if (location.hash) {
-      navigate("/", { replace: true, state: {} }); // quita #catalogo sin recargar
+      navigate("/", { replace: true, state: {} });
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ===== Sesión =====
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Ítems del menú móvil
+  // ✅ ACTUALIZADO: Menú móvil con ubicación
   const MOBILE_MENU = [
     { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
     { label: "Ofertas", href: "/offers" },
@@ -63,6 +58,10 @@ export default function Header() {
     { label: "Cómo funciona", href: "/how-it-works" },
     { label: "Autenticidad", href: "/authenticity" },
     { label: "Ayuda", href: "/help" },
+    { 
+      label: "Ubicación de envío", 
+      action: "location" 
+    },
   ];
 
   useEffect(() => {
@@ -143,16 +142,13 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ===== Contextos globales =====
   const { count: favCount, openFavorites } = useFavorites();
   const { count: cartCount, openCart } = useCart();
 
   return (
     <header id="siteHeader">
-      {/* ===== TOP BAR ===== */}
       <div className="top">
         <div className="container top-inner">
-          {/* Hamburguesa (móvil) */}
           <button
             className="lot-burger lg-hidden"
             aria-label="Abrir menú"
@@ -164,10 +160,10 @@ export default function Header() {
           </button>
 
           <div className="brand-wrap">
-          <button type="button" className="logo-link" onClick={goToHome} aria-label="Ir al inicio">
-            <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
-          </button>
-        </div>
+            <button type="button" className="logo-link" onClick={goToHome} aria-label="Ir al inicio">
+              <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
+            </button>
+          </div>
 
           <div className="search">
             <SearchBar onSelect={(id) => navigate(`/publication/${id}`)} />
@@ -224,7 +220,6 @@ export default function Header() {
               </button>
             )}
 
-            {/* Pills */}
             <button className="pill" type="button" aria-label="Favoritos" onClick={openFavorites}>
               ❤️<span>{favCount}</span>
             </button>
@@ -238,7 +233,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* ===== SUBNAV ===== */}
       <nav className="subnav" aria-label="Subnavegación">
         <div className="container subnav-inner">
           <button className="loc-link" onClick={() => setIsLocationModalOpen(true)}>
@@ -252,7 +246,6 @@ export default function Header() {
             <span>{getLocationText()}</span>
           </button>
 
-          {/* CATÁLOGO */}
           <button className="subnav-link" onClick={goToCatalog}>
             Catálogo
           </button>
@@ -285,18 +278,22 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Modal de ubicación */}
       <LocationModal
         isOpen={isLocationModalOpen}
         onClose={() => setIsLocationModalOpen(false)}
         onLocationSelect={handleLocationSelect}
       />
 
-      {/* Drawer móvil */}
+      {/* ✅ ACTUALIZADO: Pasar props adicionales al drawer */}
       <MobileDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         items={MOBILE_MENU}
+        onLocationClick={() => {
+          setDrawerOpen(false);
+          setIsLocationModalOpen(true);
+        }}
+        currentLocation={selectedLocation}
       />
     </header>
   );

@@ -4,27 +4,39 @@ import { useNavigate, useLocation } from "react-router-dom";
 import SearchBar from "../SearchBar/SearchBar";
 import "./MobileDrawer.css";
 
-export default function MobileDrawer({ open, onClose, items = [] }) {
+export default function MobileDrawer({ 
+  open, 
+  onClose, 
+  items = [], 
+  onLocationClick,
+  currentLocation 
+}) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleItemClick = (item) => {
-    // Cerrar el drawer
+    // ✅ Manejar acción especial de ubicación
+    if (item.action === "location") {
+      if (onLocationClick) onLocationClick();
+      return;
+    }
+
     onClose();
 
-    // Si el item tiene state (como Catálogo), navegar con ese state
     if (item.state) {
-      // Si ya estamos en Home, usar hash
       if (location.pathname === "/") {
         window.location.hash = "#catalogo";
       } else {
-        // Si venimos de otra página, navegar con state
         navigate(item.href, { state: item.state });
       }
     } else {
-      // Para otros items, navegación normal
       navigate(item.href);
     }
+  };
+
+  const getLocationText = () => {
+    if (!currentLocation) return "No seleccionada";
+    return `${currentLocation.ciudad}, ${currentLocation.departamento}`;
   };
 
   return (
@@ -36,19 +48,34 @@ export default function MobileDrawer({ open, onClose, items = [] }) {
           <button onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
 
-        {/* Buscador en el drawer */}
         <div className="drawer-search">
           <SearchBar />
         </div>
 
         <ul className="drawer-list">
-          {items.map((it) => (
-            <li key={it.href}>
+          {items.map((it, idx) => (
+            <li key={it.href || idx}>
               <button 
                 onClick={() => handleItemClick(it)}
                 className="drawer-link"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
               >
-                {it.label}
+                <span>{it.label}</span>
+                
+                {/* ✅ Mostrar ubicación actual si es el item de ubicación */}
+                {it.action === "location" && (
+                  <span style={{
+                    fontSize: '12px',
+                    color: currentLocation ? '#059669' : '#9ca3af',
+                    fontWeight: 500
+                  }}>
+                    {getLocationText()}
+                  </span>
+                )}
               </button>
             </li>
           ))}
