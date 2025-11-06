@@ -455,7 +455,7 @@ export default function Login() {
 
             <div className="addr-form">
               <div className="f">
-                <label>Nueva contraseña</label>
+                <label>Nueva contraseña *</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showNewPassword ? "text" : "password"}
@@ -464,7 +464,7 @@ export default function Login() {
                       setNewPwd1(e.target.value);
                       validatePasswordStrength(e.target.value);
                     }}
-                    placeholder="••••••••"
+                    placeholder="Ingresá tu nueva contraseña"
                     required
                     style={{ paddingRight: "2.5rem" }}
                   />
@@ -560,13 +560,13 @@ export default function Login() {
               </div>
 
               <div className="f">
-                <label>Repetir contraseña</label>
+                <label>Repetir contraseña *</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showConfirmPassword ? "text" : "password"}
                     value={newPwd2}
                     onChange={(e) => setNewPwd2(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Repetí tu nueva contraseña"
                     required
                     style={{ paddingRight: "2.5rem" }}
                   />
@@ -602,7 +602,7 @@ export default function Login() {
                     <span>Las contraseñas no coinciden</span>
                   </div>
                 )}
-                {newPwd2 && newPwd1 === newPwd2 && (
+                {newPwd2 && newPwd1 === newPwd2 && newPwd1.length > 0 && (
                   <div style={{ 
                     marginTop: "0.5rem", 
                     fontSize: "0.875rem", 
