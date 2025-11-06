@@ -177,9 +177,33 @@ export default function Login() {
   const [newPwd1, setNewPwd1] = useState("");
   const [newPwd2, setNewPwd2] = useState("");
   const [savingNewPwd, setSavingNewPwd] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Estado para validación de contraseña en recuperación
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    uppercase: false,
+    number: false,
+    symbol: false,
+    score: 0
+  });
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
+  };
+
+  // Validar fortaleza de contraseña
+  const validatePasswordStrength = (pwd) => {
+    const strength = {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
+      symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
+      score: 0
+    };
+    strength.score = [strength.length, strength.uppercase, strength.number, strength.symbol].filter(Boolean).length;
+    setPasswordStrength(strength);
   };
 
   const handleLogin = async (e) => {
@@ -266,8 +290,24 @@ export default function Login() {
 
   const submitNewPassword = async (e) => {
     e.preventDefault();
-    if (newPwd1.length < 6) return showToast("La contraseña debe tener al menos 6 caracteres.", "error");
-    if (newPwd1 !== newPwd2) return showToast("Las contraseñas no coinciden.", "error");
+    
+    // Validaciones completas
+    if (newPwd1.length < 8) {
+      return showToast("La contraseña debe tener al menos 8 caracteres.", "error");
+    }
+    if (!/[A-Z]/.test(newPwd1)) {
+      return showToast("La contraseña debe incluir al menos una letra mayúscula.", "error");
+    }
+    if (!/[0-9]/.test(newPwd1)) {
+      return showToast("La contraseña debe incluir al menos un número.", "error");
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPwd1)) {
+      return showToast("La contraseña debe incluir al menos un símbolo especial.", "error");
+    }
+    if (newPwd1 !== newPwd2) {
+      return showToast("Las contraseñas no coinciden.", "error");
+    }
+
     setSavingNewPwd(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPwd1 });
@@ -276,12 +316,27 @@ export default function Login() {
       setRecoveryOpen(false);
       setNewPwd1("");
       setNewPwd2("");
+      setPasswordStrength({ length: false, uppercase: false, number: false, symbol: false, score: 0 });
     } catch (err) {
       console.error(err);
       showToast(err.message || "No se pudo actualizar la contraseña.", "error");
     } finally {
       setSavingNewPwd(false);
     }
+  };
+
+  const getPasswordStrengthColor = () => {
+    if (passwordStrength.score === 4) return "#16a34a";
+    if (passwordStrength.score === 3) return "#f59e0b";
+    if (passwordStrength.score === 2) return "#f97316";
+    return "#ef4444";
+  };
+
+  const getPasswordStrengthText = () => {
+    if (passwordStrength.score === 4) return "Fuerte";
+    if (passwordStrength.score === 3) return "Media";
+    if (passwordStrength.score === 2) return "Débil";
+    return "Muy débil";
   };
 
   return (
@@ -382,6 +437,7 @@ export default function Login() {
             className="addr-modal"
             onClick={(e) => e.stopPropagation()}
             onSubmit={submitNewPassword}
+            style={{ maxWidth: "500px" }}
           >
             <div className="addr-modal-head">
               <h3 className="addr-title">Definir nueva contraseña</h3>
@@ -391,22 +447,165 @@ export default function Login() {
             <div className="addr-form">
               <div className="f">
                 <label>Nueva contraseña</label>
-                <input
-                  type="password"
-                  value={newPwd1}
-                  onChange={(e) => setNewPwd1(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  required
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPwd1}
+                    onChange={(e) => {
+                      setNewPwd1(e.target.value);
+                      validatePasswordStrength(e.target.value);
+                    }}
+                    placeholder="••••••••"
+                    required
+                    style={{ paddingRight: "2.5rem" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.25rem",
+                      color: "#6b7280",
+                      padding: 0
+                    }}
+                  >
+                    {showNewPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+
+                {/* Indicador de fortaleza */}
+                {newPwd1 && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <div style={{ 
+                      display: "flex", 
+                      justifyContent: "space-between", 
+                      alignItems: "center",
+                      marginBottom: "0.5rem"
+                    }}>
+                      <span style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                        Fortaleza:
+                      </span>
+                      <span style={{ 
+                        fontSize: "0.875rem", 
+                        fontWeight: 600,
+                        color: getPasswordStrengthColor()
+                      }}>
+                        {getPasswordStrengthText()}
+                      </span>
+                    </div>
+                    <div style={{ 
+                      height: "4px", 
+                      background: "#e5e7eb", 
+                      borderRadius: "2px",
+                      overflow: "hidden"
+                    }}>
+                      <div style={{
+                        height: "100%",
+                        width: `${(passwordStrength.score / 4) * 100}%`,
+                        background: getPasswordStrengthColor(),
+                        transition: "all 0.3s"
+                      }} />
+                    </div>
+                    <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: passwordStrength.length ? "#16a34a" : "#9ca3af" }}>
+                          {passwordStrength.length ? "✓" : "○"}
+                        </span>
+                        <span style={{ color: passwordStrength.length ? "#374151" : "#9ca3af" }}>
+                          Mínimo 8 caracteres
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: passwordStrength.uppercase ? "#16a34a" : "#9ca3af" }}>
+                          {passwordStrength.uppercase ? "✓" : "○"}
+                        </span>
+                        <span style={{ color: passwordStrength.uppercase ? "#374151" : "#9ca3af" }}>
+                          Una letra mayúscula
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: passwordStrength.number ? "#16a34a" : "#9ca3af" }}>
+                          {passwordStrength.number ? "✓" : "○"}
+                        </span>
+                        <span style={{ color: passwordStrength.number ? "#374151" : "#9ca3af" }}>
+                          Un número
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: passwordStrength.symbol ? "#16a34a" : "#9ca3af" }}>
+                          {passwordStrength.symbol ? "✓" : "○"}
+                        </span>
+                        <span style={{ color: passwordStrength.symbol ? "#374151" : "#9ca3af" }}>
+                          Un símbolo especial (!@#$%^&*)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+
               <div className="f">
                 <label>Repetir contraseña</label>
-                <input
-                  type="password"
-                  value={newPwd2}
-                  onChange={(e) => setNewPwd2(e.target.value)}
-                  required
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={newPwd2}
+                    onChange={(e) => setNewPwd2(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={{ paddingRight: "2.5rem" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.25rem",
+                      color: "#6b7280",
+                      padding: 0
+                    }}
+                  >
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+                {newPwd2 && newPwd1 !== newPwd2 && (
+                  <div style={{ 
+                    marginTop: "0.5rem", 
+                    fontSize: "0.875rem", 
+                    color: "#ef4444",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span>✕</span>
+                    <span>Las contraseñas no coinciden</span>
+                  </div>
+                )}
+                {newPwd2 && newPwd1 === newPwd2 && (
+                  <div style={{ 
+                    marginTop: "0.5rem", 
+                    fontSize: "0.875rem", 
+                    color: "#16a34a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span>✓</span>
+                    <span>Las contraseñas coinciden</span>
+                  </div>
+                )}
               </div>
 
               <div className="addr-footer">

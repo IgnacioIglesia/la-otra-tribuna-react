@@ -13,12 +13,14 @@ export default function Register() {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
     email: "",
     password: "",
+    confirmPassword: "",
     accept: false,
     pais: "Uruguay",
     departamento: "",
@@ -30,6 +32,7 @@ export default function Register() {
   const [passwordStrength, setPasswordStrength] = useState({
     length: false,
     uppercase: false,
+    number: false,
     symbol: false,
     score: 0
   });
@@ -46,26 +49,24 @@ export default function Register() {
     const v = e.target.type === "checkbox" ? e.target.checked : e.target.value;
     setForm((f) => ({ ...f, [k]: v }));
 
-    // Validar contraseña en tiempo real
     if (k === "password") {
       validatePasswordStrength(v);
     }
   };
 
-  // Validación de fortaleza de contraseña
   const validatePasswordStrength = (pwd) => {
     const strength = {
       length: pwd.length >= 8,
       uppercase: /[A-Z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
       symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
       score: 0
     };
 
-    strength.score = [strength.length, strength.uppercase, strength.symbol].filter(Boolean).length;
+    strength.score = [strength.length, strength.uppercase, strength.number, strength.symbol].filter(Boolean).length;
     setPasswordStrength(strength);
   };
 
-  // Validaciones mejoradas
   const validateStep1 = () => {
     if (!form.nombre.trim()) return "Por favor, ingresá tu nombre.";
     if (form.nombre.trim().length < 2) return "El nombre debe tener al menos 2 caracteres.";
@@ -82,8 +83,14 @@ export default function Register() {
       return "La contraseña debe tener al menos 8 caracteres.";
     if (!/[A-Z]/.test(form.password))
       return "La contraseña debe incluir al menos una letra mayúscula.";
+    if (!/[0-9]/.test(form.password))
+      return "La contraseña debe incluir al menos un número.";
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(form.password))
       return "La contraseña debe incluir al menos un símbolo especial.";
+    
+    if (!form.confirmPassword) return "Por favor, confirmá tu contraseña.";
+    if (form.password !== form.confirmPassword)
+      return "Las contraseñas no coinciden.";
     
     if (!form.accept) 
       return "Debes aceptar los Términos y Condiciones para continuar.";
@@ -144,8 +151,7 @@ export default function Register() {
 
     setSubmitting(true);
     try {
-      const redirectTo =
-        window.location.origin + "/login" + (location.search || "");
+      const redirectTo = window.location.origin + "/login" + (location.search || "");
 
       const { error: signErr } = await supabase.auth.signUp({
         email: form.email.trim(),
@@ -185,8 +191,7 @@ export default function Register() {
           open: true,
           type: "ok",
           title: "¡Revisá tu correo! 📧",
-          text:
-            "Te enviamos un email de confirmación. Revisá tu bandeja de entrada y spam.",
+          text: "Te enviamos un email de confirmación. Revisá tu bandeja de entrada y spam.",
         });
         setTimeout(() => navigate("/login"), 2000);
         return;
@@ -213,15 +218,16 @@ export default function Register() {
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength.score === 3) return "#16a34a";
-    if (passwordStrength.score === 2) return "#f59e0b";
+    if (passwordStrength.score === 4) return "#16a34a";
+    if (passwordStrength.score === 3) return "#f59e0b";
+    if (passwordStrength.score === 2) return "#f97316";
     return "#ef4444";
   };
 
   const getPasswordStrengthText = () => {
-    if (passwordStrength.score === 3) return "Fuerte";
-    if (passwordStrength.score === 2) return "Media";
-    if (passwordStrength.score === 1) return "Débil";
+    if (passwordStrength.score === 4) return "Fuerte";
+    if (passwordStrength.score === 3) return "Media";
+    if (passwordStrength.score === 2) return "Débil";
     return "Muy débil";
   };
 
@@ -251,7 +257,6 @@ export default function Register() {
             </p>
           </div>
 
-          {/* Indicador de pasos */}
           <div style={{ 
             display: "flex", 
             gap: "0.5rem", 
@@ -385,7 +390,6 @@ export default function Register() {
                   </button>
                 </div>
 
-                {/* Indicador de fortaleza */}
                 {form.password && (
                   <div style={{ marginTop: "0.75rem" }}>
                     <div style={{ 
@@ -413,7 +417,7 @@ export default function Register() {
                     }}>
                       <div style={{
                         height: "100%",
-                        width: `${(passwordStrength.score / 3) * 100}%`,
+                        width: `${(passwordStrength.score / 4) * 100}%`,
                         background: getPasswordStrengthColor(),
                         transition: "all 0.3s"
                       }} />
@@ -436,6 +440,14 @@ export default function Register() {
                         </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
+                        <span style={{ color: passwordStrength.number ? "#16a34a" : "#9ca3af" }}>
+                          {passwordStrength.number ? "✓" : "○"}
+                        </span>
+                        <span style={{ color: passwordStrength.number ? "#374151" : "#9ca3af" }}>
+                          Un número
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem" }}>
                         <span style={{ color: passwordStrength.symbol ? "#16a34a" : "#9ca3af" }}>
                           {passwordStrength.symbol ? "✓" : "○"}
                         </span>
@@ -444,6 +456,75 @@ export default function Register() {
                         </span>
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="field">
+                <label style={{ fontWeight: 600, color: "#374151", marginBottom: "0.5rem", display: "block" }}>
+                  Confirmar contraseña *
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input 
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={form.confirmPassword} 
+                    onChange={update("confirmPassword")} 
+                    placeholder="••••••••"
+                    required 
+                    style={{
+                      padding: "0.75rem 1rem",
+                      paddingRight: "3rem",
+                      border: "1.5px solid #e5e7eb",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      width: "100%",
+                      transition: "all 0.2s"
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#3b82f6"}
+                    onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "0.75rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.25rem",
+                      color: "#6b7280"
+                    }}
+                  >
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+                {form.confirmPassword && form.password !== form.confirmPassword && (
+                  <div style={{ 
+                    marginTop: "0.5rem", 
+                    fontSize: "0.875rem", 
+                    color: "#ef4444",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span>✕</span>
+                    <span>Las contraseñas no coinciden</span>
+                  </div>
+                )}
+                {form.confirmPassword && form.password === form.confirmPassword && (
+                  <div style={{ 
+                    marginTop: "0.5rem", 
+                    fontSize: "0.875rem", 
+                    color: "#16a34a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem"
+                  }}>
+                    <span>✓</span>
+                    <span>Las contraseñas coinciden</span>
                   </div>
                 )}
               </div>
@@ -475,7 +556,7 @@ export default function Register() {
                     href="/terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}   // ← no altera el checkbox
+                    onClick={(e) => e.stopPropagation()}
                     style={{ color: "#004225", textDecoration: "underline", fontWeight: 600 }}
                   >
                     Términos y Condiciones
@@ -485,7 +566,7 @@ export default function Register() {
                     href="/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}   // ← no altera el checkbox
+                    onClick={(e) => e.stopPropagation()}
                     style={{ color: "#004225", textDecoration: "underline", fontWeight: 600 }}
                   >
                     Política de Privacidad
