@@ -216,3 +216,34 @@
   line-height: 1; font-size: 18px; font-weight: 600; cursor: pointer; color: #6b7280;
 }
 .mini-cart .mi-remove:hover { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+
+@media (max-width: 640px) {
+  .addr-modal {
+    width: 92%;
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .addr-list {
+    gap: 8px;
+  }
+
+  .addr-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .addr-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .addr-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .use-address-btn {
+    width: 100%;
+  }
+}
