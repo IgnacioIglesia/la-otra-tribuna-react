@@ -1,21 +1,31 @@
-// src/components/Drawer/MobileDrawer.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import SearchBar from "../SearchBar/SearchBar";
 import "./MobileDrawer.css";
 
-export default function MobileDrawer({ 
-  open, 
-  onClose, 
-  items = [], 
+export default function MobileDrawer({
+  open,
+  onClose,
+  items = [],
   onLocationClick,
-  currentLocation 
+  currentLocation,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Bloquea scroll cuando el drawer está abierto
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   const handleItemClick = (item) => {
-    // ✅ Manejar acción especial de ubicación
     if (item.action === "location") {
       if (onLocationClick) onLocationClick();
       return;
@@ -45,7 +55,9 @@ export default function MobileDrawer({
       <aside className="drawer-panel">
         <div className="drawer-head">
           <span>Menú</span>
-          <button onClick={onClose} aria-label="Cerrar">✕</button>
+          <button onClick={onClose} aria-label="Cerrar">
+            ✕
+          </button>
         </div>
 
         <div className="drawer-search">
@@ -55,24 +67,25 @@ export default function MobileDrawer({
         <ul className="drawer-list">
           {items.map((it, idx) => (
             <li key={it.href || idx}>
-              <button 
+              <button
                 onClick={() => handleItemClick(it)}
                 className="drawer-link"
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <span>{it.label}</span>
-                
-                {/* ✅ Mostrar ubicación actual si es el item de ubicación */}
+
                 {it.action === "location" && (
-                  <span style={{
-                    fontSize: '12px',
-                    color: currentLocation ? '#059669' : '#9ca3af',
-                    fontWeight: 500
-                  }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: currentLocation ? "#059669" : "#9ca3af",
+                      fontWeight: 500,
+                    }}
+                  >
                     {getLocationText()}
                   </span>
                 )}

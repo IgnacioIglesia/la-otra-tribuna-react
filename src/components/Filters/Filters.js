@@ -19,8 +19,11 @@ function Filters({ products, onFilter }) {
     onFilter(filtered);
   }, [filters, products, onFilter]);
 
-  const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))];
-  const clubs = [...new Set(products.map(p => p.club).filter(Boolean))];
+  const categories = [...new Set(products.map(p => p.categoria).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+  const clubs = [...new Set(products.map(p => p.club).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-UY', {

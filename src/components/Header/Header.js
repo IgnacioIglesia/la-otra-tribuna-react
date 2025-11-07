@@ -1,4 +1,3 @@
-// src/components/Header/Header.js
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
@@ -48,7 +47,6 @@ export default function Header() {
   const menuRef = useRef(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // ✅ ACTUALIZADO: Menú móvil con ubicación
   const MOBILE_MENU = [
     { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
     { label: "Ofertas", href: "/offers" },
@@ -58,16 +56,15 @@ export default function Header() {
     { label: "Cómo funciona", href: "/how-it-works" },
     { label: "Autenticidad", href: "/authenticity" },
     { label: "Ayuda", href: "/help" },
-    { 
-      label: "Ubicación de envío", 
-      action: "location" 
-    },
+    { label: "Ubicación de envío", action: "location" },
   ];
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
     if (saved) {
-      try { setUser(JSON.parse(saved)); } catch {}
+      try {
+        setUser(JSON.parse(saved));
+      } catch {}
     }
 
     supabase.auth.getUser().then(({ data }) => {
@@ -97,24 +94,29 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") setMenuOpen(false); };
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   const handleLoginClick = () => navigate("/login");
   const handleLogout = async () => {
-    try { await supabase.auth.signOut(); }
-    finally {
+    try {
+      await supabase.auth.signOut();
+    } finally {
       localStorage.removeItem("user");
       setUser(null);
       setMenuOpen(false);
       navigate("/");
     }
   };
-  const goAndClose = (path) => { navigate(path); setMenuOpen(false); };
+  const goAndClose = (path) => {
+    navigate(path);
+    setMenuOpen(false);
+  };
 
-  // ===== Ubicación =====
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
@@ -142,6 +144,39 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // ✅ Header fijo en mobile
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+
+    const apply = () => {
+      const el = document.getElementById("siteHeader");
+      if (!el) return;
+      if (mql.matches) {
+        const h = el.offsetHeight || 64;
+        document.documentElement.style.setProperty("--header-h", `${h}px`);
+        document.body.classList.add("has-fixed-header");
+      } else {
+        document.body.classList.remove("has-fixed-header");
+        document.documentElement.style.removeProperty("--header-h");
+      }
+    };
+
+    apply();
+    const onResize = () => apply();
+    window.addEventListener("resize", onResize);
+
+    const ro = new ResizeObserver(apply);
+    const el = document.getElementById("siteHeader");
+    if (el) ro.observe(el);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      ro.disconnect();
+      document.body.classList.remove("has-fixed-header");
+      document.documentElement.style.removeProperty("--header-h");
+    };
+  }, []);
+
   const { count: favCount, openFavorites } = useFavorites();
   const { count: cartCount, openCart } = useCart();
 
@@ -160,8 +195,17 @@ export default function Header() {
           </button>
 
           <div className="brand-wrap">
-            <button type="button" className="logo-link" onClick={goToHome} aria-label="Ir al inicio">
-              <img src="/assets/logo.png" alt="La Otra Tribuna" className="logo" />
+            <button
+              type="button"
+              className="logo-link"
+              onClick={goToHome}
+              aria-label="Ir al inicio"
+            >
+              <img
+                src="/assets/logo.png"
+                alt="La Otra Tribuna"
+                className="logo"
+              />
             </button>
           </div>
 
@@ -188,7 +232,9 @@ export default function Header() {
                         ? `${user.user_metadata.nombre} ${user.user_metadata.apellido}`
                         : user?.user_metadata?.nombre ||
                           user?.user_metadata?.full_name ||
-                          (user?.email ? user.email.split("@")?.[0] : "Usuario")}
+                          (user?.email
+                            ? user.email.split("@")?.[0]
+                            : "Usuario")}
                     </strong>
                   </span>
                   <span className="chev">▾</span>
@@ -196,19 +242,34 @@ export default function Header() {
 
                 {menuOpen && (
                   <div className="user-dropdown" role="menu">
-                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/perfil")}>
+                    <button
+                      className="user-item"
+                      onClick={() => goAndClose("/perfil")}
+                    >
                       Mi perfil
                     </button>
-                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-listings")}>
+                    <button
+                      className="user-item"
+                      onClick={() => goAndClose("/my-listings")}
+                    >
                       Mis publicaciones
                     </button>
-                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-orders")}>
+                    <button
+                      className="user-item"
+                      onClick={() => goAndClose("/my-orders")}
+                    >
                       Mis pedidos
                     </button>
-                    <button className="user-item" role="menuitem" onClick={() => goAndClose("/my-sales")}>
+                    <button
+                      className="user-item"
+                      onClick={() => goAndClose("/my-sales")}
+                    >
                       Mis ventas
                     </button>
-                    <button className="user-item danger" role="menuitem" onClick={handleLogout}>
+                    <button
+                      className="user-item danger"
+                      onClick={handleLogout}
+                    >
                       Cerrar sesión
                     </button>
                   </div>
@@ -220,11 +281,21 @@ export default function Header() {
               </button>
             )}
 
-            <button className="pill" type="button" aria-label="Favoritos" onClick={openFavorites}>
+            <button
+              className="pill"
+              type="button"
+              aria-label="Favoritos"
+              onClick={openFavorites}
+            >
               ❤️<span>{favCount}</span>
             </button>
 
-            <button className="pill" type="button" aria-label="Carrito" onClick={openCart}>
+            <button
+              className="pill"
+              type="button"
+              aria-label="Carrito"
+              onClick={openCart}
+            >
               🛒<span>{cartCount}</span>
             </button>
 
@@ -235,13 +306,31 @@ export default function Header() {
 
       <nav className="subnav" aria-label="Subnavegación">
         <div className="container subnav-inner">
-          <button className="loc-link" onClick={() => setIsLocationModalOpen(true)}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <button
+            className="loc-link"
+            onClick={() => setIsLocationModalOpen(true)}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
               <path
                 d="M12 22s7-6.46 7-12a7 7 0 1 0-14 0c0 5.54 7 12 7 12Z"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-              <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+              <circle
+                cx="12"
+                cy="10"
+                r="2.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
             </svg>
             <span>{getLocationText()}</span>
           </button>
@@ -250,7 +339,10 @@ export default function Header() {
             Catálogo
           </button>
 
-          <button className="subnav-link" onClick={() => navigate("/offers")}>
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/offers")}
+          >
             Ofertas
           </button>
 
@@ -258,21 +350,38 @@ export default function Header() {
             Vender
           </button>
 
-          <button className="subnav-link" onClick={() => navigate("/track-order")}>
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/track-order")}
+          >
             Rastrear Pedido
           </button>
 
-          <button className="subnav-link" onClick={() => navigate("/favorites")}>
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/favorites")}
+          >
             Favoritos
           </button>
 
-          <button className="subnav-link" onClick={() => navigate("/how-it-works")}>
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/how-it-works")}
+          >
             Cómo funciona
           </button>
-          <button className="subnav-link" onClick={() => navigate("/authenticity")}>
+
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/authenticity")}
+          >
             Autenticidad
           </button>
-          <button className="subnav-link" onClick={() => navigate("/help")}>
+
+          <button
+            className="subnav-link"
+            onClick={() => navigate("/help")}
+          >
             Ayuda
           </button>
         </div>
@@ -284,7 +393,6 @@ export default function Header() {
         onLocationSelect={handleLocationSelect}
       />
 
-      {/* ✅ ACTUALIZADO: Pasar props adicionales al drawer */}
       <MobileDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}

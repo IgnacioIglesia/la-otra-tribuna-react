@@ -822,3 +822,40 @@
   display: inline-flex;
   align-items: center;
 }
+
+/* ===================== FIX DEFINITIVO AL FINAL DEL ARCHIVO ===================== */
+
+/* Desktop: sticky como tenías */
+@media (min-width: 1024px) {
+  #siteHeader {
+    position: sticky !important;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  .subnav {
+    position: sticky !important;
+    top: var(--top-h);
+  }
+}
+
+/* Mobile/Tablet: header fijo y visible SIEMPRE */
+@media (max-width: 1023px) {
+  #siteHeader {
+    position: fixed !important;   /* <- fuerza fixed y gana la cascada */
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+  /* la subnav en mobile ya la ocultás, lo dejamos por si acaso */
+  .subnav { display: none !important; }
+}
+
+/* Cuando el header es fixed, empujamos el contenido (esto ya venía desde el JS) */
+:root { --header-h: 64px; }              /* valor por defecto de seguridad */
+body.has-fixed-header { padding-top: var(--header-h); }
+
+/* Evitar márgenes por defecto que pueden verse como “banda blanca” */
+html, body { margin: 0; }
+
