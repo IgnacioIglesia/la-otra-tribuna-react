@@ -144,7 +144,7 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ✅ Header fijo en mobile
+  // ✅ Header fijo en mobile con cálculo robusto de altura
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
 
@@ -161,17 +161,22 @@ export default function Header() {
       }
     };
 
+    // primer cálculo inmediato
     apply();
+    // segundo cálculo en el próximo frame (evita desfasajes por carga de fuentes/imágenes)
+    const rafId = requestAnimationFrame(apply);
+
     const onResize = () => apply();
     window.addEventListener("resize", onResize);
 
-    const ro = new ResizeObserver(apply);
     const el = document.getElementById("siteHeader");
-    if (el) ro.observe(el);
+    const ro = el ? new ResizeObserver(apply) : null;
+    if (el && ro) ro.observe(el);
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
-      ro.disconnect();
+      if (ro) ro.disconnect();
       document.body.classList.remove("has-fixed-header");
       document.documentElement.style.removeProperty("--header-h");
     };
@@ -339,10 +344,7 @@ export default function Header() {
             Catálogo
           </button>
 
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/offers")}
-          >
+          <button className="subnav-link" onClick={() => navigate("/offers")}>
             Ofertas
           </button>
 
@@ -378,10 +380,7 @@ export default function Header() {
             Autenticidad
           </button>
 
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/help")}
-          >
+          <button className="subnav-link" onClick={() => navigate("/help")}>
             Ayuda
           </button>
         </div>

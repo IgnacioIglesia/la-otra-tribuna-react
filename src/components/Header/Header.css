@@ -859,3 +859,30 @@ body.has-fixed-header { padding-top: var(--header-h); }
 /* Evitar márgenes por defecto que pueden verse como “banda blanca” */
 html, body { margin: 0; }
 
+/* ===== Empuje correcto del contenido cuando el header es fixed ===== */
+/* Ya no usamos padding en <body>; lo aplicamos al wrapper de las páginas */
+:root {
+  --header-h: 72px;
+} /* fallback seguro; el JS luego lo recalcula */
+
+@media (max-width: 1023px) {
+  body.has-fixed-header {
+    padding-top: 0 !important;
+  }
+  .page-root {
+    padding-top: var(--header-h) !important;
+  }
+  .page-root {
+    min-height: calc(100dvh - var(--header-h));
+  }
+
+  [id] {
+    scroll-margin-top: calc(var(--header-h) + 8px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-root {
+    padding-top: 0;
+  }
+}
