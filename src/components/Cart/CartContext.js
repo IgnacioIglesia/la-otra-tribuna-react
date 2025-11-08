@@ -62,18 +62,21 @@ export function CartProvider({ children }) {
     setExchangeRate(rates);
   };
 
+  // ✅ ACTUALIZADO: Aplicar comisión del 3% cuando hay conversión de moneda
   const convertPrice = (price, itemCurrency) => {
     if (!paymentCurrency || !exchangeRate) return price;
     if (itemCurrency === paymentCurrency) return price;
 
+    let convertedPrice = price;
+
     if (paymentCurrency === "UYU" && itemCurrency === "USD") {
-      return price * exchangeRate.USD_to_UYU;
-    }
-    if (paymentCurrency === "USD" && itemCurrency === "UYU") {
-      return price * exchangeRate.UYU_to_USD;
+      convertedPrice = price * exchangeRate.USD_to_UYU;
+    } else if (paymentCurrency === "USD" && itemCurrency === "UYU") {
+      convertedPrice = price * exchangeRate.UYU_to_USD;
     }
 
-    return price;
+    // Aplicar comisión del 3% cuando hay conversión
+    return convertedPrice * 1.03;
   };
 
   const getCurrencySymbol = (currency) => {
