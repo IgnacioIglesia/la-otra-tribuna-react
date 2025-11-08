@@ -189,6 +189,31 @@ export default function Checkout() {
     [selected, paymentCurrency]
   );
 
+  // ✅ NUEVO: Calcular comisión por conversión de moneda
+  const conversionFee = useMemo(() => {
+    let fee = 0;
+    items.forEach((it) => {
+      if (it.moneda !== paymentCurrency) {
+        const precioOriginal = Number(it.precio) || 0;
+        const precioConvertido = convertPrice(precioOriginal, it.moneda);
+        // La comisión es el 3% del precio convertido
+        fee += (precioConvertido * 0.03) * it.qty;
+      }
+    });
+    console.log('🔍 DEBUG Comisión:', {
+      items: items.map(it => ({
+        nombre: it.nombre,
+        moneda: it.moneda,
+        precio: it.precio,
+        qty: it.qty,
+        precioConvertido: convertPrice(Number(it.precio), it.moneda)
+      })),
+      paymentCurrency,
+      conversionFee: fee
+    });
+    return fee;
+  }, [items, paymentCurrency, convertPrice]);
+
   // ✅ ACTUALIZADO: Total incluye envío
   const totalFinal = useMemo(
     () => total + shippingCost,
@@ -1097,12 +1122,25 @@ export default function Checkout() {
                 })}
               </ul>
 
-              {/* ✅ ACTUALIZADO: Mostrar subtotal, envío y total */}
+              {/* ✅ ACTUALIZADO: Mostrar subtotal, envío, comisión y total */}
               <div className="ck-totals">
-                <div>
-                  <span>Subtotal</span>
-                  <strong>{money(total, paymentCurrency)}</strong>
-                </div>
+                {conversionFee > 0 ? (
+                  <>
+                    <div>
+                      <span>Subtotal productos</span>
+                      <strong>{money(total - conversionFee, paymentCurrency)}</strong>
+                    </div>
+                    <div>
+                      <span>Comisión por conversión (3%)</span>
+                      <strong>{money(conversionFee, paymentCurrency)}</strong>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <span>Subtotal</span>
+                    <strong>{money(total, paymentCurrency)}</strong>
+                  </div>
+                )}
                 <div>
                   <span>Envío</span>
                   <strong>
