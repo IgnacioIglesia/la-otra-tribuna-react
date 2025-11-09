@@ -113,11 +113,11 @@ export default function App() {
           <Route path="/seller/:id" element={<SellerPublications />} />
           <Route path="/my-sales" element={<MisVentas />} />
           <Route path="/my-orders" element={<MisPedidos />} />
+          <Route path="/favorites" element={<Favorites />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/sell" element={<Vender />} />
             <Route path="/track-order" element={<TrackOrder />} />
-            <Route path="/favorites" element={<Favorites />} />
             <Route path="/help" element={<Help />} />
             <Route path="/checkout" element={<Checkout />} />
           </Route>
