@@ -29,6 +29,10 @@ import AdminRoute from "./pages/Admin/AdminRoute";
 import MisVentas from "./pages/MySeller/mis-ventas";
 import MisPedidos from "./pages/MyOrders/mis-pedidos";
 
+// 👇 Páginas del modo impostor
+import Impostor from "./pages/Impostor/Impostor";
+import ImpostorGame from "./pages/Impostor/ImpostorGame";
+
 // Drawers
 import FavoritesDrawer from "./components/Favorites/FavoritesDrawer";
 import CartDrawer from "./components/Cart/CartDrawer";
@@ -38,15 +42,10 @@ import "./styles/main.css";
 import "./styles/mobile.css";
 import "./styles/user-widget.css";
 
-/** Gestiona el scroll entre rutas:
- * - Desactiva el scrollRestoration del navegador
- * - Hace scrollTop(0) al cambiar pathname/search
- * - Si hay hash (#id), scrollea a ese elemento respetando el header fijo
- */
+/** Gestiona el scroll entre rutas */
 function ScrollManager() {
   const location = useLocation();
 
-  // Desactivar restauración automática del navegador
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
@@ -56,25 +55,20 @@ function ScrollManager() {
   useEffect(() => {
     const { hash, pathname, search } = location;
 
-    // Si hay hash (#ancla), scrollear al elemento
     if (hash) {
-      // esperar al render de la página
       requestAnimationFrame(() => {
         const id = decodeURIComponent(hash.slice(1));
         const el = document.getElementById(id);
         if (el) {
-          // compensar header fijo usando scroll-margin-top definido en CSS
           el.scrollIntoView({ behavior: "smooth", block: "start" });
           return;
         }
-        // si no hay elemento aún, ir arriba
         window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       });
       return;
     }
 
-    // Sin hash: siempre arriba del todo al cambiar de ruta o query
-    void pathname; // evita linter por variable no usada
+    void pathname;
     void search;
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -120,6 +114,10 @@ export default function App() {
             <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/help" element={<Help />} />
             <Route path="/checkout" element={<Checkout />} />
+
+            {/* 👇 CORREGIDO: Rutas del juego impostor */}
+            <Route path="/impostor" element={<Impostor />} />
+            <Route path="/impostor/sala/:roomCode" element={<ImpostorGame />} />
           </Route>
 
           <Route element={<AdminRoute />}>

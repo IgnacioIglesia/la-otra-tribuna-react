@@ -886,4 +886,41 @@ html, body { margin: 0; }
     padding-top: 0;
   }
 }
-/* aura*/
+/* Impostor Link - Estilo destacado */
+.subnav-link.impostor-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.1) 0%, rgba(120, 255, 214, 0.1) 100%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.subnav-link.impostor-link:hover {
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.2) 0%, rgba(120, 255, 214, 0.2) 100%);
+  transform: translateY(-2px);
+}
+
+.impostor-icon {
+  font-size: 1.1em;
+  animation: rotate-subtle 3s ease-in-out infinite;
+}
+
+@keyframes rotate-subtle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(10deg); }
+}
+
+/* En mobile, sin estilos especiales */
+@media (max-width: 1023px) {
+  .subnav-link.impostor-link {
+    background: none;
+    padding: 0;
+  }
+  
+  .impostor-icon {
+    animation: none;
+  }
+}

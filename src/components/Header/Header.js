@@ -51,6 +51,7 @@ export default function Header() {
     { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
     { label: "Ofertas", href: "/offers" },
     { label: "Vender", href: "/sell" },
+    { label: "Impostor Fútbol", href: "/impostor" }, // ✅ NUEVO
     { label: "Rastrear Pedido", href: "/track-order" },
     { label: "Favoritos", href: "/favorites" },
     { label: "Cómo funciona", href: "/how-it-works" },
@@ -144,7 +145,6 @@ export default function Header() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // ✅ Header fijo en mobile con cálculo robusto de altura
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
 
@@ -161,9 +161,7 @@ export default function Header() {
       }
     };
 
-    // primer cálculo inmediato
     apply();
-    // segundo cálculo en el próximo frame (evita desfasajes por carga de fuentes/imágenes)
     const rafId = requestAnimationFrame(apply);
 
     const onResize = () => apply();
@@ -350,6 +348,11 @@ export default function Header() {
 
           <button className="subnav-link" onClick={() => navigate("/sell")}>
             Vender
+          </button>
+
+          {/* ✅ NUEVO - Link de Impostor en subnav */}
+          <button className="subnav-link impostor-link" onClick={() => navigate("/impostor")}>
+            Impostor
           </button>
 
           <button

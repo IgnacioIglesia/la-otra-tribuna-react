@@ -1,0 +1,356 @@
+.impostor-card {
+  width: 100%;
+  max-width: 550px;
+  margin: 20px auto;
+  border-radius: 25px;
+  overflow: hidden;
+  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.card-content {
+  padding: 50px 35px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+/* Card de Impostor - Glassmorphism Oscuro */
+.impostor-card.impostor {
+  background: rgba(30, 30, 30, 0.4);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 15px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 50px rgba(168, 255, 120, 0.05);
+  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+             impostorPulse 3s infinite ease-in-out;
+}
+
+@keyframes impostorPulse {
+  0%, 100% {
+    box-shadow: 
+      0 15px 60px rgba(168, 255, 120, 0.3),
+      inset 0 0 50px rgba(168, 255, 120, 0.05);
+    border-color: rgba(168, 255, 120, 0.3);
+  }
+  50% {
+    box-shadow: 
+      0 20px 80px rgba(168, 255, 120, 0.5),
+      inset 0 0 60px rgba(168, 255, 120, 0.1);
+    border-color: rgba(168, 255, 120, 0.5);
+  }
+}
+
+.impostor-icon {
+  font-size: 100px;
+  margin-bottom: 25px;
+  animation: rotateAndScale 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+}
+
+@keyframes rotateAndScale {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(-15deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(15deg) scale(1.1);
+  }
+}
+
+.impostor-title {
+  font-size: 3rem;
+  font-weight: 900;
+  margin: 25px 0;
+  background: linear-gradient(135deg, #ffffff 0%, #a8ff78 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 5px 40px rgba(168, 255, 120, 0.4);
+  letter-spacing: 3px;
+  animation: titleGlow 2s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 25px rgba(168, 255, 120, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 45px rgba(168, 255, 120, 0.8));
+  }
+}
+
+.impostor-subtitle {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  margin: 25px 0;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+}
+
+.impostor-warning {
+  background: rgba(168, 255, 120, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 18px 30px;
+  border-radius: 50px;
+  margin-top: 35px;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #a8ff78;
+  border: 2px solid rgba(168, 255, 120, 0.3);
+  box-shadow: 
+    0 8px 30px rgba(168, 255, 120, 0.2),
+    inset 0 0 20px rgba(168, 255, 120, 0.1);
+  animation: warningPulse 2s infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    box-shadow: 
+      0 8px 30px rgba(168, 255, 120, 0.2),
+      inset 0 0 20px rgba(168, 255, 120, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 8px 40px rgba(168, 255, 120, 0.4),
+      inset 0 0 30px rgba(168, 255, 120, 0.15);
+  }
+}
+
+/* Card de Jugador Normal - Glassmorphism Claro */
+.impostor-card.player {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 15px 60px rgba(0, 0, 0, 0.4),
+    inset 0 0 50px rgba(255, 255, 255, 0.05);
+}
+
+.player-image-container {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 4px solid rgba(168, 255, 120, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 10px 40px rgba(168, 255, 120, 0.3),
+    inset 0 0 30px rgba(255, 255, 255, 0.1);
+  animation: imageFloat 3s ease-in-out infinite;
+  position: relative;
+}
+
+.player-image-container::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #a8ff78, #78ffd6, #a8ff78);
+  background-size: 200% 200%;
+  animation: gradientSpin 3s linear infinite;
+  z-index: -1;
+  filter: blur(10px);
+}
+
+@keyframes gradientSpin {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes imageFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.02);
+  }
+}
+
+.player-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-name {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin: 25px 0;
+  color: #ffffff;
+  text-shadow: 
+    0 3px 15px rgba(168, 255, 120, 0.5),
+    0 0 40px rgba(168, 255, 120, 0.3);
+  letter-spacing: 1px;
+}
+
+.player-info {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 25px 0;
+  flex-wrap: wrap;
+}
+
+.player-badge {
+  background: rgba(168, 255, 120, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 10px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  border: 2px solid rgba(168, 255, 120, 0.3);
+  box-shadow: 
+    0 4px 20px rgba(168, 255, 120, 0.2),
+    inset 0 0 15px rgba(168, 255, 120, 0.1);
+  transition: all 0.3s ease;
+}
+
+.player-badge:hover {
+  background: rgba(168, 255, 120, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 6px 25px rgba(168, 255, 120, 0.3),
+    inset 0 0 20px rgba(168, 255, 120, 0.15);
+}
+
+.player-club {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 20px 0;
+  color: #a8ff78;
+  text-shadow: 0 0 20px rgba(168, 255, 120, 0.5);
+}
+
+.player-instruction {
+  background: rgba(168, 255, 120, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 22px 30px;
+  border-radius: 18px;
+  margin-top: 35px;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(168, 255, 120, 0.25);
+  box-shadow: 
+    0 8px 30px rgba(168, 255, 120, 0.2),
+    inset 0 0 20px rgba(168, 255, 120, 0.05);
+}
+
+/* Card de Espera */
+.impostor-card.waiting {
+  background: rgba(50, 50, 50, 0.4);
+  backdrop-filter: blur(30px) saturate(120%);
+  -webkit-backdrop-filter: blur(30px) saturate(120%);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 15px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 40px rgba(255, 255, 255, 0.03);
+}
+
+.waiting-icon {
+  font-size: 100px;
+  margin-bottom: 25px;
+  animation: spinPulse 2s linear infinite;
+  filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.4));
+}
+
+@keyframes spinPulse {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+.impostor-card.waiting h2 {
+  color: #ffffff;
+  font-size: 2rem;
+  margin: 20px 0;
+  text-shadow: 0 2px 20px rgba(168, 255, 120, 0.3);
+}
+
+.impostor-card.waiting p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .impostor-card {
+    margin: 15px;
+    border-radius: 20px;
+  }
+
+  .card-content {
+    padding: 40px 25px;
+  }
+
+  .impostor-title {
+    font-size: 2.2rem;
+  }
+
+  .impostor-subtitle {
+    font-size: 1.05rem;
+  }
+
+  .player-name {
+    font-size: 2rem;
+  }
+
+  .player-image-container {
+    width: 180px;
+    height: 180px;
+  }
+
+  .impostor-icon,
+  .waiting-icon {
+    font-size: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-content {
+    padding: 35px 20px;
+  }
+
+  .impostor-title {
+    font-size: 1.8rem;
+  }
+
+  .player-name {
+    font-size: 1.7rem;
+  }
+
+  .player-image-container {
+    width: 160px;
+    height: 160px;
+  }
+}
