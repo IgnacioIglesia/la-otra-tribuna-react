@@ -15,7 +15,11 @@ const Impostor = () => {
   const [showRules, setShowRules] = useState(false);
   const [user, setUser] = useState(null);
 
-  // CORREGIDO: Cálculo del máximo de impostores (hasta 4 o la mitad -1)
+  // ✅ CORREGIDO: Cálculo correcto del máximo de impostores
+  // Para 3 jugadores: max 1 impostor
+  // Para 4 jugadores: max 1 impostor  
+  // Para 5 jugadores: max 2 impostores
+  // Para 6+ jugadores: max Math.floor(jugadores/2) - 1, hasta un máximo de 4
   const maxImpostors = Math.min(4, Math.max(1, Math.floor(numPlayers / 2) - 1));
 
   useEffect(() => {
@@ -27,7 +31,7 @@ const Impostor = () => {
     if (numImpostors > maxImpostors) {
       setNumImpostors(maxImpostors);
     }
-  }, [numPlayers, maxImpostors]);
+  }, [numPlayers, maxImpostors, numImpostors]);
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,6 +48,14 @@ const Impostor = () => {
       setLoading(true);
       setError('');
 
+      // Validación: mínimo 3 jugadores
+      if (numPlayers < 3) {
+        setError('Se necesitan al menos 3 jugadores');
+        setLoading(false);
+        return;
+      }
+
+      // Validación: impostores no pueden ser >= que jugadores
       if (numImpostors >= numPlayers) {
         setError('El número de impostores debe ser menor al de jugadores');
         setLoading(false);
@@ -79,7 +91,6 @@ const Impostor = () => {
 
   return (
     <>
-      {/* 👇 AGREGADO: Header para integrar con la página */}
       <Header />
       
       <div className="impostor-page">
@@ -128,6 +139,14 @@ const Impostor = () => {
             <div className="form-group">
               <label htmlFor="numImpostors">
                 Número de Impostores: <strong>{numImpostors}</strong>
+                <span style={{ 
+                  fontSize: '0.9rem', 
+                  fontWeight: 'normal', 
+                  marginLeft: '10px',
+                  opacity: 0.8 
+                }}>
+                  (máx: {maxImpostors})
+                </span>
               </label>
               <input
                 type="range"
@@ -204,6 +223,9 @@ const Impostor = () => {
                     <strong>Crea una sala</strong> y comparte el código con tus amigos
                   </li>
                   <li>
+                    Se necesitan <strong>mínimo 3 jugadores</strong> para iniciar
+                  </li>
+                  <li>
                     Todos deben estar <strong>físicamente juntos</strong> (mismo lugar)
                   </li>
                   <li>
@@ -232,6 +254,7 @@ const Impostor = () => {
                   <ul>
                     <li>No seas demasiado obvio con tus pistas</li>
                     <li>El impostor debe escuchar atentamente para deducir quién es el jugador</li>
+                    <li>Con más jugadores, puedes aumentar el número de impostores</li>
                     <li>¡Diviértanse y jueguen limpio! 🎉</li>
                   </ul>
                 </div>

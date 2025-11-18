@@ -25,7 +25,6 @@ class ImpostorService {
         .from('footballers')
         .select('*');
 
-      // Si hay jugadores usados, excluirlos
       if (usedPlayerIds.length > 0) {
         query = query.not('id', 'in', `(${usedPlayerIds.join(',')})`);
       }
@@ -34,7 +33,6 @@ class ImpostorService {
 
       if (error) throw error;
       
-      // Si no quedan jugadores disponibles, resetear y usar todos
       if (!data || data.length === 0) {
         console.log('No hay más jugadores disponibles, reseteando...');
         const { data: allPlayers, error: allError } = await supabase
@@ -50,7 +48,6 @@ class ImpostorService {
         return allPlayers[randomIndex];
       }
       
-      // Seleccionar jugador aleatorio de los disponibles
       const randomIndex = Math.floor(Math.random() * data.length);
       return data[randomIndex];
     } catch (error) {
@@ -69,7 +66,6 @@ class ImpostorService {
 
       if (error) throw error;
       
-      // Retornar array de IDs únicos
       return data ? [...new Set(data.map(session => session.player_id))].filter(Boolean) : [];
     } catch (error) {
       console.error('Error fetching used players:', error);
@@ -80,10 +76,8 @@ class ImpostorService {
   // Crear sala de juego
   async createRoom(numPlayers, numImpostors, hostUserId = null) {
     try {
-      // Generar código único de 6 caracteres
       const roomCode = this.generateRoomCode();
       
-      // Preparar el objeto para insertar
       const roomData = {
         room_code: roomCode,
         num_players: numPlayers,
@@ -91,7 +85,6 @@ class ImpostorService {
         status: 'waiting'
       };
 
-      // Solo agregar host_user_id si existe y no es null
       if (hostUserId) {
         roomData.host_user_id = hostUserId;
       }
@@ -106,7 +99,6 @@ class ImpostorService {
 
       if (error) {
         console.error('Error detallado de Supabase:', error);
-        // Hacer el mensaje de error más amigable
         if (error.code === '23505') {
           throw new Error('Ya existe una sala con ese código. Intenta de nuevo.');
         } else if (error.code === '23502') {
@@ -121,6 +113,114 @@ class ImpostorService {
       return data;
     } catch (error) {
       console.error('Error creating room:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NUEVO: Unirse a sala y obtener número de jugador automáticamente
+  async joinRoom(roomCode, userId, username) {
+    try {
+      // 1. Verificar que la sala existe y obtener info
+      const { data: room, error: roomError } = await supabase
+        .from('impostor_rooms')
+        .select('*')
+        .eq('room_code', roomCode)
+        .single();
+
+      if (roomError) throw new Error('Sala no encontrada');
+      if (room.status === 'finished') throw new Error('Esta sala ya finalizó');
+
+      // 2. Verificar si el usuario ya está en la sala
+      const { data: existingPlayer } = await supabase
+        .from('impostor_players')
+        .select('player_number')
+        .eq('room_code', roomCode)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingPlayer) {
+        console.log('Usuario ya está en la sala, usando número:', existingPlayer.player_number);
+        return {
+          playerNumber: existingPlayer.player_number,
+          isNew: false
+        };
+      }
+
+      // 3. Obtener jugadores actuales en la sala
+      const { data: currentPlayers, error: playersError } = await supabase
+        .from('impostor_players')
+        .select('player_number')
+        .eq('room_code', roomCode)
+        .order('player_number');
+
+      if (playersError) throw playersError;
+
+      // 4. Encontrar el primer número disponible
+      let playerNumber = 1;
+      const usedNumbers = currentPlayers ? currentPlayers.map(p => p.player_number) : [];
+      
+      while (usedNumbers.includes(playerNumber) && playerNumber <= room.num_players) {
+        playerNumber++;
+      }
+
+      if (playerNumber > room.num_players) {
+        throw new Error('La sala está llena');
+      }
+
+      // 5. Insertar el jugador en la sala
+      const { error: insertError } = await supabase
+        .from('impostor_players')
+        .insert({
+          room_code: roomCode,
+          user_id: userId,
+          username: username,
+          player_number: playerNumber
+        });
+
+      if (insertError) {
+        // Si hay error de duplicado, intentar obtener el número existente
+        if (insertError.code === '23505') {
+          const { data: retryPlayer } = await supabase
+            .from('impostor_players')
+            .select('player_number')
+            .eq('room_code', roomCode)
+            .eq('user_id', userId)
+            .maybeSingle();
+          
+          if (retryPlayer) {
+            return {
+              playerNumber: retryPlayer.player_number,
+              isNew: false
+            };
+          }
+        }
+        throw insertError;
+      }
+
+      console.log('Usuario asignado al número:', playerNumber);
+      return {
+        playerNumber,
+        isNew: true
+      };
+    } catch (error) {
+      console.error('Error joining room:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NUEVO: Obtener jugadores en la sala
+  async getRoomPlayers(roomCode) {
+    try {
+      const { data, error } = await supabase
+        .from('impostor_players')
+        .select('*')
+        .eq('room_code', roomCode)
+        .order('player_number');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching room players:', error);
       throw error;
     }
   }
@@ -142,7 +242,7 @@ class ImpostorService {
     }
   }
 
-  // Iniciar ronda (asignar jugador e impostores) con restricción de no repetir
+  // Iniciar ronda con soporte para múltiples impostores
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
       // 1. Obtener jugadores ya usados en esta sala
@@ -172,8 +272,7 @@ class ImpostorService {
       // 4. Generar array de roles (quiénes son impostores)
       const roles = this.assignRoles(numPlayers, numImpostors);
 
-      // 5. Limpiar sesiones anteriores de esta ronda (no de la sala completa)
-      // Solo eliminamos si vamos a crear nuevas sesiones para la misma ronda
+      // 5. Limpiar sesiones anteriores de esta ronda
       const { data: existingSessions } = await supabase
         .from('impostor_sessions')
         .select('*')
@@ -188,7 +287,7 @@ class ImpostorService {
           .eq('player_id', selectedPlayer.id);
       }
 
-      // 6. Crear nuevas sesiones
+      // 6. Crear nuevas sesiones para cada jugador
       const sessions = roles.map((isImpostor, index) => ({
         room_code: roomCode,
         player_number: index + 1,
@@ -200,7 +299,10 @@ class ImpostorService {
         .from('impostor_sessions')
         .insert(sessions);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Error insertando sesiones:', insertError);
+        throw insertError;
+      }
 
       return {
         selectedPlayer,
@@ -216,7 +318,6 @@ class ImpostorService {
   // Obtener rol de jugador específico
   async getPlayerRole(roomCode, playerNumber) {
     try {
-      // Obtener la sesión más reciente para este jugador
       const { data, error } = await supabase
         .from('impostor_sessions')
         .select('*, footballers(*)')
@@ -224,9 +325,10 @@ class ImpostorService {
         .eq('player_number', playerNumber)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('No se encontró tu rol');
       return data;
     } catch (error) {
       console.error('Error fetching player role:', error);
@@ -267,6 +369,61 @@ class ImpostorService {
     }
   }
 
+  // ✅ NUEVO: Suscribirse a cambios en la sala
+  subscribeToRoomPlayers(roomCode, callback) {
+    const subscription = supabase
+      .channel(`room_${roomCode}_players`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'impostor_players',
+          filter: `room_code=eq.${roomCode}`
+        },
+        callback
+      )
+      .subscribe();
+
+    return subscription;
+  }
+
+  // ✅ NUEVO: Suscribirse a cambios en el estado de la sala
+  subscribeToRoomStatus(roomCode, callback) {
+    const subscription = supabase
+      .channel(`room_${roomCode}_status`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'impostor_rooms',
+          filter: `room_code=eq.${roomCode}`
+        },
+        callback
+      )
+      .subscribe();
+
+    return subscription;
+  }
+
+  // ✅ NUEVO: Salir de una sala (eliminar jugador)
+  async leaveRoom(roomCode, userId) {
+    try {
+      const { error } = await supabase
+        .from('impostor_players')
+        .delete()
+        .eq('room_code', roomCode)
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error leaving room:', error);
+      throw error;
+    }
+  }
+
   // Helpers
   generateRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -277,6 +434,7 @@ class ImpostorService {
     return code;
   }
 
+  // ✅ CORREGIDO: Ahora soporta múltiples impostores correctamente
   assignRoles(numPlayers, numImpostors) {
     // Crear array con todos false (jugadores normales)
     const roles = Array(numPlayers).fill(false);
@@ -291,6 +449,7 @@ class ImpostorService {
       }
     }
     
+    console.log(`Asignados ${numImpostors} impostores en posiciones:`, impostorPositions);
     return roles;
   }
 }
