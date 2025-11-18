@@ -20,7 +20,6 @@ const ImpostorGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [showStartNotification, setShowStartNotification] = useState(false);
   
   const isHost = location.state?.isHost || false;
 
@@ -28,17 +27,17 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ Suscripciones en tiempo real + Polling como fallback
+  // ✅ Suscripciones Realtime mejoradas
   useEffect(() => {
     if (!roomCode) return;
 
-    console.log('Configurando suscripciones para sala:', roomCode);
+    console.log('🔌 Configurando suscripciones para sala:', roomCode);
 
     // Suscribirse a cambios en jugadores
     const playersSubscription = impostorService.subscribeToRoomPlayers(
       roomCode,
       async (payload) => {
-        console.log('Cambio en jugadores:', payload);
+        console.log('👥 Evento de jugadores:', payload);
         await loadRoomPlayers();
       }
     );
@@ -47,33 +46,36 @@ const ImpostorGame = () => {
     const statusSubscription = impostorService.subscribeToRoomStatus(
       roomCode,
       async (payload) => {
-        console.log('Cambio en estado de sala:', payload);
-        if (payload.new && payload.new.status === 'playing') {
-          console.log('¡Ronda iniciada! Actualizando vista...');
+        console.log('🔔 Evento de sala:', payload);
+        
+        // Detectar inicio de juego desde DB o broadcast
+        if (
+          (payload.type === 'db_change' && payload.new?.status === 'playing') ||
+          (payload.type === 'broadcast' && payload.event === 'game_started')
+        ) {
+          console.log('✅ ¡Ronda iniciada! Actualizando...');
           setGameStarted(true);
           await loadRoom();
         }
       }
     );
 
-    // ✅ NUEVO: Polling cada 2 segundos como fallback
+    // ✅ Polling como fallback cada 3 segundos
     const pollingInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
         if (roomData.status === 'playing' && !gameStarted) {
-          console.log('Polling detectó que la ronda inició');
+          console.log('⏰ Polling detectó inicio de ronda');
           setGameStarted(true);
           await loadRoom();
         }
-        // También actualizar jugadores
-        await loadRoomPlayers();
       } catch (error) {
         console.error('Error en polling:', error);
       }
-    }, 2000);
+    }, 3000);
 
     return () => {
-      console.log('Limpiando suscripciones y polling');
+      console.log('🔌 Limpiando suscripciones');
       supabase.removeChannel(playersSubscription);
       supabase.removeChannel(statusSubscription);
       clearInterval(pollingInterval);
@@ -111,12 +113,11 @@ const ImpostorGame = () => {
       try {
         const joinResult = await impostorService.joinRoom(roomCode, user.id, username);
         setPlayerNumber(joinResult.playerNumber);
-        console.log('Jugador asignado al número:', joinResult.playerNumber);
+        console.log('✅ Jugador asignado al número:', joinResult.playerNumber);
       } catch (joinError) {
         console.error('Error al unirse:', joinError);
-        // Si hay error, intentar limpiar y volver a unirse
         if (joinError.message?.includes('duplicate') || joinError.code === '23505') {
-          console.log('Detectado duplicado, limpiando e intentando de nuevo...');
+          console.log('Detectado duplicado, limpiando...');
           await impostorService.leaveRoom(roomCode, user.id);
           const retryResult = await impostorService.joinRoom(roomCode, user.id, username);
           setPlayerNumber(retryResult.playerNumber);
@@ -125,9 +126,7 @@ const ImpostorGame = () => {
         }
       }
 
-      // Cargar jugadores
       await loadRoomPlayers();
-
       setLoading(false);
     } catch (err) {
       console.error('Error inicializando sala:', err);
@@ -161,6 +160,7 @@ const ImpostorGame = () => {
       setLoading(true);
       setError('');
       
+      console.log('🎮 Host iniciando juego...');
       const result = await impostorService.startRound(
         roomCode,
         room.num_players,
@@ -191,6 +191,7 @@ const ImpostorGame = () => {
     try {
       setLoading(true);
       const role = await impostorService.getPlayerRole(roomCode, playerNumber);
+      console.log('🎭 Rol obtenido:', role);
       setPlayerRole(role);
       setIsRevealed(true);
       setLoading(false);
@@ -281,7 +282,7 @@ const ImpostorGame = () => {
                   return (
                     <div
                       key={num}
-                      className={`impostor-game-player-slot ${player ? 'selected' : ''} ${playerNumber === num ? 'current' : ''}`}
+                      className={`impostor-game-player-slot ${player ? 'selected' : ''}`}
                       style={{
                         cursor: 'default',
                         border: playerNumber === num ? '3px solid #a8ff78' : undefined
@@ -301,23 +302,7 @@ const ImpostorGame = () => {
                             {player.username}
                           </div>
                           {playerNumber === num && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '5px',
-                              right: '5px',
-                              background: '#a8ff78',
-                              color: '#0a3d0c',
-                              borderRadius: '50%',
-                              width: '24px',
-                              height: '24px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.9rem',
-                              fontWeight: 'bold'
-                            }}>
-                              ✓
-                            </div>
+                            <div className="impostor-game-check-mark">✓</div>
                           )}
                         </>
                       ) : (
@@ -363,9 +348,7 @@ const ImpostorGame = () => {
         {gameStarted && (
           <div className="impostor-game-active">
             {!isRevealed ? (
-              <div className="impostor-game-reveal-section" style={{
-                animation: 'gameScaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), gamePulse 2s infinite'
-              }}>
+              <div className="impostor-game-reveal-section">
                 <h2>🎭 ¿Listo para ver tu rol?</h2>
                 <p className="impostor-game-reveal-instructions">
                   Asegúrate de que nadie más pueda ver tu pantalla
@@ -379,9 +362,6 @@ const ImpostorGame = () => {
                   onClick={revealRole}
                   disabled={loading}
                   className="impostor-game-btn-reveal"
-                  style={{
-                    animation: loading ? 'none' : 'gameButtonPulse 1.5s infinite'
-                  }}
                 >
                   {loading ? '⏳ Cargando...' : '👁️ Ver Mi Rol'}
                 </button>

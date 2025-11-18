@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './ImpostorCard.css';
 
 const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
+  const [imageError, setImageError] = useState(false);
+
   if (!isRevealed) {
     return (
       <div className="impostor-card waiting">
@@ -32,25 +34,53 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
     );
   }
 
+  // Fallback para imagen
+  const getImageUrl = () => {
+    if (!player?.image_url || imageError) {
+      // Crear iniciales del jugador
+      const initials = player?.name
+        ?.split(' ')
+        .map(word => word[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase() || 'JG';
+      
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(player?.name || 'Jugador')}&size=300&background=1a5c1e&color=a8ff78&bold=true&font-size=0.4`;
+    }
+    return player.image_url;
+  };
+
   return (
     <div className="impostor-card player">
       <div className="card-content">
         <div className="player-image-container">
-          <img 
-            src={player.image_url} 
-            alt={player.name}
-            className="player-image"
-            onError={(e) => {
-              e.target.src = 'https://via.placeholder.com/200x200?text=Jugador';
-            }}
-          />
+          {!imageError && player?.image_url ? (
+            <img 
+              src={getImageUrl()}
+              alt={player?.name || 'Jugador'}
+              className="player-image"
+              onError={(e) => {
+                console.error('❌ Error cargando imagen:', player?.image_url);
+                setImageError(true);
+              }}
+              loading="eager"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <img 
+              src={getImageUrl()}
+              alt={player?.name || 'Jugador'}
+              className="player-image"
+              loading="eager"
+            />
+          )}
         </div>
-        <h1 className="player-name">{player.name}</h1>
+        <h1 className="player-name">{player?.name || 'Jugador Desconocido'}</h1>
         <div className="player-info">
-          <span className="player-badge">{player.position}</span>
-          <span className="player-badge">{player.nationality}</span>
+          <span className="player-badge">{player?.position || 'N/A'}</span>
+          <span className="player-badge">{player?.nationality || 'N/A'}</span>
         </div>
-        <div className="player-club">{player.club}</div>
+        <div className="player-club">{player?.club || 'Club Desconocido'}</div>
         <div className="player-instruction">
           ⚽ Este es tu jugador<br />
           Da pistas sin ser muy obvio

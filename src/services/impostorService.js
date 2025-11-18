@@ -117,7 +117,7 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Unirse a sala y obtener número de jugador automáticamente
+  // Unirse a sala y obtener número de jugador automáticamente
   async joinRoom(roomCode, userId, username) {
     try {
       // 1. Verificar que la sala existe y obtener info
@@ -208,7 +208,7 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Obtener jugadores en la sala
+  // Obtener jugadores en la sala
   async getRoomPlayers(roomCode) {
     try {
       const { data, error } = await supabase
@@ -245,6 +245,8 @@ class ImpostorService {
   // Iniciar ronda con soporte para múltiples impostores
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
+      console.log('🎮 Iniciando ronda...', { roomCode, numPlayers, numImpostors });
+      
       // 1. Obtener jugadores ya usados en esta sala
       const usedPlayers = await this.getUsedPlayers(roomCode);
       console.log('Jugadores ya usados:', usedPlayers);
@@ -304,6 +306,11 @@ class ImpostorService {
         throw insertError;
       }
 
+      console.log('✅ Sesiones creadas, enviando notificación...');
+
+      // 7. Enviar notificación broadcast a todos los clientes
+      await this.notifyGameStart(roomCode);
+
       return {
         selectedPlayer,
         roles,
@@ -312,6 +319,34 @@ class ImpostorService {
     } catch (error) {
       console.error('Error starting round:', error);
       throw error;
+    }
+  }
+
+  // ✅ NUEVO: Notificar inicio de juego via broadcast
+  async notifyGameStart(roomCode) {
+    try {
+      const channel = supabase.channel(`room-${roomCode}-broadcast`);
+      
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({
+            type: 'broadcast',
+            event: 'game_started',
+            payload: { 
+              roomCode, 
+              timestamp: new Date().toISOString() 
+            }
+          });
+          console.log('📡 Broadcast enviado: game_started');
+          
+          // Desuscribir después de enviar
+          setTimeout(() => {
+            supabase.removeChannel(channel);
+          }, 1000);
+        }
+      });
+    } catch (error) {
+      console.error('Error enviando broadcast:', error);
     }
   }
 
@@ -369,12 +404,13 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Suscribirse a cambios en la sala
+  // ✅ Suscribirse a cambios en jugadores
   subscribeToRoomPlayers(roomCode, callback) {
     const channel = supabase
-      .channel(`room_${roomCode}_players`, {
+      .channel(`room-${roomCode}-players`, {
         config: {
-          broadcast: { self: true }
+          broadcast: { self: true, ack: true },
+          presence: { key: roomCode }
         }
       })
       .on(
@@ -386,23 +422,28 @@ class ImpostorService {
           filter: `room_code=eq.${roomCode}`
         },
         (payload) => {
-          console.log('Cambio detectado en impostor_players:', payload);
+          console.log('👥 Cambio en jugadores:', payload);
           callback(payload);
         }
       )
       .subscribe((status) => {
-        console.log('Estado de suscripción jugadores:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Suscrito a cambios de jugadores');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error en suscripción de jugadores');
+        }
       });
 
     return channel;
   }
 
-  // ✅ NUEVO: Suscribirse a cambios en el estado de la sala
+  // ✅ Suscribirse a cambios en el estado de la sala + broadcast
   subscribeToRoomStatus(roomCode, callback) {
     const channel = supabase
-      .channel(`room_${roomCode}_status`, {
+      .channel(`room-${roomCode}-status`, {
         config: {
-          broadcast: { self: true }
+          broadcast: { self: true, ack: true },
+          presence: { key: roomCode }
         }
       })
       .on(
@@ -414,18 +455,30 @@ class ImpostorService {
           filter: `room_code=eq.${roomCode}`
         },
         (payload) => {
-          console.log('Cambio detectado en impostor_rooms:', payload);
-          callback(payload);
+          console.log('🏠 Cambio en sala (DB):', payload);
+          callback({ type: 'db_change', ...payload });
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'game_started' },
+        (payload) => {
+          console.log('📡 Broadcast recibido:', payload);
+          callback({ type: 'broadcast', event: 'game_started', ...payload });
         }
       )
       .subscribe((status) => {
-        console.log('Estado de suscripción sala:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Suscrito a estado de sala');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error en suscripción de sala');
+        }
       });
 
     return channel;
   }
 
-  // ✅ NUEVO: Salir de una sala (eliminar jugador)
+  // Salir de una sala (eliminar jugador)
   async leaveRoom(roomCode, userId) {
     try {
       const { error } = await supabase
@@ -452,13 +505,11 @@ class ImpostorService {
     return code;
   }
 
-  // ✅ CORREGIDO: Ahora soporta múltiples impostores correctamente
+  // Asignar roles con múltiples impostores
   assignRoles(numPlayers, numImpostors) {
-    // Crear array con todos false (jugadores normales)
     const roles = Array(numPlayers).fill(false);
-    
-    // Seleccionar posiciones aleatorias para impostores
     const impostorPositions = [];
+    
     while (impostorPositions.length < numImpostors) {
       const randomPos = Math.floor(Math.random() * numPlayers);
       if (!impostorPositions.includes(randomPos)) {
