@@ -629,3 +629,55 @@
     font-size: 1.6rem;
   }
 }
+
+/* ✅ Agregar estas animaciones al final de ImpostorGame.css */
+
+@keyframes gamePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 15px 50px rgba(0, 0, 0, 0.4),
+      inset 0 0 40px rgba(255, 255, 255, 0.05);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 
+      0 20px 60px rgba(168, 255, 120, 0.3),
+      inset 0 0 50px rgba(168, 255, 120, 0.1);
+  }
+}
+
+@keyframes gameButtonPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 
+      0 8px 35px rgba(168, 255, 120, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 
+      0 12px 45px rgba(168, 255, 120, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+}
+
+/* Animación de notificación cuando inicia la ronda */
+@keyframes gameNotification {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) scale(1.05);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+}

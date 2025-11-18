@@ -20,6 +20,7 @@ const ImpostorGame = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [showStartNotification, setShowStartNotification] = useState(false);
   
   const isHost = location.state?.isHost || false;
 
@@ -27,14 +28,17 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ Suscripciones en tiempo real
+  // ✅ Suscripciones en tiempo real + Polling como fallback
   useEffect(() => {
     if (!roomCode) return;
+
+    console.log('Configurando suscripciones para sala:', roomCode);
 
     // Suscribirse a cambios en jugadores
     const playersSubscription = impostorService.subscribeToRoomPlayers(
       roomCode,
-      async () => {
+      async (payload) => {
+        console.log('Cambio en jugadores:', payload);
         await loadRoomPlayers();
       }
     );
@@ -43,18 +47,38 @@ const ImpostorGame = () => {
     const statusSubscription = impostorService.subscribeToRoomStatus(
       roomCode,
       async (payload) => {
-        if (payload.new.status === 'playing') {
+        console.log('Cambio en estado de sala:', payload);
+        if (payload.new && payload.new.status === 'playing') {
+          console.log('¡Ronda iniciada! Actualizando vista...');
           setGameStarted(true);
           await loadRoom();
         }
       }
     );
 
+    // ✅ NUEVO: Polling cada 2 segundos como fallback
+    const pollingInterval = setInterval(async () => {
+      try {
+        const roomData = await impostorService.getRoom(roomCode);
+        if (roomData.status === 'playing' && !gameStarted) {
+          console.log('Polling detectó que la ronda inició');
+          setGameStarted(true);
+          await loadRoom();
+        }
+        // También actualizar jugadores
+        await loadRoomPlayers();
+      } catch (error) {
+        console.error('Error en polling:', error);
+      }
+    }, 2000);
+
     return () => {
+      console.log('Limpiando suscripciones y polling');
       supabase.removeChannel(playersSubscription);
       supabase.removeChannel(statusSubscription);
+      clearInterval(pollingInterval);
     };
-  }, [roomCode]);
+  }, [roomCode, gameStarted]);
 
   const initializeRoom = async () => {
     try {
@@ -339,15 +363,25 @@ const ImpostorGame = () => {
         {gameStarted && (
           <div className="impostor-game-active">
             {!isRevealed ? (
-              <div className="impostor-game-reveal-section">
+              <div className="impostor-game-reveal-section" style={{
+                animation: 'gameScaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), gamePulse 2s infinite'
+              }}>
                 <h2>🎭 ¿Listo para ver tu rol?</h2>
                 <p className="impostor-game-reveal-instructions">
                   Asegúrate de que nadie más pueda ver tu pantalla
                 </p>
+                {error && (
+                  <div className="impostor-game-error" style={{ marginBottom: '20px' }}>
+                    ⚠️ {error}
+                  </div>
+                )}
                 <button
                   onClick={revealRole}
                   disabled={loading}
                   className="impostor-game-btn-reveal"
+                  style={{
+                    animation: loading ? 'none' : 'gameButtonPulse 1.5s infinite'
+                  }}
                 >
                   {loading ? '⏳ Cargando...' : '👁️ Ver Mi Rol'}
                 </button>

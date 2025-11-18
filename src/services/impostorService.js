@@ -371,8 +371,12 @@ class ImpostorService {
 
   // ✅ NUEVO: Suscribirse a cambios en la sala
   subscribeToRoomPlayers(roomCode, callback) {
-    const subscription = supabase
-      .channel(`room_${roomCode}_players`)
+    const channel = supabase
+      .channel(`room_${roomCode}_players`, {
+        config: {
+          broadcast: { self: true }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -381,17 +385,26 @@ class ImpostorService {
           table: 'impostor_players',
           filter: `room_code=eq.${roomCode}`
         },
-        callback
+        (payload) => {
+          console.log('Cambio detectado en impostor_players:', payload);
+          callback(payload);
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Estado de suscripción jugadores:', status);
+      });
 
-    return subscription;
+    return channel;
   }
 
   // ✅ NUEVO: Suscribirse a cambios en el estado de la sala
   subscribeToRoomStatus(roomCode, callback) {
-    const subscription = supabase
-      .channel(`room_${roomCode}_status`)
+    const channel = supabase
+      .channel(`room_${roomCode}_status`, {
+        config: {
+          broadcast: { self: true }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -400,11 +413,16 @@ class ImpostorService {
           table: 'impostor_rooms',
           filter: `room_code=eq.${roomCode}`
         },
-        callback
+        (payload) => {
+          console.log('Cambio detectado en impostor_rooms:', payload);
+          callback(payload);
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Estado de suscripción sala:', status);
+      });
 
-    return subscription;
+    return channel;
   }
 
   // ✅ NUEVO: Salir de una sala (eliminar jugador)
