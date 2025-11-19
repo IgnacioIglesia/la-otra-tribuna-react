@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import impostorService from '../../services/impostorService';
@@ -22,18 +22,18 @@ const ImpostorGame = () => {
   const [currentUser, setCurrentUser] = useState(null);
   
   const isHost = location.state?.isHost || false;
+  const hasLoadedRole = useRef(false);
 
   useEffect(() => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ Suscripciones Realtime mejoradas
+  // ✅ Suscripciones con forzado de recarga al detectar cambios
   useEffect(() => {
     if (!roomCode) return;
 
     console.log('🔌 Configurando suscripciones para sala:', roomCode);
 
-    // Suscribirse a cambios en jugadores
     const playersSubscription = impostorService.subscribeToRoomPlayers(
       roomCode,
       async (payload) => {
@@ -42,37 +42,44 @@ const ImpostorGame = () => {
       }
     );
 
-    // Suscribirse a cambios en el estado de la sala
     const statusSubscription = impostorService.subscribeToRoomStatus(
       roomCode,
       async (payload) => {
         console.log('🔔 Evento de sala:', payload);
         
-        // Detectar inicio de juego desde DB o broadcast
         if (
           (payload.type === 'db_change' && payload.new?.status === 'playing') ||
           (payload.type === 'broadcast' && payload.event === 'game_started')
         ) {
-          console.log('✅ ¡Ronda iniciada! Actualizando...');
+          console.log('✅ ¡Ronda iniciada! Forzando recarga...');
+          
+          // ✅ Resetear estado y forzar recarga
+          hasLoadedRole.current = false;
+          setIsRevealed(false);
+          setPlayerRole(null);
           setGameStarted(true);
+          
+          // Recargar sala para obtener nuevo jugador
           await loadRoom();
         }
       }
     );
 
-    // ✅ Polling como fallback cada 3 segundos
     const pollingInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
         if (roomData.status === 'playing' && !gameStarted) {
           console.log('⏰ Polling detectó inicio de ronda');
+          hasLoadedRole.current = false;
+          setIsRevealed(false);
+          setPlayerRole(null);
           setGameStarted(true);
           await loadRoom();
         }
       } catch (error) {
         console.error('Error en polling:', error);
       }
-    }, 3000);
+    }, 2000);
 
     return () => {
       console.log('🔌 Limpiando suscripciones');
@@ -87,7 +94,6 @@ const ImpostorGame = () => {
       setLoading(true);
       setError('');
       
-      // Obtener usuario actual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setError('Debes iniciar sesión');
@@ -96,11 +102,8 @@ const ImpostorGame = () => {
       }
 
       setCurrentUser(user);
-
-      // Cargar sala
       await loadRoom();
       
-      // Obtener perfil para username
       const { data: profile } = await supabase
         .from('perfil')
         .select('username')
@@ -109,7 +112,6 @@ const ImpostorGame = () => {
 
       const username = profile?.username || user.email?.split('@')[0] || 'Jugador';
 
-      // Unirse automáticamente a la sala
       try {
         const joinResult = await impostorService.joinRoom(roomCode, user.id, username);
         setPlayerNumber(joinResult.playerNumber);
@@ -173,6 +175,7 @@ const ImpostorGame = () => {
         status: 'playing'
       }));
       
+      hasLoadedRole.current = false;
       setGameStarted(true);
       setLoading(false);
     } catch (err) {
@@ -188,12 +191,18 @@ const ImpostorGame = () => {
       return;
     }
 
+    if (hasLoadedRole.current && playerRole) {
+      setIsRevealed(true);
+      return;
+    }
+
     try {
       setLoading(true);
       const role = await impostorService.getPlayerRole(roomCode, playerNumber);
       console.log('🎭 Rol obtenido:', role);
       setPlayerRole(role);
       setIsRevealed(true);
+      hasLoadedRole.current = true;
       setLoading(false);
     } catch (err) {
       console.error('Error obteniendo rol:', err);
@@ -203,6 +212,7 @@ const ImpostorGame = () => {
   };
 
   const newRound = async () => {
+    hasLoadedRole.current = false;
     setIsRevealed(false);
     setPlayerRole(null);
     await startGame();
@@ -243,7 +253,6 @@ const ImpostorGame = () => {
       <Header />
       
       <div className="impostor-game-container">
-        {/* Header */}
         <div className="impostor-game-header">
           <div className="impostor-game-room-info">
             <h2>Sala: <span className="impostor-game-room-code">{roomCode}</span></h2>
@@ -263,7 +272,6 @@ const ImpostorGame = () => {
           </div>
         </div>
 
-        {/* Sala de Espera */}
         {!gameStarted && (
           <div className="impostor-game-waiting-room">
             <h2>🎮 Sala de Espera</h2>
@@ -271,7 +279,6 @@ const ImpostorGame = () => {
               Esperando a que todos los jugadores se unan...
             </p>
 
-            {/* Lista de jugadores conectados */}
             <div style={{ marginTop: '30px', marginBottom: '30px' }}>
               <h3 style={{ color: '#a8ff78', marginBottom: '20px', textAlign: 'center' }}>
                 Jugadores conectados ({roomPlayers.length}/{room.num_players})
@@ -344,7 +351,6 @@ const ImpostorGame = () => {
           </div>
         )}
 
-        {/* Juego Activo */}
         {gameStarted && (
           <div className="impostor-game-active">
             {!isRevealed ? (
@@ -395,7 +401,6 @@ const ImpostorGame = () => {
           </div>
         )}
 
-        {/* Botón Salir */}
         <button onClick={exitGame} className="impostor-game-btn-exit">
           ← Salir de la Sala
         </button>

@@ -32,7 +32,7 @@
   backdrop-filter: blur(30px) saturate(150%);
   -webkit-backdrop-filter: blur(30px) saturate(150%);
   border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
+  box-shadow:
     0 15px 60px rgba(0, 0, 0, 0.5),
     inset 0 0 50px rgba(168, 255, 120, 0.05);
   animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
@@ -41,13 +41,13 @@
 
 @keyframes impostorPulse {
   0%, 100% {
-    box-shadow: 
+    box-shadow:
       0 15px 60px rgba(168, 255, 120, 0.3),
       inset 0 0 50px rgba(168, 255, 120, 0.05);
     border-color: rgba(168, 255, 120, 0.3);
   }
   50% {
-    box-shadow: 
+    box-shadow:
       0 20px 80px rgba(168, 255, 120, 0.5),
       inset 0 0 60px rgba(168, 255, 120, 0.1);
     border-color: rgba(168, 255, 120, 0.5);
@@ -113,7 +113,7 @@
   font-size: 1.15rem;
   color: #a8ff78;
   border: 2px solid rgba(168, 255, 120, 0.3);
-  box-shadow: 
+  box-shadow:
     0 8px 30px rgba(168, 255, 120, 0.2),
     inset 0 0 20px rgba(168, 255, 120, 0.1);
   animation: warningPulse 2s infinite;
@@ -121,12 +121,12 @@
 
 @keyframes warningPulse {
   0%, 100% {
-    box-shadow: 
+    box-shadow:
       0 8px 30px rgba(168, 255, 120, 0.2),
       inset 0 0 20px rgba(168, 255, 120, 0.1);
   }
   50% {
-    box-shadow: 
+    box-shadow:
       0 8px 40px rgba(168, 255, 120, 0.4),
       inset 0 0 30px rgba(168, 255, 120, 0.15);
   }
@@ -138,7 +138,7 @@
   backdrop-filter: blur(30px) saturate(180%);
   -webkit-backdrop-filter: blur(30px) saturate(180%);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
+  box-shadow:
     0 15px 60px rgba(0, 0, 0, 0.4),
     inset 0 0 50px rgba(255, 255, 255, 0.05);
 }
@@ -155,7 +155,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 
+  box-shadow:
     0 10px 40px rgba(168, 255, 120, 0.3),
     inset 0 0 30px rgba(255, 255, 255, 0.1);
   animation: imageFloat 3s ease-in-out infinite;
@@ -200,7 +200,7 @@
   font-weight: 900;
   margin: 25px 0;
   color: #ffffff;
-  text-shadow: 
+  text-shadow:
     0 3px 15px rgba(168, 255, 120, 0.5),
     0 0 40px rgba(168, 255, 120, 0.3);
   letter-spacing: 1px;
@@ -223,7 +223,7 @@
   font-weight: 700;
   color: #ffffff;
   border: 2px solid rgba(168, 255, 120, 0.3);
-  box-shadow: 
+  box-shadow:
     0 4px 20px rgba(168, 255, 120, 0.2),
     inset 0 0 15px rgba(168, 255, 120, 0.1);
   transition: all 0.3s ease;
@@ -232,17 +232,9 @@
 .player-badge:hover {
   background: rgba(168, 255, 120, 0.3);
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     0 6px 25px rgba(168, 255, 120, 0.3),
     inset 0 0 20px rgba(168, 255, 120, 0.15);
-}
-
-.player-club {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 20px 0;
-  color: #a8ff78;
-  text-shadow: 0 0 20px rgba(168, 255, 120, 0.5);
 }
 
 .player-instruction {
@@ -255,7 +247,7 @@
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.95);
   border: 2px solid rgba(168, 255, 120, 0.25);
-  box-shadow: 
+  box-shadow:
     0 8px 30px rgba(168, 255, 120, 0.2),
     inset 0 0 20px rgba(168, 255, 120, 0.05);
 }
@@ -266,7 +258,7 @@
   backdrop-filter: blur(30px) saturate(120%);
   -webkit-backdrop-filter: blur(30px) saturate(120%);
   border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 
+  box-shadow:
     0 15px 60px rgba(0, 0, 0, 0.5),
     inset 0 0 40px rgba(255, 255, 255, 0.03);
 }

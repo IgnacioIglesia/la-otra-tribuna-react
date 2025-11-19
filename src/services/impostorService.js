@@ -23,7 +23,8 @@ class ImpostorService {
     try {
       let query = supabase
         .from('footballers')
-        .select('*');
+        .select('*')
+        .eq('is_active', true);
 
       if (usedPlayerIds.length > 0) {
         query = query.not('id', 'in', `(${usedPlayerIds.join(',')})`);
@@ -37,7 +38,8 @@ class ImpostorService {
         console.log('No hay más jugadores disponibles, reseteando...');
         const { data: allPlayers, error: allError } = await supabase
           .from('footballers')
-          .select('*');
+          .select('*')
+          .eq('is_active', true);
         
         if (allError) throw allError;
         if (!allPlayers || allPlayers.length === 0) {
@@ -120,7 +122,6 @@ class ImpostorService {
   // Unirse a sala y obtener número de jugador automáticamente
   async joinRoom(roomCode, userId, username) {
     try {
-      // 1. Verificar que la sala existe y obtener info
       const { data: room, error: roomError } = await supabase
         .from('impostor_rooms')
         .select('*')
@@ -130,7 +131,6 @@ class ImpostorService {
       if (roomError) throw new Error('Sala no encontrada');
       if (room.status === 'finished') throw new Error('Esta sala ya finalizó');
 
-      // 2. Verificar si el usuario ya está en la sala
       const { data: existingPlayer } = await supabase
         .from('impostor_players')
         .select('player_number')
@@ -146,7 +146,6 @@ class ImpostorService {
         };
       }
 
-      // 3. Obtener jugadores actuales en la sala
       const { data: currentPlayers, error: playersError } = await supabase
         .from('impostor_players')
         .select('player_number')
@@ -155,7 +154,6 @@ class ImpostorService {
 
       if (playersError) throw playersError;
 
-      // 4. Encontrar el primer número disponible
       let playerNumber = 1;
       const usedNumbers = currentPlayers ? currentPlayers.map(p => p.player_number) : [];
       
@@ -167,7 +165,6 @@ class ImpostorService {
         throw new Error('La sala está llena');
       }
 
-      // 5. Insertar el jugador en la sala
       const { error: insertError } = await supabase
         .from('impostor_players')
         .insert({
@@ -178,7 +175,6 @@ class ImpostorService {
         });
 
       if (insertError) {
-        // Si hay error de duplicado, intentar obtener el número existente
         if (insertError.code === '23505') {
           const { data: retryPlayer } = await supabase
             .from('impostor_players')
@@ -242,16 +238,27 @@ class ImpostorService {
     }
   }
 
-  // ✅ CORREGIDO: Iniciar ronda con soporte para múltiples impostores
+  // ✅ ARREGLADO: Garantiza que siempre haya el número correcto de impostores
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
       console.log('🎮 Iniciando ronda...', { roomCode, numPlayers, numImpostors });
       
-      // 1. Obtener jugadores ya usados en esta sala
+      // 1. Obtener jugadores REALMENTE conectados en la sala
+      const connectedPlayers = await this.getRoomPlayers(roomCode);
+      const actualPlayerCount = connectedPlayers.length;
+      
+      console.log('👥 Jugadores conectados:', actualPlayerCount, 'de', numPlayers);
+      
+      // 2. ✅ AJUSTAR número de impostores si hay menos jugadores que el máximo
+      const adjustedImpostors = Math.min(numImpostors, Math.max(1, Math.floor(actualPlayerCount / 2) - 1));
+      
+      console.log(`🎭 Impostores ajustados: ${adjustedImpostors} (original: ${numImpostors})`);
+      
+      // 3. Obtener jugadores ya usados
       const usedPlayers = await this.getUsedPlayers(roomCode);
       console.log('Jugadores ya usados:', usedPlayers);
       
-      // 2. Obtener jugador aleatorio que NO haya sido usado
+      // 4. Obtener jugador aleatorio
       const selectedPlayer = await this.getRandomPlayerExcluding(usedPlayers);
       
       if (!selectedPlayer) {
@@ -260,7 +267,7 @@ class ImpostorService {
 
       console.log('Jugador seleccionado:', selectedPlayer.name);
 
-      // 3. Actualizar sala con jugador seleccionado
+      // 5. Actualizar sala
       const { error: updateError } = await supabase
         .from('impostor_rooms')
         .update({ 
@@ -271,11 +278,14 @@ class ImpostorService {
 
       if (updateError) throw updateError;
 
-      // 4. Generar array de roles (quiénes son impostores)
-      const roles = this.assignRoles(numPlayers, numImpostors);
+      // 6. ✅ Asignar roles basándose en jugadores REALES conectados
+      const playerNumbers = connectedPlayers.map(p => p.player_number).sort((a, b) => a - b);
+      const roles = this.assignRolesToConnectedPlayers(playerNumbers, adjustedImpostors);
 
-      // 5. ✅ CORREGIDO: Eliminar TODAS las sesiones anteriores de esta sala
-      console.log('🗑️ Limpiando TODAS las sesiones anteriores de la sala...');
+      console.log('🎭 Roles asignados:', roles);
+
+      // 7. Eliminar sesiones anteriores
+      console.log('🗑️ Limpiando sesiones anteriores...');
       const { error: deleteError } = await supabase
         .from('impostor_sessions')
         .delete()
@@ -286,12 +296,10 @@ class ImpostorService {
         throw deleteError;
       }
 
-      console.log('✅ Sesiones anteriores eliminadas');
-
-      // 6. Crear nuevas sesiones para cada jugador
-      const sessions = roles.map((isImpostor, index) => ({
+      // 8. ✅ Crear sesiones SOLO para jugadores conectados
+      const sessions = roles.map(({ playerNumber, isImpostor }) => ({
         room_code: roomCode,
-        player_number: index + 1,
+        player_number: playerNumber,
         is_impostor: isImpostor,
         player_id: selectedPlayer.id
       }));
@@ -307,15 +315,16 @@ class ImpostorService {
         throw insertError;
       }
 
-      console.log('✅ Sesiones creadas, enviando notificación...');
+      console.log('✅ Sesiones creadas correctamente');
 
-      // 7. Enviar notificación broadcast a todos los clientes
+      // 9. Notificar a todos los clientes
       await this.notifyGameStart(roomCode);
 
       return {
         selectedPlayer,
         roles,
-        roomCode
+        roomCode,
+        adjustedImpostors
       };
     } catch (error) {
       console.error('Error starting round:', error);
@@ -323,7 +332,27 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Notificar inicio de juego via broadcast
+  // ✅ NUEVO: Asignar roles a jugadores realmente conectados
+  assignRolesToConnectedPlayers(playerNumbers, numImpostors) {
+    const roles = playerNumbers.map(num => ({ playerNumber: num, isImpostor: false }));
+    const impostorIndices = [];
+    
+    // Seleccionar índices aleatorios para impostores
+    while (impostorIndices.length < numImpostors) {
+      const randomIndex = Math.floor(Math.random() * roles.length);
+      if (!impostorIndices.includes(randomIndex)) {
+        impostorIndices.push(randomIndex);
+        roles[randomIndex].isImpostor = true;
+      }
+    }
+    
+    console.log(`✅ ${numImpostors} impostor(es) asignado(s) en posiciones:`, 
+      impostorIndices.map(i => playerNumbers[i]));
+    
+    return roles;
+  }
+
+  // Notificar inicio de juego via broadcast
   async notifyGameStart(roomCode) {
     try {
       const channel = supabase.channel(`room-${roomCode}-broadcast`);
@@ -340,7 +369,6 @@ class ImpostorService {
           });
           console.log('📡 Broadcast enviado: game_started');
           
-          // Desuscribir después de enviar
           setTimeout(() => {
             supabase.removeChannel(channel);
           }, 1000);
@@ -405,7 +433,7 @@ class ImpostorService {
     }
   }
 
-  // ✅ Suscribirse a cambios en jugadores
+  // Suscribirse a cambios en jugadores
   subscribeToRoomPlayers(roomCode, callback) {
     const channel = supabase
       .channel(`room-${roomCode}-players`, {
@@ -438,7 +466,7 @@ class ImpostorService {
     return channel;
   }
 
-  // ✅ Suscribirse a cambios en el estado de la sala + broadcast
+  // Suscribirse a cambios en el estado de la sala + broadcast
   subscribeToRoomStatus(roomCode, callback) {
     const channel = supabase
       .channel(`room-${roomCode}-status`, {
@@ -479,7 +507,7 @@ class ImpostorService {
     return channel;
   }
 
-  // Salir de una sala (eliminar jugador)
+  // Salir de una sala
   async leaveRoom(roomCode, userId) {
     try {
       const { error } = await supabase
@@ -496,7 +524,7 @@ class ImpostorService {
     }
   }
 
-  // Helpers
+  // Generar código de sala
   generateRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -506,7 +534,7 @@ class ImpostorService {
     return code;
   }
 
-  // Asignar roles con múltiples impostores
+  // DEPRECADO: Ya no se usa
   assignRoles(numPlayers, numImpostors) {
     const roles = Array(numPlayers).fill(false);
     const impostorPositions = [];
@@ -519,7 +547,6 @@ class ImpostorService {
       }
     }
     
-    console.log(`Asignados ${numImpostors} impostores en posiciones:`, impostorPositions);
     return roles;
   }
 }
