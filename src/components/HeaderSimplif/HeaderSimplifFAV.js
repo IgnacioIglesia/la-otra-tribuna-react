@@ -299,6 +299,10 @@ export default function HeaderSimplifFAV() {
             Vender
           </button>
 
+          <button className="subnav-link impostor-link" onClick={() => navigate("/impostor")}>
+            Impostor
+          </button>
+
           <button className="subnav-link" onClick={() => navigate("/track-order")}>
             Rastrear Pedido
           </button>

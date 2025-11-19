@@ -286,6 +286,9 @@ export default function HeaderSimplif() {
 
           <button className="subnav-link" onClick={() => navigate("/offers")}>Ofertas</button>
           <button className="subnav-link" onClick={() => navigate("/sell")}>Vender</button>
+          <button className="subnav-link impostor-link" onClick={() => navigate("/impostor")}>
+            Impostor
+          </button>
           <button className="subnav-link" onClick={() => navigate("/track-order")}>Rastrear Pedido</button>
           <button className="subnav-link" onClick={() => navigate("/favorites")}>Favoritos</button>
           <button className="subnav-link" onClick={() => navigate("/how-it-works")}>Cómo funciona</button>
