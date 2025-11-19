@@ -439,6 +439,7 @@ const ImpostorGame = () => {
       <RoundResultsModal
         isOpen={showResultsModal}
         onClose={() => setShowResultsModal(false)}
+        onNewRound={isHost ? handleNewRound : null}
         impostorPlayers={roundResults?.impostorPlayers}
         selectedPlayer={roundResults?.selectedPlayer}
       />
@@ -656,10 +657,10 @@ const ImpostorGame = () => {
                 <div className="impostor-game-actions">
                   {isHost && (
                     <button
-                      onClick={newRound}
+                      onClick={showResults}
                       className="impostor-game-btn impostor-game-btn-primary"
                     >
-                      🔄 Nueva Ronda
+                      📊 Ver Resultados
                     </button>
                   )}
                   <button

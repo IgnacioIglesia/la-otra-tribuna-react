@@ -155,7 +155,15 @@ class ImpostorService {
         .maybeSingle();
 
       if (existingPlayer) {
-        console.log('Usuario ya está en la sala, usando número:', existingPlayer.player_number);
+        console.log('Usuario ya está en la sala, actualizando nombre...');
+        
+        // ✅ ARREGLADO: Actualizar username cada vez que se une
+        await supabase
+          .from('impostor_players')
+          .update({ username: username })
+          .eq('room_code', roomCode)
+          .eq('user_id', userId);
+        
         return {
           playerNumber: existingPlayer.player_number,
           isNew: false
@@ -200,6 +208,13 @@ class ImpostorService {
             .maybeSingle();
           
           if (retryPlayer) {
+            // ✅ También actualizar aquí por si acaso
+            await supabase
+              .from('impostor_players')
+              .update({ username: username })
+              .eq('room_code', roomCode)
+              .eq('user_id', userId);
+            
             return {
               playerNumber: retryPlayer.player_number,
               isNew: false
