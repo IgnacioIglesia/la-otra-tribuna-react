@@ -21,18 +21,22 @@ const ImpostorGame = () => {
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   
-  // ✅ NUEVO: Control de impostores en la sala
+  // ✅ Control de impostores
   const [numImpostors, setNumImpostors] = useState(1);
   const [isEditingImpostors, setIsEditingImpostors] = useState(false);
   
+  // ✅ NUEVO: Notificaciones
+  const [notification, setNotification] = useState(null);
+  
   const isHost = location.state?.isHost || false;
   const hasLoadedRole = useRef(false);
+  const previousPlayerIdRef = useRef(null);
 
   useEffect(() => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ NUEVO: Detectar si el host se va y cerrar sala
+  // ✅ MEJORADO: Detectar si el host se va y cerrar sala
   useEffect(() => {
     if (!roomCode || !room) return;
 
@@ -49,16 +53,21 @@ const ImpostorGame = () => {
         async (payload) => {
           console.log('🚨 Jugador eliminado:', payload.old);
           
-          // Verificar si el que se fue era el host
           if (room.host_user_id && payload.old.user_id === room.host_user_id) {
             console.log('👑 El host abandonó la sala, cerrando...');
             
-            // Cerrar la sala
+            showNotification(
+              '👑 El host abandonó la sala',
+              'La partida ha sido cancelada',
+              'error',
+              5000
+            );
+            
             await impostorService.endRoom(roomCode);
             
-            // Redirigir a todos
-            alert('El host abandonó la sala. La partida ha terminado.');
-            navigate('/impostor');
+            setTimeout(() => {
+              navigate('/impostor');
+            }, 3000);
           }
         }
       )
@@ -98,6 +107,14 @@ const ImpostorGame = () => {
           setPlayerRole(null);
           setGameStarted(true);
           
+          // ✅ NUEVO: Notificación de nueva ronda
+          showNotification(
+            '🎮 ¡Nueva Ronda!',
+            'Los roles han sido asignados. Prepárate para ver tu rol.',
+            'success',
+            3000
+          );
+          
           await loadRoom();
         }
       }
@@ -112,6 +129,14 @@ const ImpostorGame = () => {
           setIsRevealed(false);
           setPlayerRole(null);
           setGameStarted(true);
+          
+          showNotification(
+            '🎮 ¡Nueva Ronda!',
+            'Los roles han sido asignados. Prepárate para ver tu rol.',
+            'success',
+            3000
+          );
+          
           await loadRoom();
         }
       } catch (error) {
@@ -126,6 +151,17 @@ const ImpostorGame = () => {
       clearInterval(pollingInterval);
     };
   }, [roomCode, gameStarted]);
+
+  // ✅ NUEVO: Función para mostrar notificaciones
+  const showNotification = (title, message, type = 'info', duration = 4000) => {
+    setNotification({ title, message, type });
+    
+    if (duration) {
+      setTimeout(() => {
+        setNotification(null);
+      }, duration);
+    }
+  };
 
   const initializeRoom = async () => {
     try {
@@ -142,14 +178,12 @@ const ImpostorGame = () => {
       setCurrentUser(user);
       await loadRoom();
       
-      // ✅ CAMBIO: Obtener nombre completo del perfil
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido, username')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Priorizar nombre + apellido, luego username, luego email
       const username = profile?.nombre && profile?.apellido
         ? `${profile.nombre} ${profile.apellido}`
         : profile?.username || user.email?.split('@')[0] || 'Jugador';
@@ -182,8 +216,23 @@ const ImpostorGame = () => {
   const loadRoom = async () => {
     try {
       const roomData = await impostorService.getRoom(roomCode);
+      
+      // ✅ NUEVO: Detectar cambio de jugador actual
+      if (previousPlayerIdRef.current && 
+          previousPlayerIdRef.current !== roomData.current_player_id &&
+          gameStarted) {
+        showNotification(
+          '🔄 ¡Cambio de Turno!',
+          'El jugador actual ha cambiado. Nuevo jugador seleccionado.',
+          'warning',
+          3000
+        );
+      }
+      
+      previousPlayerIdRef.current = roomData.current_player_id;
+      
       setRoom(roomData);
-      setNumImpostors(roomData.num_impostors); // ✅ Sincronizar impostores
+      setNumImpostors(roomData.num_impostors);
       setGameStarted(roomData.status === 'playing');
     } catch (err) {
       console.error('Error cargando sala:', err);
@@ -200,7 +249,6 @@ const ImpostorGame = () => {
     }
   };
 
-  // ✅ NUEVO: Actualizar número de impostores
   const updateImpostors = async () => {
     try {
       setLoading(true);
@@ -208,10 +256,24 @@ const ImpostorGame = () => {
       await loadRoom();
       setIsEditingImpostors(false);
       setLoading(false);
+      
+      showNotification(
+        '✅ Configuración Actualizada',
+        `Número de impostores: ${numImpostors}`,
+        'success',
+        3000
+      );
     } catch (err) {
       console.error('Error actualizando impostores:', err);
       setError('Error al actualizar impostores');
       setLoading(false);
+      
+      showNotification(
+        '❌ Error',
+        'No se pudo actualizar la configuración',
+        'error',
+        3000
+      );
     }
   };
 
@@ -224,7 +286,7 @@ const ImpostorGame = () => {
       const result = await impostorService.startRound(
         roomCode,
         room.num_players,
-        numImpostors // ✅ Usar el número actualizado
+        numImpostors
       );
 
       setRoom(prev => ({
@@ -233,13 +295,28 @@ const ImpostorGame = () => {
         status: 'playing'
       }));
       
+      previousPlayerIdRef.current = result.selectedPlayer.id;
       hasLoadedRole.current = false;
       setGameStarted(true);
       setLoading(false);
+      
+      showNotification(
+        '🚀 ¡Ronda Iniciada!',
+        'Los roles han sido asignados a todos los jugadores',
+        'success',
+        3000
+      );
     } catch (err) {
       console.error('Error iniciando juego:', err);
       setError(err.message || 'Error al iniciar el juego');
       setLoading(false);
+      
+      showNotification(
+        '❌ Error',
+        'No se pudo iniciar la ronda',
+        'error',
+        3000
+      );
     }
   };
 
@@ -276,7 +353,6 @@ const ImpostorGame = () => {
     await startGame();
   };
 
-  // ✅ MEJORADO: Si eres host, elimina la sala al salir
   const exitGame = async () => {
     try {
       if (isHost && currentUser) {
@@ -292,7 +368,6 @@ const ImpostorGame = () => {
     }
   };
 
-  // ✅ NUEVO: Calcular máximo de impostores según jugadores conectados
   const maxImpostorsForCurrentPlayers = Math.min(4, Math.max(1, Math.floor(roomPlayers.length / 2) - 1));
 
   if (loading && !room) {
@@ -325,6 +400,17 @@ const ImpostorGame = () => {
     <>
       <Header />
       
+      {/* ✅ NUEVO: Componente de Notificaciones */}
+      {notification && (
+        <div className={`impostor-game-notification impostor-game-notification-${notification.type}`}>
+          <div className="impostor-game-notification-content">
+            <h3>{notification.title}</h3>
+            <p>{notification.message}</p>
+          </div>
+          <div className="impostor-game-notification-progress"></div>
+        </div>
+      )}
+      
       <div className="impostor-game-container">
         <div className="impostor-game-header">
           <div className="impostor-game-room-info">
@@ -352,48 +438,28 @@ const ImpostorGame = () => {
               Esperando a que todos los jugadores se unan...
             </p>
 
-            {/* ✅ NUEVO: Control de impostores en sala */}
             {isHost && (
-              <div style={{ 
-                marginTop: '20px', 
-                marginBottom: '30px',
-                background: 'rgba(168, 255, 120, 0.1)',
-                padding: '20px',
-                borderRadius: '15px',
-                border: '2px solid rgba(168, 255, 120, 0.3)'
-              }}>
-                <h3 style={{ color: '#a8ff78', marginBottom: '15px', textAlign: 'center' }}>
-                  ⚙️ Configuración
-                </h3>
+              <div className="impostor-game-config-section">
+                <h3 className="impostor-game-config-title">⚙️ Configuración</h3>
                 
                 {!isEditingImpostors ? (
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '10px' }}>
-                      Número de impostores: <strong style={{ color: '#a8ff78', fontSize: '1.3rem' }}>{numImpostors}</strong>
+                  <div className="impostor-game-config-display">
+                    <p className="impostor-game-config-label">
+                      Número de impostores:
                     </p>
+                    <p className="impostor-game-config-value">{numImpostors}</p>
                     <button
                       onClick={() => setIsEditingImpostors(true)}
-                      className="impostor-game-btn impostor-game-btn-secondary"
-                      style={{ padding: '10px 20px', fontSize: '0.9rem', marginTop: '10px' }}
+                      className="impostor-game-btn-config impostor-game-btn-config-edit"
                     >
                       ✏️ Cambiar
                     </button>
                   </div>
                 ) : (
-                  <div>
-                    <label style={{ 
-                      display: 'block',
-                      color: 'rgba(255,255,255,0.95)',
-                      marginBottom: '10px',
-                      fontWeight: '600'
-                    }}>
-                      Impostores: <strong style={{ color: '#a8ff78', fontSize: '1.3rem' }}>{numImpostors}</strong>
-                      <span style={{ 
-                        fontSize: '0.9rem', 
-                        fontWeight: 'normal', 
-                        marginLeft: '10px',
-                        opacity: 0.8 
-                      }}>
+                  <div className="impostor-game-config-editor">
+                    <label className="impostor-game-config-range-label">
+                      Impostores: <span className="impostor-game-config-range-value">{numImpostors}</span>
+                      <span className="impostor-game-config-range-hint">
                         (máx: {maxImpostorsForCurrentPlayers} con {roomPlayers.length} jugadores)
                       </span>
                     </label>
@@ -403,15 +469,13 @@ const ImpostorGame = () => {
                       max={maxImpostorsForCurrentPlayers}
                       value={Math.min(numImpostors, maxImpostorsForCurrentPlayers)}
                       onChange={(e) => setNumImpostors(parseInt(e.target.value))}
-                      className="impostor-slider"
-                      style={{ width: '100%', marginBottom: '15px' }}
+                      className="impostor-game-slider"
                     />
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    <div className="impostor-game-config-buttons">
                       <button
                         onClick={updateImpostors}
                         disabled={loading}
-                        className="impostor-game-btn impostor-game-btn-primary"
-                        style={{ padding: '10px 20px', fontSize: '0.9rem' }}
+                        className="impostor-game-btn-config impostor-game-btn-config-save"
                       >
                         {loading ? '⏳' : '✅'} Guardar
                       </button>
@@ -420,8 +484,7 @@ const ImpostorGame = () => {
                           setIsEditingImpostors(false);
                           setNumImpostors(room.num_impostors);
                         }}
-                        className="impostor-game-btn impostor-game-btn-secondary"
-                        style={{ padding: '10px 20px', fontSize: '0.9rem' }}
+                        className="impostor-game-btn-config impostor-game-btn-config-cancel"
                       >
                         ❌ Cancelar
                       </button>
