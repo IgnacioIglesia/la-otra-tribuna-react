@@ -242,7 +242,7 @@ class ImpostorService {
     }
   }
 
-  // Iniciar ronda con soporte para múltiples impostores
+  // ✅ CORREGIDO: Iniciar ronda con soporte para múltiples impostores
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
       console.log('🎮 Iniciando ronda...', { roomCode, numPlayers, numImpostors });
@@ -274,20 +274,19 @@ class ImpostorService {
       // 4. Generar array de roles (quiénes son impostores)
       const roles = this.assignRoles(numPlayers, numImpostors);
 
-      // 5. Limpiar sesiones anteriores de esta ronda
-      const { data: existingSessions } = await supabase
+      // 5. ✅ CORREGIDO: Eliminar TODAS las sesiones anteriores de esta sala
+      console.log('🗑️ Limpiando TODAS las sesiones anteriores de la sala...');
+      const { error: deleteError } = await supabase
         .from('impostor_sessions')
-        .select('*')
-        .eq('room_code', roomCode)
-        .eq('player_id', selectedPlayer.id);
+        .delete()
+        .eq('room_code', roomCode);
 
-      if (existingSessions && existingSessions.length > 0) {
-        await supabase
-          .from('impostor_sessions')
-          .delete()
-          .eq('room_code', roomCode)
-          .eq('player_id', selectedPlayer.id);
+      if (deleteError) {
+        console.error('Error eliminando sesiones:', deleteError);
+        throw deleteError;
       }
+
+      console.log('✅ Sesiones anteriores eliminadas');
 
       // 6. Crear nuevas sesiones para cada jugador
       const sessions = roles.map((isImpostor, index) => ({
@@ -296,6 +295,8 @@ class ImpostorService {
         is_impostor: isImpostor,
         player_id: selectedPlayer.id
       }));
+
+      console.log('📝 Insertando nuevas sesiones:', sessions);
 
       const { error: insertError } = await supabase
         .from('impostor_sessions')

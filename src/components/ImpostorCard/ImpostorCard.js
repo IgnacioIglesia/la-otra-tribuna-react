@@ -34,19 +34,15 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
     );
   }
 
-  // Fallback para imagen
+  // ✅ CORREGIDO: Mejorar el manejo de imágenes
   const getImageUrl = () => {
+    // Si hay error o no hay URL, usar avatar generado
     if (!player?.image_url || imageError) {
-      // Crear iniciales del jugador
-      const initials = player?.name
-        ?.split(' ')
-        .map(word => word[0])
-        .join('')
-        .substring(0, 2)
-        .toUpperCase() || 'JG';
-      
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(player?.name || 'Jugador')}&size=300&background=1a5c1e&color=a8ff78&bold=true&font-size=0.4`;
+      const playerName = player?.name || 'Jugador';
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(playerName)}&size=300&background=1a5c1e&color=a8ff78&bold=true&font-size=0.4`;
     }
+    
+    // Retornar la URL de la imagen
     return player.image_url;
   };
 
@@ -54,26 +50,21 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
     <div className="impostor-card player">
       <div className="card-content">
         <div className="player-image-container">
-          {!imageError && player?.image_url ? (
-            <img 
-              src={getImageUrl()}
-              alt={player?.name || 'Jugador'}
-              className="player-image"
-              onError={(e) => {
-                console.error('❌ Error cargando imagen:', player?.image_url);
-                setImageError(true);
-              }}
-              loading="eager"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <img 
-              src={getImageUrl()}
-              alt={player?.name || 'Jugador'}
-              className="player-image"
-              loading="eager"
-            />
-          )}
+          <img 
+            src={getImageUrl()}
+            alt={player?.name || 'Jugador'}
+            className="player-image"
+            onError={(e) => {
+              console.error('❌ Error cargando imagen de:', player?.name, '| URL:', player?.image_url);
+              setImageError(true);
+              // Recargar con el fallback
+              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(player?.name || 'Jugador')}&size=300&background=1a5c1e&color=a8ff78&bold=true&font-size=0.4`;
+            }}
+            onLoad={() => {
+              console.log('✅ Imagen cargada correctamente:', player?.name);
+            }}
+            loading="eager"
+          />
         </div>
         <h1 className="player-name">{player?.name || 'Jugador Desconocido'}</h1>
         <div className="player-info">
