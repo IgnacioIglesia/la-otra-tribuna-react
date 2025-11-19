@@ -119,6 +119,22 @@ class ImpostorService {
     }
   }
 
+  // ✅ NUEVO: Actualizar número de impostores
+  async updateRoomImpostors(roomCode, numImpostors) {
+    try {
+      const { error } = await supabase
+        .from('impostor_rooms')
+        .update({ num_impostors: numImpostors })
+        .eq('room_code', roomCode);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error updating impostors:', error);
+      throw error;
+    }
+  }
+
   // Unirse a sala y obtener número de jugador automáticamente
   async joinRoom(roomCode, userId, username) {
     try {
@@ -238,27 +254,23 @@ class ImpostorService {
     }
   }
 
-  // ✅ ARREGLADO: Garantiza que siempre haya el número correcto de impostores
+  // ✅ MEJORADO: Retorna info de impostores para el modal
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
       console.log('🎮 Iniciando ronda...', { roomCode, numPlayers, numImpostors });
       
-      // 1. Obtener jugadores REALMENTE conectados en la sala
       const connectedPlayers = await this.getRoomPlayers(roomCode);
       const actualPlayerCount = connectedPlayers.length;
       
       console.log('👥 Jugadores conectados:', actualPlayerCount, 'de', numPlayers);
       
-      // 2. ✅ AJUSTAR número de impostores si hay menos jugadores que el máximo
       const adjustedImpostors = Math.min(numImpostors, Math.max(1, Math.floor(actualPlayerCount / 2) - 1));
       
       console.log(`🎭 Impostores ajustados: ${adjustedImpostors} (original: ${numImpostors})`);
       
-      // 3. Obtener jugadores ya usados
       const usedPlayers = await this.getUsedPlayers(roomCode);
       console.log('Jugadores ya usados:', usedPlayers);
       
-      // 4. Obtener jugador aleatorio
       const selectedPlayer = await this.getRandomPlayerExcluding(usedPlayers);
       
       if (!selectedPlayer) {
@@ -267,7 +279,6 @@ class ImpostorService {
 
       console.log('Jugador seleccionado:', selectedPlayer.name);
 
-      // 5. Actualizar sala
       const { error: updateError } = await supabase
         .from('impostor_rooms')
         .update({ 
@@ -278,13 +289,11 @@ class ImpostorService {
 
       if (updateError) throw updateError;
 
-      // 6. ✅ Asignar roles basándose en jugadores REALES conectados
       const playerNumbers = connectedPlayers.map(p => p.player_number).sort((a, b) => a - b);
       const roles = this.assignRolesToConnectedPlayers(playerNumbers, adjustedImpostors);
 
       console.log('🎭 Roles asignados:', roles);
 
-      // 7. Eliminar sesiones anteriores
       console.log('🗑️ Limpiando sesiones anteriores...');
       const { error: deleteError } = await supabase
         .from('impostor_sessions')
@@ -296,7 +305,6 @@ class ImpostorService {
         throw deleteError;
       }
 
-      // 8. ✅ Crear sesiones SOLO para jugadores conectados
       const sessions = roles.map(({ playerNumber, isImpostor }) => ({
         room_code: roomCode,
         player_number: playerNumber,
@@ -317,14 +325,18 @@ class ImpostorService {
 
       console.log('✅ Sesiones creadas correctamente');
 
-      // 9. Notificar a todos los clientes
+      // ✅ Obtener nombres de impostores
+      const impostorNumbers = roles.filter(r => r.isImpostor).map(r => r.playerNumber);
+      const impostorPlayers = connectedPlayers.filter(p => impostorNumbers.includes(p.player_number));
+
       await this.notifyGameStart(roomCode);
 
       return {
         selectedPlayer,
         roles,
         roomCode,
-        adjustedImpostors
+        adjustedImpostors,
+        impostorPlayers // ✅ NUEVO: para mostrar en modal
       };
     } catch (error) {
       console.error('Error starting round:', error);
@@ -332,12 +344,10 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Asignar roles a jugadores realmente conectados
   assignRolesToConnectedPlayers(playerNumbers, numImpostors) {
     const roles = playerNumbers.map(num => ({ playerNumber: num, isImpostor: false }));
     const impostorIndices = [];
     
-    // Seleccionar índices aleatorios para impostores
     while (impostorIndices.length < numImpostors) {
       const randomIndex = Math.floor(Math.random() * roles.length);
       if (!impostorIndices.includes(randomIndex)) {
@@ -352,7 +362,6 @@ class ImpostorService {
     return roles;
   }
 
-  // Notificar inicio de juego via broadcast
   async notifyGameStart(roomCode) {
     try {
       const channel = supabase.channel(`room-${roomCode}-broadcast`);
@@ -379,7 +388,6 @@ class ImpostorService {
     }
   }
 
-  // Obtener rol de jugador específico
   async getPlayerRole(roomCode, playerNumber) {
     try {
       const { data, error } = await supabase
@@ -400,7 +408,6 @@ class ImpostorService {
     }
   }
 
-  // Obtener todas las sesiones de una sala
   async getRoomSessions(roomCode) {
     try {
       const { data, error } = await supabase
@@ -417,7 +424,6 @@ class ImpostorService {
     }
   }
 
-  // Finalizar sala
   async endRoom(roomCode) {
     try {
       const { error } = await supabase
@@ -433,7 +439,6 @@ class ImpostorService {
     }
   }
 
-  // Suscribirse a cambios en jugadores
   subscribeToRoomPlayers(roomCode, callback) {
     const channel = supabase
       .channel(`room-${roomCode}-players`, {
@@ -466,7 +471,6 @@ class ImpostorService {
     return channel;
   }
 
-  // Suscribirse a cambios en el estado de la sala + broadcast
   subscribeToRoomStatus(roomCode, callback) {
     const channel = supabase
       .channel(`room-${roomCode}-status`, {
@@ -507,7 +511,6 @@ class ImpostorService {
     return channel;
   }
 
-  // Salir de una sala
   async leaveRoom(roomCode, userId) {
     try {
       const { error } = await supabase
@@ -524,7 +527,6 @@ class ImpostorService {
     }
   }
 
-  // Generar código de sala
   generateRoomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
@@ -534,7 +536,6 @@ class ImpostorService {
     return code;
   }
 
-  // DEPRECADO: Ya no se usa
   assignRoles(numPlayers, numImpostors) {
     const roles = Array(numPlayers).fill(false);
     const impostorPositions = [];

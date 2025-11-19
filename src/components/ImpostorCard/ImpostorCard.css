@@ -2,6 +2,7 @@
   width: 100%;
   max-width: 550px;
   margin: 20px auto;
+  padding: 0 15px; /* Añadido para evitar que quede pegado a los bordes */
   border-radius: 25px;
   overflow: hidden;
   animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -297,12 +298,12 @@
 /* Responsive */
 @media (max-width: 768px) {
   .impostor-card {
-    margin: 15px;
-    border-radius: 20px;
+    margin: 15px auto;
+    padding: 0 10px; /* Ajuste adicional para pantallas medianas */
   }
 
   .card-content {
-    padding: 40px 25px;
+    padding: 30px 20px;
   }
 
   .impostor-title {
@@ -329,8 +330,13 @@
 }
 
 @media (max-width: 480px) {
+  .impostor-card {
+    margin: 10px auto;
+    padding: 0 8px; /* Ajuste adicional para pantallas pequeñas */
+  }
+
   .card-content {
-    padding: 35px 20px;
+    padding: 25px 15px;
   }
 
   .impostor-title {

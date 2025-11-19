@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import impostorService from '../../services/impostorService';
 import ImpostorCard from '../../components/ImpostorCard/ImpostorCard';
+import RoundResultsModal from '../../components/RoundResultsModal/RoundResultsModal';
 import Header from '../../components/Header/Header';
 import './ImpostorGame.css';
 
@@ -21,12 +22,17 @@ const ImpostorGame = () => {
   const [roomPlayers, setRoomPlayers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   
-  // ✅ Control de impostores
   const [numImpostors, setNumImpostors] = useState(1);
   const [isEditingImpostors, setIsEditingImpostors] = useState(false);
   
-  // ✅ NUEVO: Notificaciones
   const [notification, setNotification] = useState(null);
+  
+  // ✅ NUEVO: Modal de resultados
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [roundResults, setRoundResults] = useState(null);
+  
+  // ✅ NUEVO: Confirmación para salir
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   
   const isHost = location.state?.isHost || false;
   const hasLoadedRole = useRef(false);
@@ -36,7 +42,7 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ MEJORADO: Detectar si el host se va y cerrar sala
+  // ✅ MEJORADO: Detectar si el host se va
   useEffect(() => {
     if (!roomCode || !room) return;
 
@@ -57,7 +63,7 @@ const ImpostorGame = () => {
             console.log('👑 El host abandonó la sala, cerrando...');
             
             showNotification(
-              '👑 El host abandonó la sala',
+              'El host abandonó la sala',
               'La partida ha sido cancelada',
               'error',
               5000
@@ -107,9 +113,8 @@ const ImpostorGame = () => {
           setPlayerRole(null);
           setGameStarted(true);
           
-          // ✅ NUEVO: Notificación de nueva ronda
           showNotification(
-            '🎮 ¡Nueva Ronda!',
+            '¡Nueva Ronda!',
             'Los roles han sido asignados. Prepárate para ver tu rol.',
             'success',
             3000
@@ -131,7 +136,7 @@ const ImpostorGame = () => {
           setGameStarted(true);
           
           showNotification(
-            '🎮 ¡Nueva Ronda!',
+            '¡Nueva Ronda!',
             'Los roles han sido asignados. Prepárate para ver tu rol.',
             'success',
             3000
@@ -152,7 +157,6 @@ const ImpostorGame = () => {
     };
   }, [roomCode, gameStarted]);
 
-  // ✅ NUEVO: Función para mostrar notificaciones
   const showNotification = (title, message, type = 'info', duration = 4000) => {
     setNotification({ title, message, type });
     
@@ -178,6 +182,7 @@ const ImpostorGame = () => {
       setCurrentUser(user);
       await loadRoom();
       
+      // ✅ ARREGLADO: Obtener nombre y apellido del perfil
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido, username')
@@ -217,12 +222,11 @@ const ImpostorGame = () => {
     try {
       const roomData = await impostorService.getRoom(roomCode);
       
-      // ✅ NUEVO: Detectar cambio de jugador actual
       if (previousPlayerIdRef.current && 
           previousPlayerIdRef.current !== roomData.current_player_id &&
           gameStarted) {
         showNotification(
-          '🔄 ¡Cambio de Turno!',
+          '¡Cambio de Turno!',
           'El jugador actual ha cambiado. Nuevo jugador seleccionado.',
           'warning',
           3000
@@ -258,7 +262,7 @@ const ImpostorGame = () => {
       setLoading(false);
       
       showNotification(
-        '✅ Configuración Actualizada',
+        'Configuración Actualizada',
         `Número de impostores: ${numImpostors}`,
         'success',
         3000
@@ -269,7 +273,7 @@ const ImpostorGame = () => {
       setLoading(false);
       
       showNotification(
-        '❌ Error',
+        'Error',
         'No se pudo actualizar la configuración',
         'error',
         3000
@@ -301,7 +305,7 @@ const ImpostorGame = () => {
       setLoading(false);
       
       showNotification(
-        '🚀 ¡Ronda Iniciada!',
+        '¡Ronda Iniciada!',
         'Los roles han sido asignados a todos los jugadores',
         'success',
         3000
@@ -312,7 +316,7 @@ const ImpostorGame = () => {
       setLoading(false);
       
       showNotification(
-        '❌ Error',
+        'Error',
         'No se pudo iniciar la ronda',
         'error',
         3000
@@ -346,11 +350,42 @@ const ImpostorGame = () => {
     }
   };
 
-  const newRound = async () => {
+  // ✅ NUEVO: Ver resultados (sin iniciar ronda todavía)
+  const showResults = async () => {
+    try {
+      const sessions = await impostorService.getRoomSessions(roomCode);
+      const currentImpostors = sessions.filter(s => s.is_impostor);
+      
+      const impostorPlayers = roomPlayers.filter(p => 
+        currentImpostors.some(s => s.player_number === p.player_number)
+      );
+      
+      setRoundResults({
+        impostorPlayers,
+        selectedPlayer: room.footballers
+      });
+      
+      setShowResultsModal(true);
+    } catch (err) {
+      console.error('Error obteniendo resultados:', err);
+      showNotification('Error', 'No se pudieron cargar los resultados', 'error', 3000);
+    }
+  };
+
+  // ✅ NUEVO: Nueva ronda (desde el modal)
+  const handleNewRound = async () => {
+    setShowResultsModal(false);
+    
     hasLoadedRole.current = false;
     setIsRevealed(false);
     setPlayerRole(null);
+    
     await startGame();
+  };
+
+  // ✅ NUEVO: Confirmación para salir
+  const handleLeaveConfirm = () => {
+    setShowLeaveConfirm(true);
   };
 
   const exitGame = async () => {
@@ -400,7 +435,38 @@ const ImpostorGame = () => {
     <>
       <Header />
       
-      {/* ✅ NUEVO: Componente de Notificaciones */}
+      {/* Modal de Resultados */}
+      <RoundResultsModal
+        isOpen={showResultsModal}
+        onClose={() => setShowResultsModal(false)}
+        impostorPlayers={roundResults?.impostorPlayers}
+        selectedPlayer={roundResults?.selectedPlayer}
+      />
+      
+      {/* Modal de Confirmación para Salir */}
+      {showLeaveConfirm && (
+        <div className="leave-confirm-overlay" onClick={() => setShowLeaveConfirm(false)}>
+          <div className="leave-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>¿Salir de la sala?</h3>
+            <p>
+              {isHost 
+                ? '⚠️ Eres el host. Si sales, la sala se cerrará para todos.'
+                : '¿Estás seguro de que quieres salir?'
+              }
+            </p>
+            <div className="leave-confirm-buttons">
+              <button onClick={exitGame} className="confirm-btn-yes">
+                Sí, salir
+              </button>
+              <button onClick={() => setShowLeaveConfirm(false)} className="confirm-btn-no">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Notificaciones */}
       {notification && (
         <div className={`impostor-game-notification impostor-game-notification-${notification.type}`}>
           <div className="impostor-game-notification-content">
@@ -608,7 +674,7 @@ const ImpostorGame = () => {
           </div>
         )}
 
-        <button onClick={exitGame} className="impostor-game-btn-exit">
+        <button onClick={handleLeaveConfirm} className="impostor-game-btn-exit">
           ← Salir de la Sala
         </button>
       </div>

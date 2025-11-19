@@ -4,6 +4,9 @@
   padding: 40px 20px 100px;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .impostor-game-container::before {
@@ -59,7 +62,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* ✅ NUEVO: Sistema de Notificaciones */
+/* ✅ Sistema de Notificaciones */
 .impostor-game-notification {
   position: fixed;
   top: 100px;
@@ -132,12 +135,8 @@
 }
 
 @keyframes notificationProgress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+  from { width: 100%; }
+  to { width: 0%; }
 }
 
 /* Glass Header */
@@ -147,7 +146,8 @@
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 20px;
   padding: 25px 35px;
-  margin-bottom: 35px;
+  margin: 0 auto 35px;
+  max-width: 1100px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -264,7 +264,7 @@
   line-height: 1.6;
 }
 
-/* ✅ NUEVO: Sección de Configuración Profesional */
+/* Sección de Configuración */
 .impostor-game-config-section {
   background: linear-gradient(135deg, rgba(168, 255, 120, 0.15) 0%, rgba(120, 255, 214, 0.15) 100%);
   border: 2px solid rgba(168, 255, 120, 0.3);
@@ -286,7 +286,6 @@
   letter-spacing: 1px;
 }
 
-/* Display Mode */
 .impostor-game-config-display {
   display: flex;
   flex-direction: column;
@@ -310,7 +309,6 @@
   text-shadow: 0 0 20px rgba(168, 255, 120, 0.4);
 }
 
-/* Editor Mode */
 .impostor-game-config-editor {
   display: flex;
   flex-direction: column;
@@ -385,7 +383,6 @@
   box-shadow: 0 0 25px rgba(168, 255, 120, 0.8);
 }
 
-/* Config Buttons */
 .impostor-game-config-buttons {
   display: flex;
   gap: 12px;
@@ -461,11 +458,6 @@
   margin: 35px 0;
 }
 
-.impostor-game-player-grid.compact {
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 15px;
-}
-
 .impostor-game-player-slot {
   aspect-ratio: 1;
   background: rgba(255, 255, 255, 0.08);
@@ -485,31 +477,6 @@
   box-shadow: 
     0 5px 20px rgba(0, 0, 0, 0.2),
     inset 0 0 20px rgba(255, 255, 255, 0.03);
-}
-
-.impostor-game-player-slot::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #a8ff78, #78ffd6);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: -1;
-}
-
-.impostor-game-player-slot:hover:not(:disabled) {
-  transform: translateY(-8px) scale(1.05);
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(168, 255, 120, 0.4);
-  color: #ffffff;
-  box-shadow: 
-    0 12px 35px rgba(168, 255, 120, 0.3),
-    inset 0 0 30px rgba(168, 255, 120, 0.1);
-}
-
-.impostor-game-player-slot:hover:not(:disabled)::before {
-  opacity: 0.3;
 }
 
 .impostor-game-player-slot.selected {
@@ -535,11 +502,6 @@
       0 15px 50px rgba(168, 255, 120, 0.7),
       inset 0 0 50px rgba(168, 255, 120, 0.2);
   }
-}
-
-.impostor-game-player-slot:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .impostor-game-player-number {
@@ -569,12 +531,8 @@
 }
 
 @keyframes gameCheckPop {
-  from {
-    transform: scale(0);
-  }
-  to {
-    transform: scale(1);
-  }
+  from { transform: scale(0); }
+  to { transform: scale(1); }
 }
 
 .impostor-game-waiting-host {
@@ -763,7 +721,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* Error Message - Glass */
 .impostor-game-error {
   background: rgba(255, 100, 100, 0.2);
   backdrop-filter: blur(10px);
@@ -786,7 +743,6 @@
   75% { transform: translateX(10px); }
 }
 
-/* Botones generales */
 .impostor-game-btn-large {
   width: 100%;
   padding: 22px 35px;
@@ -796,125 +752,222 @@
   margin-top: 20px;
 }
 
-/* Responsive */
+/* ✅ Modal de Confirmación para Salir */
+.leave-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  animation: fadeIn 0.3s ease;
+  padding: 20px;
+}
+
+.leave-confirm-modal {
+  background: linear-gradient(135deg, #0a3d0c 0%, #1a5c1e 100%);
+  border-radius: 20px;
+  padding: 35px 40px;
+  max-width: 450px;
+  width: 100%;
+  text-align: center;
+  border: 2px solid rgba(168, 255, 120, 0.3);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+  animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.leave-confirm-modal h3 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 20px 0;
+  text-shadow: 0 2px 15px rgba(168, 255, 120, 0.4);
+}
+
+.leave-confirm-modal p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 0 30px 0;
+}
+
+.leave-confirm-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.confirm-btn-yes,
+.confirm-btn-no {
+  padding: 14px 35px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.confirm-btn-yes {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.confirm-btn-yes:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+}
+
+.confirm-btn-no {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.confirm-btn-no:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+}
+
+/* ===================================
+   RESPONSIVE DESIGN
+   =================================== */
+
 @media (max-width: 768px) {
   .impostor-game-container {
-    padding: 15px;
-    padding-bottom: 90px;
+    padding: 10px;
+    padding-bottom: 70px;
   }
 
   .impostor-game-header {
     flex-direction: column;
-    gap: 18px;
-    padding: 25px;
+    gap: 12px;
+    padding: 20px;
   }
 
   .impostor-game-room-info h2 {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
   }
 
   .impostor-game-waiting-room,
   .impostor-game-reveal-section {
-    padding: 35px 25px;
-  }
-
-  .impostor-game-waiting-room h2,
-  .impostor-game-reveal-section h2 {
-    font-size: 1.8rem;
+    padding: 25px 20px;
   }
 
   .impostor-game-player-grid {
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 12px;
-  }
-
-  .impostor-game-player-number {
-    font-size: 1.8rem;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 10px;
   }
 
   .impostor-game-btn-reveal {
-    padding: 20px 45px;
-    font-size: 1.15rem;
+    padding: 18px 30px;
+    font-size: 1rem;
   }
 
   .impostor-game-actions {
     flex-direction: column;
-  }
-
-  .impostor-game-actions .impostor-game-btn {
-    min-width: 100%;
+    gap: 12px;
   }
 
   .impostor-game-btn-exit {
-    bottom: 25px;
-    font-size: 0.95rem;
-    padding: 12px 30px;
+    bottom: 15px;
+    font-size: 0.85rem;
+    padding: 10px 20px;
+  }
+
+  .leave-confirm-modal {
+    padding: 20px;
+  }
+
+  .leave-confirm-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .confirm-btn-yes,
+  .confirm-btn-no {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+
+  .impostor-game-config-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .impostor-game-btn-config {
+    width: 100%;
+    min-width: auto;
   }
 }
 
 @media (max-width: 480px) {
+  .impostor-game-container {
+    padding: 8px;
+    padding-bottom: 60px;
+  }
+
+  .impostor-game-header {
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .impostor-game-room-info h2 {
+    font-size: 1rem;
+  }
+
+  .impostor-game-waiting-room,
+  .impostor-game-reveal-section {
+    padding: 20px;
+    border-radius: 15px;
+  }
+
   .impostor-game-player-grid {
-    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 8px;
   }
 
-  .impostor-game-player-slot {
-    font-size: 1.2rem;
+  .impostor-game-btn-reveal {
+    padding: 15px 25px;
+    font-size: 0.9rem;
   }
 
-  .impostor-game-player-number {
-    font-size: 1.6rem;
+  .impostor-game-actions .impostor-game-btn {
+    padding: 14px 20px;
+    font-size: 0.85rem;
   }
-}
 
-/* ✅ Agregar estas animaciones al final de ImpostorGame.css */
+  .impostor-game-btn-exit {
+    bottom: 10px;
+    font-size: 0.8rem;
+    padding: 8px 20px;
+  }
 
-@keyframes gamePulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 
-      0 15px 50px rgba(0, 0, 0, 0.4),
-      inset 0 0 40px rgba(255, 255, 255, 0.05);
+  .impostor-game-notification {
+    width: 90%;
+    top: 80px;
   }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 
-      0 20px 60px rgba(168, 255, 120, 0.3),
-      inset 0 0 50px rgba(168, 255, 120, 0.1);
-  }
-}
 
-@keyframes gameButtonPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 
-      0 8px 35px rgba(168, 255, 120, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  .leave-confirm-modal h3 {
+    font-size: 1.3rem;
   }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 
-      0 12px 45px rgba(168, 255, 120, 0.6),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  }
-}
 
-/* Animación de notificación cuando inicia la ronda */
-@keyframes gameNotification {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.9);
+  .leave-confirm-modal p {
+    font-size: 0.85rem;
   }
-  10% {
-    opacity: 1;
-    transform: translateY(0) scale(1.05);
-  }
-  90% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(20px) scale(0.9);
+
+  .confirm-btn-yes,
+  .confirm-btn-no {
+    padding: 10px 20px;
+    font-size: 0.85rem;
   }
 }
