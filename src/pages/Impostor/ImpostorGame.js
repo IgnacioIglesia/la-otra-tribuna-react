@@ -27,11 +27,9 @@ const ImpostorGame = () => {
   
   const [notification, setNotification] = useState(null);
   
-  // ✅ NUEVO: Modal de resultados
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [roundResults, setRoundResults] = useState(null);
   
-  // ✅ NUEVO: Confirmación para salir
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   
   const isHost = location.state?.isHost || false;
@@ -42,7 +40,6 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ MEJORADO: Detectar si el host se va
   useEffect(() => {
     if (!roomCode || !room) return;
 
@@ -125,6 +122,43 @@ const ImpostorGame = () => {
       }
     );
 
+    // ✅ NUEVO: Suscripción para broadcast de resultados
+    const resultsSubscription = supabase
+      .channel(`room-${roomCode}-results`)
+      .on(
+        'broadcast',
+        { event: 'show_results' },
+        async (payload) => {
+          console.log('📊 Broadcast recibido: mostrar resultados');
+          
+          try {
+            const sessions = await impostorService.getRoomSessions(roomCode);
+            const currentImpostors = sessions.filter(s => s.is_impostor);
+            
+            const impostorPlayersList = roomPlayers.filter(p => 
+              currentImpostors.some(s => s.player_number === p.player_number)
+            );
+            
+            setRoundResults({
+              impostorPlayers: impostorPlayersList,
+              selectedPlayer: room.footballers
+            });
+            
+            setShowResultsModal(true);
+            
+            showNotification(
+              '📊 Resultados Disponibles',
+              'El host ha revelado los resultados de la ronda',
+              'info',
+              4000
+            );
+          } catch (err) {
+            console.error('Error cargando resultados:', err);
+          }
+        }
+      )
+      .subscribe();
+
     const pollingInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
@@ -153,9 +187,10 @@ const ImpostorGame = () => {
       console.log('🔌 Limpiando suscripciones');
       supabase.removeChannel(playersSubscription);
       supabase.removeChannel(statusSubscription);
+      supabase.removeChannel(resultsSubscription);
       clearInterval(pollingInterval);
     };
-  }, [roomCode, gameStarted]);
+  }, [roomCode, gameStarted, roomPlayers, room]);
 
   const showNotification = (title, message, type = 'info', duration = 4000) => {
     setNotification({ title, message, type });
@@ -182,7 +217,6 @@ const ImpostorGame = () => {
       setCurrentUser(user);
       await loadRoom();
       
-      // ✅ ARREGLADO: Obtener nombre y apellido del perfil
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido, username')
@@ -350,29 +384,50 @@ const ImpostorGame = () => {
     }
   };
 
-  // ✅ NUEVO: Ver resultados (sin iniciar ronda todavía)
+  // ✅ ACTUALIZADO: Mostrar resultados con broadcast para todos
   const showResults = async () => {
     try {
       const sessions = await impostorService.getRoomSessions(roomCode);
       const currentImpostors = sessions.filter(s => s.is_impostor);
       
-      const impostorPlayers = roomPlayers.filter(p => 
+      const impostorPlayersList = roomPlayers.filter(p => 
         currentImpostors.some(s => s.player_number === p.player_number)
       );
       
       setRoundResults({
-        impostorPlayers,
+        impostorPlayers: impostorPlayersList,
         selectedPlayer: room.footballers
       });
       
       setShowResultsModal(true);
+      
+      // ✅ Hacer broadcast para que TODOS vean los resultados
+      const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
+      
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({
+            type: 'broadcast',
+            event: 'show_results',
+            payload: { 
+              roomCode,
+              timestamp: new Date().toISOString()
+            }
+          });
+          console.log('📡 Broadcast enviado: show_results');
+          
+          setTimeout(() => {
+            supabase.removeChannel(channel);
+          }, 1000);
+        }
+      });
+      
     } catch (err) {
       console.error('Error obteniendo resultados:', err);
       showNotification('Error', 'No se pudieron cargar los resultados', 'error', 3000);
     }
   };
 
-  // ✅ NUEVO: Nueva ronda (desde el modal)
   const handleNewRound = async () => {
     setShowResultsModal(false);
     
@@ -383,7 +438,6 @@ const ImpostorGame = () => {
     await startGame();
   };
 
-  // ✅ NUEVO: Confirmación para salir
   const handleLeaveConfirm = () => {
     setShowLeaveConfirm(true);
   };
@@ -435,7 +489,6 @@ const ImpostorGame = () => {
     <>
       <Header />
       
-      {/* Modal de Resultados */}
       <RoundResultsModal
         isOpen={showResultsModal}
         onClose={() => setShowResultsModal(false)}
@@ -444,7 +497,6 @@ const ImpostorGame = () => {
         selectedPlayer={roundResults?.selectedPlayer}
       />
       
-      {/* Modal de Confirmación para Salir */}
       {showLeaveConfirm && (
         <div className="leave-confirm-overlay" onClick={() => setShowLeaveConfirm(false)}>
           <div className="leave-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -467,7 +519,6 @@ const ImpostorGame = () => {
         </div>
       )}
       
-      {/* Notificaciones */}
       {notification && (
         <div className={`impostor-game-notification impostor-game-notification-${notification.type}`}>
           <div className="impostor-game-notification-content">
@@ -655,14 +706,31 @@ const ImpostorGame = () => {
                 />
 
                 <div className="impostor-game-actions">
-                  {isHost && (
+                  {isHost ? (
                     <button
                       onClick={showResults}
                       className="impostor-game-btn impostor-game-btn-primary"
                     >
-                      📊 Ver Resultados
+                      📊 Mostrar Resultados a Todos
                     </button>
+                  ) : (
+                    <div style={{
+                      textAlign: 'center',
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      fontSize: '1rem',
+                      padding: '18px 25px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                      borderRadius: '15px',
+                      border: '2px solid rgba(255, 255, 255, 0.2)',
+                      boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
+                      flex: 1,
+                      minWidth: '220px'
+                    }}>
+                      ⏳ Esperando a que el host revele los resultados...
+                    </div>
                   )}
+                  
                   <button
                     onClick={() => setIsRevealed(false)}
                     className="impostor-game-btn impostor-game-btn-secondary"

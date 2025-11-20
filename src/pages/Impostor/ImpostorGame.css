@@ -7,6 +7,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .impostor-game-container::before {
@@ -55,6 +60,7 @@
   animation: gameSpin 2s linear infinite;
   margin-bottom: 25px;
   filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+  transform-origin: center;
 }
 
 @keyframes gameSpin {
@@ -62,7 +68,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* ✅ Sistema de Notificaciones */
+/* Sistema de Notificaciones */
 .impostor-game-notification {
   position: fixed;
   top: 100px;
@@ -70,12 +76,14 @@
   transform: translateX(-50%);
   max-width: 500px;
   width: 90%;
-  z-index: 2000;
+  z-index: 10000;
   border-radius: 15px;
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   animation: notificationSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   backdrop-filter: blur(20px);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 @keyframes notificationSlideIn {
@@ -112,6 +120,7 @@
 .impostor-game-notification-content {
   padding: 16px 20px;
   color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .impostor-game-notification-content h3 {
@@ -159,6 +168,9 @@
   position: relative;
   z-index: 10;
   animation: gameSlideDown 0.5s ease-out;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes gameSlideDown {
@@ -176,7 +188,10 @@
   margin: 0 0 8px 0;
   font-size: 1.6rem;
   font-weight: 800;
-  text-shadow: 0 2px 15px rgba(168, 255, 120, 0.4);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 255, 120, 0.4);
 }
 
 .impostor-game-room-code {
@@ -190,6 +205,7 @@
   margin: 0;
   opacity: 0.9;
   font-size: 1rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .impostor-game-host-badge {
@@ -235,6 +251,7 @@
   position: relative;
   z-index: 1;
   animation: gameScaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes gameScaleIn {
@@ -253,7 +270,10 @@
   font-size: 2.2rem;
   margin-bottom: 18px;
   color: #ffffff;
-  text-shadow: 0 2px 20px rgba(168, 255, 120, 0.5);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 255, 120, 0.5);
 }
 
 .impostor-game-waiting-instructions {
@@ -262,6 +282,7 @@
   margin-bottom: 35px;
   font-size: 1.15rem;
   line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 /* Sección de Configuración */
@@ -275,6 +296,7 @@
   box-shadow: 
     0 8px 32px rgba(168, 255, 120, 0.2),
     inset 0 0 20px rgba(255, 255, 255, 0.05);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .impostor-game-config-title {
@@ -397,13 +419,16 @@
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: uppercase;
   letter-spacing: 1px;
   white-space: nowrap;
   flex: 1;
   min-width: 140px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .impostor-game-btn-config-edit {
@@ -469,7 +494,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   font-size: 1.5rem;
   font-weight: 700;
@@ -546,6 +571,7 @@
   border-radius: 15px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.03);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 /* Game Active */
@@ -574,7 +600,10 @@
   font-size: 2.3rem;
   margin-bottom: 25px;
   color: #ffffff;
-  text-shadow: 0 2px 20px rgba(168, 255, 120, 0.5);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 255, 120, 0.5);
 }
 
 .impostor-game-reveal-instructions {
@@ -582,6 +611,7 @@
   color: rgba(255, 255, 255, 0.85);
   margin-bottom: 35px;
   line-height: 1.7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .impostor-game-btn-reveal {
@@ -601,6 +631,9 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
   position: relative;
   overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .impostor-game-btn-reveal::before {
@@ -650,11 +683,14 @@
   font-size: 1.1rem;
   font-weight: 800;
   border-radius: 15px;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: uppercase;
   letter-spacing: 1.5px;
   border: none;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .impostor-game-actions .impostor-game-btn-primary {
@@ -707,10 +743,13 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 100;
   box-shadow: 
     0 8px 30px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .impostor-game-btn-exit:hover {
@@ -735,6 +774,7 @@
     0 8px 30px rgba(255, 100, 100, 0.3),
     inset 0 0 20px rgba(255, 100, 100, 0.1);
   animation: gameShake 0.5s;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes gameShake {
@@ -752,7 +792,7 @@
   margin-top: 20px;
 }
 
-/* ✅ Modal de Confirmación para Salir */
+/* Modal de Confirmación para Salir */
 .leave-confirm-overlay {
   position: fixed;
   top: 0;
@@ -767,6 +807,9 @@
   z-index: 9998;
   animation: fadeIn 0.3s ease;
   padding: 20px;
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .leave-confirm-modal {
@@ -779,6 +822,9 @@
   border: 2px solid rgba(168, 255, 120, 0.3);
   box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
   animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .leave-confirm-modal h3 {
@@ -786,7 +832,10 @@
   font-size: 1.8rem;
   font-weight: 800;
   margin: 0 0 20px 0;
-  text-shadow: 0 2px 15px rgba(168, 255, 120, 0.4);
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 255, 120, 0.4);
 }
 
 .leave-confirm-modal p {
@@ -794,6 +843,7 @@
   font-size: 1.1rem;
   line-height: 1.6;
   margin: 0 0 30px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .leave-confirm-buttons {
@@ -813,6 +863,9 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 .confirm-btn-yes {
@@ -838,6 +891,96 @@
   transform: translateY(-3px);
 }
 
+.impostor-game-btn:active:not(:disabled),
+.impostor-game-btn-config:active:not(:disabled),
+.confirm-btn-yes:active,
+.confirm-btn-no:active {
+  transform: scale(0.97);
+}
+
+/* ===================================
+   MEJORAS DE RENDIMIENTO Y FLUIDEZ
+   =================================== */
+
+.impostor-game-container,
+.impostor-game-header,
+.impostor-card,
+.impostor-game-btn,
+.impostor-game-notification,
+.leave-confirm-overlay,
+.leave-confirm-modal {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.impostor-game-container {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
+  .impostor-card,
+  .impostor-game-header,
+  .impostor-game-waiting-room,
+  .impostor-game-reveal-section {
+    backdrop-filter: blur(15px) saturate(150%);
+    -webkit-backdrop-filter: blur(15px) saturate(150%);
+  }
+}
+
+.impostor-game-container {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.impostor-card p,
+.impostor-card h1,
+.impostor-card h2,
+.player-instruction {
+  user-select: text;
+}
+
+.impostor-game-notification,
+.leave-confirm-overlay {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* ===================================
    RESPONSIVE DESIGN
    =================================== */
@@ -846,6 +989,11 @@
   .impostor-game-container {
     padding: 10px;
     padding-bottom: 70px;
+  }
+
+  .impostor-game-container::before,
+  .impostor-game-container::after {
+    display: none;
   }
 
   .impostor-game-header {
@@ -907,6 +1055,18 @@
   .impostor-game-btn-config {
     width: 100%;
     min-width: auto;
+  }
+
+  .impostor-game-header,
+  .impostor-game-card,
+  .impostor-game-notification {
+    animation-duration: 0.3s !important;
+  }
+
+  .impostor-card,
+  .impostor-game-header {
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
   }
 }
 

@@ -5,68 +5,85 @@ const RoundResultsModal = ({ isOpen, onClose, onNewRound, impostorPlayers, selec
   if (!isOpen) return null;
 
   return (
-    <div className="round-results-overlay" onClick={onClose}>
-      <div className="round-results-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={onClose}>×</button>
-        
-        <div className="modal-header">
-          <div className="modal-icon">🎭</div>
-          <h2>Fin de Ronda</h2>
+    <div 
+      className="results-modal-overlay"
+      onClick={onClose}
+    >
+      <div 
+        className="results-modal-content"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Botón de cerrar */}
+        <button
+          onClick={onClose}
+          className="results-modal-close"
+        >
+          ×
+        </button>
+
+        {/* Título */}
+        <div className="results-modal-header">
+          <div className="results-modal-icon">🏆</div>
+          <h2 className="results-modal-title">Resultados de la Ronda</h2>
+          <p className="results-modal-subtitle">¡Descubre quién era el impostor!</p>
         </div>
 
-        <div className="modal-content">
-          <div className="selected-player-section">
-            <h3>⚽ Jugador de esta ronda:</h3>
-            <div className="player-reveal">
-              <div className="player-avatar">
-                <img 
-                  src={selectedPlayer?.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedPlayer?.name || 'Jugador')}&size=120&background=1a5c1e&color=a8ff78&bold=true`}
-                  alt={selectedPlayer?.name}
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedPlayer?.name || 'Jugador')}&size=120&background=1a5c1e&color=a8ff78&bold=true`;
-                  }}
-                />
-              </div>
-              <h4>{selectedPlayer?.name}</h4>
-              <div className="player-details">
-                <span>{selectedPlayer?.position}</span>
-                <span>{selectedPlayer?.nationality}</span>
-              </div>
+        {/* Jugador Revelado */}
+        {selectedPlayer && (
+          <div className="results-player-section">
+            <div className="results-player-icon">⚽</div>
+            <h3 className="results-player-label">Jugador de la Ronda</h3>
+            <p className="results-player-name">{selectedPlayer.name}</p>
+            <div className="results-player-badges">
+              <span className="results-badge">{selectedPlayer.position}</span>
+              <span className="results-badge">{selectedPlayer.nationality}</span>
             </div>
           </div>
+        )}
 
-          <div className="impostor-reveal-section">
-            <h3>🎭 {impostorPlayers?.length > 1 ? 'Los impostores fueron:' : 'El impostor fue:'}</h3>
-            <div className="impostor-list">
-              {impostorPlayers && impostorPlayers.length > 0 ? (
-                impostorPlayers.map((impostor, index) => (
-                  <div key={index} className="impostor-badge-large">
-                    <span className="impostor-number">#{impostor.player_number}</span>
-                    <span className="impostor-name">{impostor.username}</span>
+        {/* Impostores */}
+        <div className="results-impostor-section">
+          <div className="results-impostor-header">
+            <div className="results-impostor-icon">🎭</div>
+            <h3 className="results-impostor-title">
+              {impostorPlayers?.length === 1 ? 'El Impostor' : 'Los Impostores'}
+            </h3>
+          </div>
+
+          {impostorPlayers && impostorPlayers.length > 0 ? (
+            <div className="results-impostor-list">
+              {impostorPlayers.map((player, index) => (
+                <div
+                  key={index}
+                  className="results-impostor-item"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="results-impostor-number">#{player.player_number}</div>
+                  <div className="results-impostor-info">
+                    <div className="results-impostor-username">{player.username}</div>
+                    <div className="results-impostor-label">Jugador #{player.player_number}</div>
                   </div>
-                ))
-              ) : (
-                <p className="no-impostors">No se encontraron impostores</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          {onNewRound ? (
-            <div className="modal-footer-buttons">
-              <button className="modal-action-btn primary" onClick={onNewRound}>
-                🔄 Nueva Ronda
-              </button>
-              <button className="modal-action-btn secondary" onClick={onClose}>
-                Cerrar
-              </button>
+                  <div className="results-impostor-emoji">🎭</div>
+                </div>
+              ))}
             </div>
           ) : (
-            <button className="modal-action-btn primary" onClick={onClose}>
-              ✓ Entendido
+            <p className="results-impostor-empty">No hay impostores para mostrar</p>
+          )}
+        </div>
+
+        {/* Botones de acción */}
+        <div className="results-modal-actions">
+          {onNewRound && (
+            <button onClick={onNewRound} className="results-btn results-btn-primary">
+              <span className="results-btn-icon">🔄</span>
+              Nueva Ronda
             </button>
           )}
+          
+          <button onClick={onClose} className="results-btn results-btn-secondary">
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
