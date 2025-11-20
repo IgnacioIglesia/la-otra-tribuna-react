@@ -628,6 +628,54 @@ const ImpostorGame = () => {
     );
   }
 
+  const broadcastRoundResults = async (results) => {
+    const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
+
+    await channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await channel.send({
+          type: 'broadcast',
+          event: 'round_results',
+          payload: results,
+        });
+        console.log('📡 Broadcast enviado: round_results');
+
+        setTimeout(() => {
+          supabase.removeChannel(channel);
+        }, 1000);
+      }
+    });
+  };
+
+  const handleEndRound = async () => {
+    if (!isHost) return;
+
+    const results = {
+      impostorPlayers: roomPlayers.filter((p) => p.isImpostor),
+      selectedPlayer: roomPlayers.find((p) => p.isSelected),
+    };
+
+    setRoundResults(results);
+    setShowResultsModal(true);
+
+    await broadcastRoundResults(results);
+  };
+
+  useEffect(() => {
+    const resultsSubscription = supabase
+      .channel(`room-${roomCode}-results-listener`)
+      .on('broadcast', { event: 'round_results' }, (payload) => {
+        console.log('📡 Broadcast recibido: round_results', payload);
+        setRoundResults(payload);
+        setShowResultsModal(true);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(resultsSubscription);
+    };
+  }, [roomCode]);
+
   return (
     <>
       <Header />

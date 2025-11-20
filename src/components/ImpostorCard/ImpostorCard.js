@@ -4,7 +4,6 @@ import './ImpostorCard.css';
 const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
   const [imageError, setImageError] = useState(false);
 
-  // Estado: todavía no puede ver su rol
   if (!isRevealed) {
     return (
       <div className="impostor-card waiting">
@@ -17,7 +16,6 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
     );
   }
 
-  // Estado: es impostor
   if (isImpostor) {
     return (
       <div className="impostor-card impostor">
@@ -28,15 +26,12 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
             Los demás tienen un jugador asignado.<br />
             ¡Descubre quién es sin que te descubran!
           </p>
-          <div className="impostor-warning">
-            🤫 Mantén esto en secreto
-          </div>
+          <button className="impostor-game-btn-secondary">🙈 Ocultar Rol</button>
         </div>
       </div>
     );
   }
 
-  // Obtener URL de imagen: primero DB, si falla => avatar
   const getImageUrl = () => {
     if (player?.image_url && !imageError) {
       return player.image_url;
@@ -80,10 +75,7 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
           </span>
         </div>
 
-        <div className="player-instruction">
-          ⚽ Este es tu jugador<br />
-          Da pistas sin ser muy obvio
-        </div>
+        <button className="impostor-game-btn-secondary">🙈 Ocultar Rol</button>
       </div>
     </div>
   );
