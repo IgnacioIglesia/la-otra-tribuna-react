@@ -28,12 +28,12 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
             ¡Descubre quién es sin que te descubran!
           </p>
 
-          {/* Botón dentro de la card, en lugar del texto "mantén esto en secreto" */}
           <button
-            className="impostor-game-btn-secondary"
+            className="impostor-hide-role-btn"
             onClick={onHideRole}
           >
-            🙈 Ocultar Rol
+            <span className="hide-btn-icon">🙈</span>
+            <span className="hide-btn-text">Ocultar Rol</span>
           </button>
         </div>
       </div>
@@ -87,13 +87,12 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
           </span>
         </div>
 
-        {/* Antes acá tenías el texto "Este es tu jugador" + botón abajo.
-            Ahora dejamos SOLO el botón, bien accesible */}
         <button
-          className="impostor-game-btn-secondary"
+          className="impostor-hide-role-btn"
           onClick={onHideRole}
         >
-          🙈 Ocultar Rol
+          <span className="hide-btn-icon">🙈</span>
+          <span className="hide-btn-text">Ocultar Rol</span>
         </button>
       </div>
     </div>

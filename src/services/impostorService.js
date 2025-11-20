@@ -161,6 +161,20 @@ class ImpostorService {
           isWaiting: existingPlayer.is_waiting || false 
         };
       }
+
+      // 🔥 OBTENER NOMBRE COMPLETO DEL PERFIL
+      const { data: profile } = await supabase
+        .from('perfil')
+        .select('nombre, apellido')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      let displayUsername = username;
+      if (profile?.nombre && profile?.apellido) {
+        displayUsername = `${profile.nombre} ${profile.apellido}`;
+      }
+
+      console.log('👤 Nombre para mostrar:', displayUsername);
   
       // Calcular el próximo número de jugador para esta sala específica
       const { data: existingPlayers, error: playersError } = await supabase
@@ -184,14 +198,14 @@ class ImpostorService {
       // Si la sala ya está jugando, este jugador entra "en espera"
       const isWaiting = room.status === 'playing';
   
-      // Insertar con player_number explícito
+      // Insertar con player_number explícito y nombre completo
       const { data: newPlayer, error: insertError } = await supabase
         .from('impostor_players')
         .insert([
           {
             room_code: roomCode,
             user_id: userId,
-            username,
+            username: displayUsername, // 🔥 Nombre completo
             player_number: nextPlayerNumber,
             is_waiting: isWaiting,
           },
@@ -507,6 +521,35 @@ class ImpostorService {
       });
 
     return channel;
+  }
+
+  // 🔥 NUEVA FUNCIÓN: Broadcast de resultados para TODOS los jugadores
+  async broadcastResults(roomCode) {
+    try {
+      console.log('📊 Enviando broadcast de resultados a todos...');
+      
+      const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
+      
+      await channel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await channel.send({
+            type: 'broadcast',
+            event: 'show_results',
+            payload: { 
+              roomCode,
+              timestamp: new Date().toISOString()
+            }
+          });
+          console.log('📡 Broadcast enviado: show_results');
+          
+          setTimeout(() => {
+            supabase.removeChannel(channel);
+          }, 1000);
+        }
+      });
+    } catch (error) {
+      console.error('Error enviando broadcast de resultados:', error);
+    }
   }
 
   async leaveRoom(roomCode, userId) {

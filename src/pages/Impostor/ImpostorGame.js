@@ -36,11 +36,6 @@ const ImpostorGame = () => {
   const hasLoadedRole = useRef(false);
   const previousPlayerIdRef = useRef(null);
 
-  // ==========================================
-  // TODOS LOS useEffect DEBEN ESTAR AQUÍ
-  // ANTES DE CUALQUIER RETURN CONDICIONAL
-  // ==========================================
-
   useEffect(() => {
     initializeRoom();
   }, [roomCode]);
@@ -202,13 +197,14 @@ const ImpostorGame = () => {
       }
     );
 
+    // 🔥 SUSCRIPCIÓN A RESULTADOS PARA TODOS LOS JUGADORES
     const resultsSubscription = supabase
-      .channel(`room-${roomCode}-results`)
+      .channel(`room-${roomCode}-results-listener`)
       .on(
         'broadcast',
         { event: 'show_results' },
-        async () => {
-          console.log('📊 Broadcast recibido: mostrar resultados');
+        async (payload) => {
+          console.log('📊 Broadcast recibido: mostrar resultados', payload);
           
           try {
             const sessions = await impostorService.getRoomSessions(roomCode);
@@ -227,7 +223,7 @@ const ImpostorGame = () => {
             
             showNotification(
               '📊 Resultados Disponibles',
-              'El host ha revelado los resultados de la ronda',
+              'Los resultados de la ronda están listos',
               'info',
               4000
             );
@@ -336,10 +332,6 @@ const ImpostorGame = () => {
       supabase.removeChannel(waitingSubscription);
     };
   }, [roomCode]);
-
-  // ==========================================
-  // FUNCIONES AUXILIARES
-  // ==========================================
 
   const showNotification = (title, message, type = 'info', duration = 4000) => {
     setNotification({ title, message, type });
@@ -536,8 +528,10 @@ const ImpostorGame = () => {
     }
   };
 
+  // 🔥 FUNCIÓN ACTUALIZADA: Usa broadcast en lugar de solo abrir el modal localmente
   const showResults = async () => {
     try {
+      // Cargar resultados localmente primero
       const sessions = await impostorService.getRoomSessions(roomCode);
       const currentImpostors = sessions.filter(s => s.is_impostor);
       
@@ -552,25 +546,15 @@ const ImpostorGame = () => {
       
       setShowResultsModal(true);
       
-      const channel = supabase.channel(`room-${roomCode}-results`);
+      // 🔥 ENVIAR BROADCAST A TODOS LOS JUGADORES
+      await impostorService.broadcastResults(roomCode);
       
-      await channel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.send({
-            type: 'broadcast',
-            event: 'show_results',
-            payload: { 
-              roomCode,
-              timestamp: new Date().toISOString()
-            }
-          });
-          console.log('📡 Broadcast enviado: show_results');
-          
-          setTimeout(() => {
-            supabase.removeChannel(channel);
-          }, 1000);
-        }
-      });
+      showNotification(
+        'Resultados Enviados',
+        'Todos los jugadores pueden ver los resultados ahora',
+        'success',
+        3000
+      );
       
     } catch (err) {
       console.error('Error obteniendo resultados:', err);
@@ -650,10 +634,6 @@ const ImpostorGame = () => {
     }
   };
 
-  // ==========================================
-  // CÁLCULOS Y VARIABLES DERIVADAS
-  // ==========================================
-
   const maxImpostorsForCurrentPlayers = Math.min(
     4,
     Math.max(1, Math.floor(roomPlayers.length / 2) - 1)
@@ -663,10 +643,6 @@ const ImpostorGame = () => {
     (p) => p.player_number === playerNumber
   );
   const isWaitingPlayer = currentPlayerRecord?.is_waiting;
-
-  // ==========================================
-  // RENDERS CONDICIONALES
-  // ==========================================
 
   if (loading && !room) {
     return (
@@ -696,10 +672,6 @@ const ImpostorGame = () => {
       </>
     );
   }
-
-  // ==========================================
-  // RENDER PRINCIPAL
-  // ==========================================
 
   return (
     <>
