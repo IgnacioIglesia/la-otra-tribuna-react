@@ -143,24 +143,48 @@ class ImpostorService {
         .select('*')
         .eq('room_code', roomCode)
         .single();
-
+  
       if (roomError) throw new Error('Sala no encontrada');
       if (room.status === 'finished') throw new Error('Esta sala ya finalizó');
-
-      // 🔹 Si la sala ya está jugando, este jugador entra "en espera"
-      const isWaiting = room.status === 'playing';
-
+  
+      // Verificar si el jugador ya existe
       const { data: existingPlayer } = await supabase
         .from('impostor_players')
         .select('*')
         .eq('room_code', roomCode)
         .eq('user_id', userId)
-        .single();
-
+        .maybeSingle();
+  
       if (existingPlayer) {
-        return { playerNumber: existingPlayer.player_number, isWaiting: existingPlayer.is_waiting };
+        return { 
+          playerNumber: existingPlayer.player_number, 
+          isWaiting: existingPlayer.is_waiting || false 
+        };
       }
-
+  
+      // Calcular el próximo número de jugador para esta sala específica
+      const { data: existingPlayers, error: playersError } = await supabase
+        .from('impostor_players')
+        .select('player_number')
+        .eq('room_code', roomCode)
+        .order('player_number', { ascending: true });
+  
+      if (playersError) throw playersError;
+  
+      // Encontrar el primer número disponible
+      let nextPlayerNumber = 1;
+      const occupiedNumbers = (existingPlayers || []).map(p => p.player_number);
+      
+      while (occupiedNumbers.includes(nextPlayerNumber)) {
+        nextPlayerNumber++;
+      }
+  
+      console.log('🎲 Próximo número de jugador:', nextPlayerNumber);
+  
+      // Si la sala ya está jugando, este jugador entra "en espera"
+      const isWaiting = room.status === 'playing';
+  
+      // Insertar con player_number explícito
       const { data: newPlayer, error: insertError } = await supabase
         .from('impostor_players')
         .insert([
@@ -168,15 +192,22 @@ class ImpostorService {
             room_code: roomCode,
             user_id: userId,
             username,
+            player_number: nextPlayerNumber,
             is_waiting: isWaiting,
           },
         ])
         .select()
         .single();
-
-      if (insertError) throw insertError;
-
-      return { playerNumber: newPlayer.player_number, isWaiting: newPlayer.is_waiting };
+  
+      if (insertError) {
+        console.error('Error insertando jugador:', insertError);
+        throw insertError;
+      }
+  
+      return { 
+        playerNumber: newPlayer.player_number, 
+        isWaiting: newPlayer.is_waiting || false 
+      };
     } catch (error) {
       console.error('Error al unirse a la sala:', error);
       throw error;
