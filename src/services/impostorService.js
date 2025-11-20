@@ -229,42 +229,47 @@ class ImpostorService {
   }
 
   // Obtener jugadores en la sala CON NOMBRES COMPLETOS
-  async getRoomPlayers(roomCode) {
-    try {
-      const { data, error } = await supabase
-        .from('impostor_players')
-        .select(`
-          *,
-          perfil!inner(nombre, apellido, username)
-        `)
-        .eq('room_code', roomCode)
-        .order('player_number');
+async getRoomPlayers(roomCode) {
+  try {
+    const { data, error } = await supabase
+      .from('impostor_players')
+      .select(`
+        *,
+        usuario:user_id (
+          nombre,
+          apellido,
+          email
+        )
+      `)
+      .eq('room_code', roomCode)
+      .order('player_number');
 
-      if (error) throw error;
-      
-      // Formatear nombres completos
-      const playersWithNames = (data || []).map(player => {
-        const profile = player.perfil;
-        let displayName = player.username;
-        
-        if (profile?.nombre && profile?.apellido) {
-          displayName = `${profile.nombre} ${profile.apellido}`;
-        } else if (profile?.username) {
-          displayName = profile.username;
-        }
-        
-        return {
-          ...player,
-          username: displayName
-        };
-      });
-      
-      return playersWithNames;
-    } catch (error) {
-      console.error('Error fetching room players:', error);
-      throw error;
-    }
+    if (error) throw error;
+
+    // Formatear nombres completos
+    const playersWithNames = (data || []).map((player) => {
+      const u = player.usuario; // viene del alias usuario:user_id
+      let displayName = player.username;
+
+      if (u?.nombre && u?.apellido) {
+        displayName = `${u.nombre} ${u.apellido}`;
+      } else if (u?.email) {
+        // fallback: parte antes del @
+        displayName = u.email.split('@')[0];
+      }
+
+      return {
+        ...player,
+        username: displayName,
+      };
+    });
+
+    return playersWithNames;
+  } catch (error) {
+    console.error('Error fetching room players:', error);
+    throw error;
   }
+}
 
   // Obtener información de sala
   async getRoom(roomCode) {
