@@ -1131,3 +1131,396 @@
     font-size: 0.85rem;
   }
 }
+
+/* ===================================
+   SISTEMA DE NOTIFICACIONES - ARREGLADO PARA MÓVIL
+   =================================== */
+
+.impostor-game-notification {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 500px;
+  width: 90%;
+  z-index: 10000;
+  border-radius: 15px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: notificationSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(20px);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+@keyframes notificationSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.impostor-game-notification-info {
+  background: rgba(100, 150, 255, 0.95);
+  border-left: 5px solid #6496ff;
+}
+
+.impostor-game-notification-success {
+  background: rgba(100, 255, 150, 0.95);
+  border-left: 5px solid #64ff96;
+}
+
+.impostor-game-notification-warning {
+  background: rgba(255, 200, 100, 0.95);
+  border-left: 5px solid #ffc864;
+}
+
+.impostor-game-notification-error {
+  background: rgba(255, 100, 100, 0.95);
+  border-left: 5px solid #ff6464;
+}
+
+.impostor-game-notification-content {
+  padding: 16px 20px;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.impostor-game-notification-content h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.3; /* ✅ Mejorado para no cortar */
+}
+
+.impostor-game-notification-content p {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.95;
+  line-height: 1.4;
+  word-wrap: break-word; /* ✅ NUEVO: Para que el texto se ajuste */
+  overflow-wrap: break-word; /* ✅ NUEVO: Compatibilidad */
+}
+
+.impostor-game-notification-progress {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.3);
+  animation: notificationProgress 4s linear forwards;
+}
+
+@keyframes notificationProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* ===================================
+   RESPONSIVE PARA NOTIFICACIONES
+   =================================== */
+
+@media (max-width: 768px) {
+  .impostor-game-notification {
+    top: 90px;
+    width: 92%;
+    max-width: 450px;
+  }
+
+  .impostor-game-notification-content {
+    padding: 14px 18px; /* ✅ Más padding en móvil */
+  }
+
+  .impostor-game-notification-content h3 {
+    font-size: 1rem;
+    line-height: 1.4; /* ✅ Más espacio para evitar cortes */
+  }
+
+  .impostor-game-notification-content p {
+    font-size: 0.9rem;
+    line-height: 1.5; /* ✅ Mejor legibilidad */
+  }
+}
+
+@media (max-width: 480px) {
+  .impostor-game-notification {
+    top: 85px;
+    width: 94%;
+    max-width: 100%;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .impostor-game-notification-content {
+    padding: 12px 16px; /* ✅ ARREGLADO: Más espacio interno */
+  }
+
+  .impostor-game-notification-content h3 {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  .impostor-game-notification-content p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+}
+
+/* ===================================
+   MODAL DE CONFIRMACIÓN DE SALIDA - ARREGLADO
+   =================================== */
+
+.leave-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  animation: fadeIn 0.3s ease;
+  padding: 20px;
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.leave-confirm-modal {
+  background: linear-gradient(135deg, #0a3d0c 0%, #1a5c1e 100%);
+  border-radius: 20px;
+  padding: 35px 40px;
+  max-width: 450px;
+  width: 100%;
+  text-align: center;
+  border: 2px solid rgba(168, 255, 120, 0.3);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+  animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.leave-confirm-modal h3 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin: 0 0 20px 0;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 255, 120, 0.4);
+  line-height: 1.3; /* ✅ Mejorado */
+}
+
+.leave-confirm-modal p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 0 30px 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  word-wrap: break-word; /* ✅ NUEVO */
+  overflow-wrap: break-word; /* ✅ NUEVO */
+}
+
+.leave-confirm-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.confirm-btn-yes,
+.confirm-btn-no {
+  padding: 14px 35px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  white-space: nowrap; /* ✅ NUEVO: Evita que se rompa el texto */
+}
+
+.confirm-btn-yes {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.confirm-btn-yes:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+}
+
+.confirm-btn-no {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.confirm-btn-no:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+}
+
+/* ===================================
+   RESPONSIVE MODAL DE CONFIRMACIÓN
+   =================================== */
+
+@media (max-width: 768px) {
+  .leave-confirm-modal {
+    padding: 30px 25px;
+    max-width: 90%;
+  }
+
+  .leave-confirm-modal h3 {
+    font-size: 1.5rem;
+  }
+
+  .leave-confirm-modal p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .leave-confirm-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .confirm-btn-yes,
+  .confirm-btn-no {
+    width: 100%;
+    padding: 14px 25px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .leave-confirm-modal {
+    padding: 25px 20px;
+    border-radius: 18px;
+  }
+
+  .leave-confirm-modal h3 {
+    font-size: 1.3rem;
+    line-height: 1.4;
+  }
+
+  .leave-confirm-modal p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+
+  .confirm-btn-yes,
+  .confirm-btn-no {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* ===================================
+   HEADER RESPONSIVE
+   =================================== */
+
+.impostor-game-header {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  padding: 25px 35px;
+  margin: 0 auto 35px;
+  max-width: 1100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 0 30px rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 10;
+  animation: gameSlideDown 0.5s ease-out;
+}
+
+@media (max-width: 768px) {
+  .impostor-game-header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px 20px;
+    text-align: center;
+  }
+
+  .impostor-game-room-info h2 {
+    font-size: 1.3rem;
+  }
+
+  .impostor-game-room-info p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .impostor-game-header {
+    padding: 18px 16px;
+    gap: 12px;
+  }
+
+  .impostor-game-room-info h2 {
+    font-size: 1.1rem;
+    word-wrap: break-word;
+  }
+
+  .impostor-game-room-info p {
+    font-size: 0.85rem;
+  }
+
+  .impostor-game-host-badge {
+    font-size: 0.9rem;
+    padding: 8px 18px;
+    white-space: nowrap;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes gameSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

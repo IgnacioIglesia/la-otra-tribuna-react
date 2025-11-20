@@ -40,11 +40,9 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
-  // ✅ MEJORADO: Detectar cuando el host abandona o la sala se cierra
   useEffect(() => {
     if (!roomCode || !room) return;
 
-    // Suscripción para detectar cuando el host se va
     const hostSubscription = supabase
       .channel(`room-${roomCode}-host-check`)
       .on(
@@ -61,7 +59,6 @@ const ImpostorGame = () => {
           if (room.host_user_id && payload.old.user_id === room.host_user_id) {
             console.log('👑 El host abandonó la sala, cerrando...');
             
-            // Broadcast para avisar a todos
             const channel = supabase.channel(`room-${roomCode}-closed-broadcast`);
             
             await channel.subscribe(async (status) => {
@@ -100,7 +97,6 @@ const ImpostorGame = () => {
       )
       .subscribe();
 
-    // Suscripción para detectar cuando la sala cambia a 'finished'
     const roomStatusSubscription = supabase
       .channel(`room-${roomCode}-status-check`)
       .on(
@@ -132,7 +128,6 @@ const ImpostorGame = () => {
       )
       .subscribe();
 
-    // Suscripción para recibir broadcast de cierre
     const closedBroadcastSubscription = supabase
       .channel(`room-${roomCode}-closed-listener`)
       .on(
@@ -203,7 +198,7 @@ const ImpostorGame = () => {
       }
     );
 
-    // Suscripción para broadcast de resultados
+    // ✅ ARREGLADO: Suscripción para que TODOS reciban los resultados
     const resultsSubscription = supabase
       .channel(`room-${roomCode}-results`)
       .on(
@@ -240,12 +235,10 @@ const ImpostorGame = () => {
       )
       .subscribe();
 
-    // ✅ NUEVO: Polling para verificar estado de la sala (respaldo)
     const roomCheckInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
         
-        // Si la sala está cerrada, redirigir
         if (roomData.status === 'finished') {
           console.log('⚠️ Polling detectó sala cerrada');
           
@@ -263,7 +256,6 @@ const ImpostorGame = () => {
           }, 2000);
         }
       } catch (error) {
-        // Si hay error al obtener la sala (probablemente fue eliminada)
         if (error.message?.includes('No rows') || error.code === 'PGRST116') {
           console.log('⚠️ Sala no encontrada, probablemente fue eliminada');
           
@@ -281,7 +273,7 @@ const ImpostorGame = () => {
           }, 2000);
         }
       }
-    }, 3000); // Verificar cada 3 segundos
+    }, 3000);
 
     const pollingInterval = setInterval(async () => {
       try {
@@ -354,7 +346,6 @@ const ImpostorGame = () => {
 
       console.log('👤 Username obtenido:', username);
 
-      // Ahora sí cargamos la sala
       await loadRoom();
 
       try {
@@ -530,7 +521,7 @@ const ImpostorGame = () => {
       
       setShowResultsModal(true);
       
-      // Hacer broadcast para que TODOS vean los resultados
+      // ✅ ARREGLADO: Hacer broadcast para que TODOS vean los resultados
       const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
       
       await channel.subscribe(async (status) => {
@@ -576,7 +567,6 @@ const ImpostorGame = () => {
       if (isHost && currentUser) {
         console.log('👑 Host saliendo, cerrando sala para todos...');
         
-        // Primero hacer broadcast para avisar a todos
         const channel = supabase.channel(`room-${roomCode}-closed-broadcast-exit`);
         
         await channel.subscribe(async (status) => {
@@ -592,10 +582,8 @@ const ImpostorGame = () => {
             });
             console.log('📡 Broadcast enviado: room_closed desde exitGame');
             
-            // Esperar un poco para que llegue el broadcast
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // Luego cerrar la sala y salir
             await impostorService.endRoom(roomCode);
             await impostorService.leaveRoom(roomCode, currentUser.id);
             
@@ -692,7 +680,7 @@ const ImpostorGame = () => {
               {roomPlayers.length} jugadores conectados · {numImpostors} impostor{numImpostors > 1 ? 'es' : ''}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             {playerNumber && (
               <span className="impostor-game-host-badge" style={{ background: 'rgba(255,255,255,0.2)' }}>
                 🎮 Jugador #{playerNumber}
