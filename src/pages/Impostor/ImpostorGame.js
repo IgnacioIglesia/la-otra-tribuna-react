@@ -676,6 +676,48 @@ const ImpostorGame = () => {
     };
   }, [roomCode]);
 
+  useEffect(() => {
+    if (!roomCode) return;
+
+    const waitingSubscription = supabase
+      .channel(`room-${roomCode}-waiting-listener`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'impostor_players',
+        filter: `room_code=eq.${roomCode}`,
+      }, (payload) => {
+        console.log('📡 Nuevo jugador en espera:', payload.new);
+        setRoomPlayers((prev) => [...prev, payload.new]);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(waitingSubscription);
+    };
+  }, [roomCode]);
+
+  const startNewRound = async () => {
+    if (!isHost) return;
+
+    const activePlayers = roomPlayers.filter((p) => !p.is_waiting);
+    const waitingPlayers = roomPlayers.filter((p) => p.is_waiting);
+
+    // Actualizar jugadores en espera a activos
+    if (waitingPlayers.length > 0) {
+      await supabase
+        .from('impostor_players')
+        .update({ is_waiting: false })
+        .eq('room_code', roomCode)
+        .eq('is_waiting', true);
+
+      console.log('✅ Jugadores en espera ahora activos');
+    }
+
+    // Lógica para iniciar nueva ronda con jugadores activos
+    console.log('🎮 Iniciando nueva ronda con jugadores:', activePlayers);
+  };
+
   return (
     <>
       <Header />

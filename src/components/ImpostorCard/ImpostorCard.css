@@ -295,6 +295,31 @@
   font-size: 1.1rem;
 }
 
+/* Card de Rol Oculto */
+.impostor-card.hidden-role {
+  background: rgba(50, 50, 50, 0.4);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.5),
+    inset 0 0 30px rgba(255, 255, 255, 0.05);
+  padding: 40px 30px;
+  text-align: center;
+  border-radius: 25px;
+}
+
+.hidden-role h2 {
+  font-size: 2rem;
+  color: #ffffff;
+  margin-bottom: 15px;
+}
+
+.hidden-role p {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .impostor-card {

@@ -147,90 +147,37 @@ class ImpostorService {
       if (roomError) throw new Error('Sala no encontrada');
       if (room.status === 'finished') throw new Error('Esta sala ya finalizó');
 
+      const isWaiting = room.status === 'active';
+
       const { data: existingPlayer } = await supabase
         .from('impostor_players')
-        .select('player_number')
+        .select('*')
         .eq('room_code', roomCode)
         .eq('user_id', userId)
-        .maybeSingle();
+        .single();
 
       if (existingPlayer) {
-        console.log('Usuario ya está en la sala, actualizando nombre...');
-        
-        // ✅ ARREGLADO: Actualizar username cada vez que se une
-        await supabase
-          .from('impostor_players')
-          .update({ username: username })
-          .eq('room_code', roomCode)
-          .eq('user_id', userId);
-        
-        return {
-          playerNumber: existingPlayer.player_number,
-          isNew: false
-        };
+        return { playerNumber: existingPlayer.player_number, isWaiting };
       }
 
-      const { data: currentPlayers, error: playersError } = await supabase
+      const { data: newPlayer, error: insertError } = await supabase
         .from('impostor_players')
-        .select('player_number')
-        .eq('room_code', roomCode)
-        .order('player_number');
+        .insert([
+          {
+            room_code: roomCode,
+            user_id: userId,
+            username,
+            is_waiting: isWaiting,
+          },
+        ])
+        .select()
+        .single();
 
-      if (playersError) throw playersError;
+      if (insertError) throw insertError;
 
-      let playerNumber = 1;
-      const usedNumbers = currentPlayers ? currentPlayers.map(p => p.player_number) : [];
-      
-      while (usedNumbers.includes(playerNumber) && playerNumber <= room.num_players) {
-        playerNumber++;
-      }
-
-      if (playerNumber > room.num_players) {
-        throw new Error('La sala está llena');
-      }
-
-      const { error: insertError } = await supabase
-        .from('impostor_players')
-        .insert({
-          room_code: roomCode,
-          user_id: userId,
-          username: username,
-          player_number: playerNumber
-        });
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          const { data: retryPlayer } = await supabase
-            .from('impostor_players')
-            .select('player_number')
-            .eq('room_code', roomCode)
-            .eq('user_id', userId)
-            .maybeSingle();
-          
-          if (retryPlayer) {
-            // ✅ También actualizar aquí por si acaso
-            await supabase
-              .from('impostor_players')
-              .update({ username: username })
-              .eq('room_code', roomCode)
-              .eq('user_id', userId);
-            
-            return {
-              playerNumber: retryPlayer.player_number,
-              isNew: false
-            };
-          }
-        }
-        throw insertError;
-      }
-
-      console.log('Usuario asignado al número:', playerNumber);
-      return {
-        playerNumber,
-        isNew: true
-      };
+      return { playerNumber: newPlayer.player_number, isWaiting };
     } catch (error) {
-      console.error('Error joining room:', error);
+      console.error('Error al unirse a la sala:', error);
       throw error;
     }
   }
