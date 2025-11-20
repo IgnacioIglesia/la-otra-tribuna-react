@@ -73,7 +73,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  fontSize: 1.5rem;
+  font-Size: 1.5rem;
   color: white;
   transition: all 0.3s ease;
   font-weight: bold;
@@ -107,7 +107,7 @@
 }
 
 .results-modal-title {
-  fontSize: 2.8rem;
+  font-Size: 2.8rem;
   font-weight: 900;
   background: linear-gradient(135deg, #ffffff 0%, #a8ff78 100%);
   -webkit-background-clip: text;
