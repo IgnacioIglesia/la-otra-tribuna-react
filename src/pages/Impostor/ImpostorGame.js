@@ -340,8 +340,8 @@ const ImpostorGame = () => {
       }
 
       setCurrentUser(user);
-      await loadRoom();
       
+      // ✅ ARREGLADO: Obtener perfil ANTES de cargar la sala
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido, username')
@@ -351,6 +351,11 @@ const ImpostorGame = () => {
       const username = profile?.nombre && profile?.apellido
         ? `${profile.nombre} ${profile.apellido}`
         : profile?.username || user.email?.split('@')[0] || 'Jugador';
+
+      console.log('👤 Username obtenido:', username);
+
+      // Ahora sí cargamos la sala
+      await loadRoom();
 
       try {
         const joinResult = await impostorService.joinRoom(roomCode, user.id, username);
