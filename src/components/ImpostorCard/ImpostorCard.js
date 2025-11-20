@@ -15,7 +15,7 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
       // Remover la clase de animación después de que termine
       const timer = setTimeout(() => {
         setAnimationClass('');
-      }, 1000);
+      }, 1200); // Aumentado para match con la duración del CSS
       
       return () => clearTimeout(timer);
     } else {
@@ -31,7 +31,7 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
     setTimeout(() => {
       setAnimationClass('');
       onHideRole();
-    }, 800);
+    }, 1000); // Aumentado para match con la duración del CSS
   };
 
   if (!isRevealed) {

@@ -199,14 +199,15 @@ const ImpostorGame = () => {
 
     // 🔥 SUSCRIPCIÓN A RESULTADOS PARA TODOS LOS JUGADORES
     const resultsSubscription = supabase
-      .channel(`room-${roomCode}-results-listener`)
+      .channel(`room-${roomCode}-results`) // 🔥 MISMO nombre que en el service
       .on(
         'broadcast',
         { event: 'show_results' },
         async (payload) => {
-          console.log('📊 Broadcast recibido: mostrar resultados', payload);
+          console.log('📊 ✅ Broadcast recibido: mostrar resultados', payload);
           
           try {
+            // Cargar datos de la ronda actual
             const sessions = await impostorService.getRoomSessions(roomCode);
             const currentImpostors = sessions.filter(s => s.is_impostor);
             
@@ -214,12 +215,14 @@ const ImpostorGame = () => {
               currentImpostors.some(s => s.player_number === p.player_number)
             );
             
+            console.log('🎭 Impostores encontrados:', impostorPlayersList);
+            
             setRoundResults({
               impostorPlayers: impostorPlayersList,
               selectedPlayer: room?.footballers
             });
             
-            // En lugar de modal, cambiar a vista de resultados
+            // Cambiar a vista de resultados
             setShowResultsView(true);
             setIsRevealed(false);
             
@@ -230,12 +233,20 @@ const ImpostorGame = () => {
               4000
             );
           } catch (err) {
-            console.error('Error cargando resultados:', err);
+            console.error('❌ Error cargando resultados:', err);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Estado de suscripción a resultados:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Suscrito exitosamente a resultados');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error en canal de resultados');
+        }
+      });
 
+    // Polling de backup (por si falla el broadcast)
     const roomCheckInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
@@ -309,7 +320,6 @@ const ImpostorGame = () => {
       clearInterval(roomCheckInterval);
     };
   }, [roomCode, gameStarted, roomPlayers, room, navigate]);
-
   useEffect(() => {
     if (!roomCode) return;
 

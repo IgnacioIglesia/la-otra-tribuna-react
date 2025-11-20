@@ -205,7 +205,7 @@ class ImpostorService {
           {
             room_code: roomCode,
             user_id: userId,
-            username: displayUsername, // 🔥 Nombre completo
+            username: displayUsername,
             player_number: nextPlayerNumber,
             is_waiting: isWaiting,
           },
@@ -229,47 +229,46 @@ class ImpostorService {
   }
 
   // Obtener jugadores en la sala CON NOMBRES COMPLETOS
-async getRoomPlayers(roomCode) {
-  try {
-    const { data, error } = await supabase
-      .from('impostor_players')
-      .select(`
-        *,
-        usuario:user_id (
-          nombre,
-          apellido,
-          email
-        )
-      `)
-      .eq('room_code', roomCode)
-      .order('player_number');
+  async getRoomPlayers(roomCode) {
+    try {
+      const { data, error } = await supabase
+        .from('impostor_players')
+        .select(`
+          *,
+          usuario:user_id (
+            nombre,
+            apellido,
+            email
+          )
+        `)
+        .eq('room_code', roomCode)
+        .order('player_number');
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Formatear nombres completos
-    const playersWithNames = (data || []).map((player) => {
-      const u = player.usuario; // viene del alias usuario:user_id
-      let displayName = player.username;
+      // Formatear nombres completos
+      const playersWithNames = (data || []).map((player) => {
+        const u = player.usuario;
+        let displayName = player.username;
 
-      if (u?.nombre && u?.apellido) {
-        displayName = `${u.nombre} ${u.apellido}`;
-      } else if (u?.email) {
-        // fallback: parte antes del @
-        displayName = u.email.split('@')[0];
-      }
+        if (u?.nombre && u?.apellido) {
+          displayName = `${u.nombre} ${u.apellido}`;
+        } else if (u?.email) {
+          displayName = u.email.split('@')[0];
+        }
 
-      return {
-        ...player,
-        username: displayName,
-      };
-    });
+        return {
+          ...player,
+          username: displayName,
+        };
+      });
 
-    return playersWithNames;
-  } catch (error) {
-    console.error('Error fetching room players:', error);
-    throw error;
+      return playersWithNames;
+    } catch (error) {
+      console.error('Error fetching room players:', error);
+      throw error;
+    }
   }
-}
 
   // Obtener información de sala
   async getRoom(roomCode) {
@@ -549,16 +548,20 @@ async getRoomPlayers(roomCode) {
     return channel;
   }
 
-  // 🔥 NUEVA FUNCIÓN: Broadcast de resultados para TODOS los jugadores
+  // 🔥 FUNCIÓN CORREGIDA: Broadcast de resultados para TODOS los jugadores
   async broadcastResults(roomCode) {
     try {
       console.log('📊 Enviando broadcast de resultados a todos...');
       
-      const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
+      // 🔥 CRÍTICO: Usar el MISMO nombre de canal que los listeners
+      const channel = supabase.channel(`room-${roomCode}-results`);
       
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          await channel.send({
+          console.log('✅ Canal suscrito, enviando broadcast...');
+          
+          // Enviar el broadcast
+          const result = await channel.send({
             type: 'broadcast',
             event: 'show_results',
             payload: { 
@@ -566,15 +569,21 @@ async getRoomPlayers(roomCode) {
               timestamp: new Date().toISOString()
             }
           });
-          console.log('📡 Broadcast enviado: show_results');
           
+          console.log('📡 Resultado del broadcast:', result);
+          
+          // Esperar un poco para que llegue el mensaje
           setTimeout(() => {
+            console.log('🔌 Cerrando canal después de broadcast');
             supabase.removeChannel(channel);
-          }, 1000);
+          }, 2000);
+        } else {
+          console.error('❌ Error al suscribirse al canal:', status);
         }
       });
     } catch (error) {
-      console.error('Error enviando broadcast de resultados:', error);
+      console.error('❌ Error enviando broadcast de resultados:', error);
+      throw error;
     }
   }
 
