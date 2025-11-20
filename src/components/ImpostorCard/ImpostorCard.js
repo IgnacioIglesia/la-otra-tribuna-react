@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import './ImpostorCard.css';
 
-const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
+const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
   const [imageError, setImageError] = useState(false);
-  const [isRoleHidden, setIsRoleHidden] = useState(false);
 
   if (!isRevealed) {
     return (
@@ -17,17 +16,6 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
     );
   }
 
-  if (isRoleHidden) {
-    return (
-      <div className="impostor-card hidden-role">
-        <div className="card-content">
-          <h2>Rol Oculto</h2>
-          <p>Has ocultado tu rol</p>
-        </div>
-      </div>
-    );
-  }
-
   if (isImpostor) {
     return (
       <div className="impostor-card impostor">
@@ -35,12 +23,15 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
           <div className="impostor-icon">🎭</div>
           <h1 className="impostor-title">¡ERES EL IMPOSTOR!</h1>
           <p className="impostor-subtitle">
-            Los demás tienen un jugador asignado.<br />
+            Los demás tienen un jugador asignado.
+            <br />
             ¡Descubre quién es sin que te descubran!
           </p>
+
+          {/* Botón dentro de la card, en lugar del texto "mantén esto en secreto" */}
           <button
             className="impostor-game-btn-secondary"
-            onClick={() => setIsRoleHidden(true)}
+            onClick={onHideRole}
           >
             🙈 Ocultar Rol
           </button>
@@ -69,7 +60,11 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
             alt={player?.name || 'Jugador'}
             className="player-image"
             onError={() => {
-              console.error('❌ Error cargando imagen:', player?.name, player?.image_url);
+              console.error(
+                '❌ Error cargando imagen:',
+                player?.name,
+                player?.image_url
+              );
               setImageError(true);
             }}
             onLoad={() => {
@@ -92,9 +87,11 @@ const ImpostorCard = ({ isImpostor, player, isRevealed }) => {
           </span>
         </div>
 
+        {/* Antes acá tenías el texto "Este es tu jugador" + botón abajo.
+            Ahora dejamos SOLO el botón, bien accesible */}
         <button
           className="impostor-game-btn-secondary"
-          onClick={() => setIsRoleHidden(true)}
+          onClick={onHideRole}
         >
           🙈 Ocultar Rol
         </button>

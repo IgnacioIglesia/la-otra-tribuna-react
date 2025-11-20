@@ -164,8 +164,7 @@ const ImpostorGame = () => {
 
     const playersSubscription = impostorService.subscribeToRoomPlayers(
       roomCode,
-      async (payload) => {
-        console.log('👥 Evento de jugadores:', payload);
+      async () => {
         await loadRoomPlayers();
       }
     );
@@ -198,13 +197,13 @@ const ImpostorGame = () => {
       }
     );
 
-    // ✅ ARREGLADO: Suscripción para que TODOS reciban los resultados
+    // 🔹 Suscripción para que TODOS reciban los resultados
     const resultsSubscription = supabase
       .channel(`room-${roomCode}-results`)
       .on(
         'broadcast',
         { event: 'show_results' },
-        async (payload) => {
+        async () => {
           console.log('📊 Broadcast recibido: mostrar resultados');
           
           try {
@@ -217,7 +216,7 @@ const ImpostorGame = () => {
             
             setRoundResults({
               impostorPlayers: impostorPlayersList,
-              selectedPlayer: room.footballers
+              selectedPlayer: room?.footballers
             });
             
             setShowResultsModal(true);
@@ -333,7 +332,6 @@ const ImpostorGame = () => {
 
       setCurrentUser(user);
       
-      // ✅ ARREGLADO: Obtener perfil ANTES de cargar la sala
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido, username')
@@ -516,13 +514,13 @@ const ImpostorGame = () => {
       
       setRoundResults({
         impostorPlayers: impostorPlayersList,
-        selectedPlayer: room.footballers
+        selectedPlayer: room?.footballers
       });
       
       setShowResultsModal(true);
       
-      // ✅ ARREGLADO: Hacer broadcast para que TODOS vean los resultados
-      const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
+      // 🔹 Broadcast en el MISMO canal que escucha todo el mundo
+      const channel = supabase.channel(`room-${roomCode}-results`);
       
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
@@ -554,7 +552,10 @@ const ImpostorGame = () => {
     hasLoadedRole.current = false;
     setIsRevealed(false);
     setPlayerRole(null);
-    
+
+    // 🔹 Primero activamos jugadores que estaban en espera
+    await startNewRound();
+    // 🔹 Luego iniciamos nueva ronda
     await startGame();
   };
 
@@ -600,7 +601,16 @@ const ImpostorGame = () => {
     }
   };
 
-  const maxImpostorsForCurrentPlayers = Math.min(4, Math.max(1, Math.floor(roomPlayers.length / 2) - 1));
+  const maxImpostorsForCurrentPlayers = Math.min(
+    4,
+    Math.max(1, Math.floor(roomPlayers.length / 2) - 1)
+  );
+
+  // 🔹 Saber si este jugador está marcado como "en espera"
+  const currentPlayerRecord = roomPlayers.find(
+    (p) => p.player_number === playerNumber
+  );
+  const isWaitingPlayer = currentPlayerRecord?.is_waiting;
 
   if (loading && !room) {
     return (
@@ -620,7 +630,10 @@ const ImpostorGame = () => {
         <Header />
         <div className="impostor-game-container error">
           <h2>❌ {error}</h2>
-          <button onClick={() => navigate('/impostor')} className="impostor-game-btn impostor-game-btn-primary">
+          <button
+            onClick={() => navigate('/impostor')}
+            className="impostor-game-btn impostor-game-btn-primary"
+          >
             Volver al Inicio
           </button>
         </div>
@@ -628,68 +641,24 @@ const ImpostorGame = () => {
     );
   }
 
-  const broadcastRoundResults = async (results) => {
-    const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
-
-    await channel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        await channel.send({
-          type: 'broadcast',
-          event: 'round_results',
-          payload: results,
-        });
-        console.log('📡 Broadcast enviado: round_results');
-
-        setTimeout(() => {
-          supabase.removeChannel(channel);
-        }, 1000);
-      }
-    });
-  };
-
-  const handleEndRound = async () => {
-    if (!isHost) return;
-
-    const results = {
-      impostorPlayers: roomPlayers.filter((p) => p.isImpostor),
-      selectedPlayer: roomPlayers.find((p) => p.isSelected),
-    };
-
-    setRoundResults(results);
-    setShowResultsModal(true);
-
-    await broadcastRoundResults(results);
-  };
-
-  useEffect(() => {
-    const resultsSubscription = supabase
-      .channel(`room-${roomCode}-results-listener`)
-      .on('broadcast', { event: 'round_results' }, (payload) => {
-        console.log('📡 Broadcast recibido: round_results', payload);
-        setRoundResults(payload);
-        setShowResultsModal(true);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(resultsSubscription);
-    };
-  }, [roomCode]);
-
   useEffect(() => {
     if (!roomCode) return;
 
     const waitingSubscription = supabase
       .channel(`room-${roomCode}-waiting-listener`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'impostor_players',
-        filter: `room_code=eq.${roomCode}`,
-      }, (payload) => {
-        console.log('📡 Nuevo jugador en espera:', payload.new);
-        setRoomPlayers((prev) => [...prev, payload.new]);
-      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'impostor_players',
+          filter: `room_code=eq.${roomCode}`,
+        },
+        (payload) => {
+          console.log('📡 Nuevo jugador en espera:', payload.new);
+          setRoomPlayers((prev) => [...prev, payload.new]);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -700,22 +669,21 @@ const ImpostorGame = () => {
   const startNewRound = async () => {
     if (!isHost) return;
 
-    const activePlayers = roomPlayers.filter((p) => !p.is_waiting);
-    const waitingPlayers = roomPlayers.filter((p) => p.is_waiting);
-
-    // Actualizar jugadores en espera a activos
-    if (waitingPlayers.length > 0) {
-      await supabase
+    try {
+      // Todos los que estaban en espera pasan a activos
+      const { error } = await supabase
         .from('impostor_players')
         .update({ is_waiting: false })
         .eq('room_code', roomCode)
         .eq('is_waiting', true);
 
-      console.log('✅ Jugadores en espera ahora activos');
-    }
+      if (error) throw error;
 
-    // Lógica para iniciar nueva ronda con jugadores activos
-    console.log('🎮 Iniciando nueva ronda con jugadores:', activePlayers);
+      console.log('✅ Jugadores en espera ahora activos');
+      await loadRoomPlayers();
+    } catch (err) {
+      console.error('Error al activar jugadores en espera:', err);
+    }
   };
 
   return (
@@ -731,8 +699,14 @@ const ImpostorGame = () => {
       />
       
       {showLeaveConfirm && (
-        <div className="leave-confirm-overlay" onClick={() => setShowLeaveConfirm(false)}>
-          <div className="leave-confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="leave-confirm-overlay"
+          onClick={() => setShowLeaveConfirm(false)}
+        >
+          <div
+            className="leave-confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3>¿Salir de la sala?</h3>
             <p>
               {isHost 
@@ -744,7 +718,10 @@ const ImpostorGame = () => {
               <button onClick={exitGame} className="confirm-btn-yes">
                 Sí, salir
               </button>
-              <button onClick={() => setShowLeaveConfirm(false)} className="confirm-btn-no">
+              <button
+                onClick={() => setShowLeaveConfirm(false)}
+                className="confirm-btn-no"
+              >
                 Cancelar
               </button>
             </div>
@@ -753,7 +730,9 @@ const ImpostorGame = () => {
       )}
       
       {notification && (
-        <div className={`impostor-game-notification impostor-game-notification-${notification.type}`}>
+        <div
+          className={`impostor-game-notification impostor-game-notification-${notification.type}`}
+        >
           <div className="impostor-game-notification-content">
             <h3>{notification.title}</h3>
             <p>{notification.message}</p>
@@ -765,14 +744,21 @@ const ImpostorGame = () => {
       <div className="impostor-game-container">
         <div className="impostor-game-header">
           <div className="impostor-game-room-info">
-            <h2>Sala: <span className="impostor-game-room-code">{roomCode}</span></h2>
+            <h2>
+              Sala:{' '}
+              <span className="impostor-game-room-code">{roomCode}</span>
+            </h2>
             <p>
-              {roomPlayers.length} jugadores conectados · {numImpostors} impostor{numImpostors > 1 ? 'es' : ''}
+              {roomPlayers.length} jugadores conectados · {numImpostors}{' '}
+              impostor{numImpostors > 1 ? 'es' : ''}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             {playerNumber && (
-              <span className="impostor-game-host-badge" style={{ background: 'rgba(255,255,255,0.2)' }}>
+              <span
+                className="impostor-game-host-badge"
+                style={{ background: 'rgba(255,255,255,0.2)' }}
+              >
                 🎮 Jugador #{playerNumber}
               </span>
             )}
@@ -809,9 +795,13 @@ const ImpostorGame = () => {
                 ) : (
                   <div className="impostor-game-config-editor">
                     <label className="impostor-game-config-range-label">
-                      Impostores: <span className="impostor-game-config-range-value">{numImpostors}</span>
+                      Impostores:{' '}
+                      <span className="impostor-game-config-range-value">
+                        {numImpostors}
+                      </span>
                       <span className="impostor-game-config-range-hint">
-                        (máx: {maxImpostorsForCurrentPlayers} con {roomPlayers.length} jugadores)
+                        (máx: {maxImpostorsForCurrentPlayers} con {roomPlayers.length}{' '}
+                        jugadores)
                       </span>
                     </label>
                     <input
@@ -819,7 +809,9 @@ const ImpostorGame = () => {
                       min="1"
                       max={maxImpostorsForCurrentPlayers}
                       value={Math.min(numImpostors, maxImpostorsForCurrentPlayers)}
-                      onChange={(e) => setNumImpostors(parseInt(e.target.value))}
+                      onChange={(e) =>
+                        setNumImpostors(parseInt(e.target.value, 10))
+                      }
                       className="impostor-game-slider"
                     />
                     <div className="impostor-game-config-buttons">
@@ -846,7 +838,13 @@ const ImpostorGame = () => {
             )}
 
             <div style={{ marginTop: '30px', marginBottom: '30px' }}>
-              <h3 style={{ color: '#a8ff78', marginBottom: '20px', textAlign: 'center' }}>
+              <h3
+                style={{
+                  color: '#a8ff78',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                }}
+              >
                 Jugadores conectados ({roomPlayers.length})
               </h3>
               <div className="impostor-game-player-grid">
@@ -856,19 +854,26 @@ const ImpostorGame = () => {
                     className="impostor-game-player-slot selected"
                     style={{
                       cursor: 'default',
-                      border: playerNumber === player.player_number ? '3px solid #a8ff78' : undefined
+                      border:
+                        playerNumber === player.player_number
+                          ? '3px solid #a8ff78'
+                          : undefined,
                     }}
                   >
-                    <span className="impostor-game-player-number">{player.player_number}</span>
-                    <div style={{ 
-                      fontSize: '0.8rem', 
-                      marginTop: '5px',
-                      color: 'rgba(255,255,255,0.9)',
-                      fontWeight: '600',
-                      textAlign: 'center',
-                      wordBreak: 'break-word',
-                      padding: '0 5px'
-                    }}>
+                    <span className="impostor-game-player-number">
+                      {player.player_number}
+                    </span>
+                    <div
+                      style={{
+                        fontSize: '0.8rem',
+                        marginTop: '5px',
+                        color: 'rgba(255,255,255,0.9)',
+                        fontWeight: '600',
+                        textAlign: 'center',
+                        wordBreak: 'break-word',
+                        padding: '0 5px',
+                      }}
+                    >
                       {player.username}
                     </div>
                     {playerNumber === player.player_number && (
@@ -889,21 +894,22 @@ const ImpostorGame = () => {
                 disabled={loading || roomPlayers.length < 3}
                 className="impostor-game-btn impostor-game-btn-primary impostor-game-btn-large"
                 style={{
-                  opacity: roomPlayers.length < 3 ? 0.5 : 1
+                  opacity: roomPlayers.length < 3 ? 0.5 : 1,
                 }}
               >
-                {loading ? '⏳ Iniciando...' : 
-                 roomPlayers.length < 3 ? `⏳ Esperando más jugadores (${roomPlayers.length}/3 mínimo)` :
-                 '🚀 Iniciar Ronda'}
+                {loading
+                  ? '⏳ Iniciando...'
+                  : roomPlayers.length < 3
+                  ? `⏳ Esperando más jugadores (${roomPlayers.length}/3 mínimo)`
+                  : '🚀 Iniciar Ronda'}
               </button>
             )}
 
             {!isHost && (
               <p className="impostor-game-waiting-host">
-                {roomPlayers.length < 3 
+                {roomPlayers.length < 3
                   ? `⏳ Esperando más jugadores (${roomPlayers.length}/3 mínimo)`
-                  : '⏳ Esperando a que el host inicie la ronda...'
-                }
+                  : '⏳ Esperando a que el host inicie la ronda...'}
               </p>
             )}
           </div>
@@ -911,14 +917,24 @@ const ImpostorGame = () => {
 
         {gameStarted && (
           <div className="impostor-game-active">
-            {!isRevealed ? (
+            {isWaitingPlayer ? (
+              <div className="impostor-game-reveal-section">
+                <h2>🙋 Estás en espera</h2>
+                <p className="impostor-game-reveal-instructions">
+                  Te unirás automáticamente en la próxima ronda.
+                </p>
+              </div>
+            ) : !isRevealed ? (
               <div className="impostor-game-reveal-section">
                 <h2>🎭 ¿Listo para ver tu rol?</h2>
                 <p className="impostor-game-reveal-instructions">
                   Asegúrate de que nadie más pueda ver tu pantalla
                 </p>
                 {error && (
-                  <div className="impostor-game-error" style={{ marginBottom: '20px' }}>
+                  <div
+                    className="impostor-game-error"
+                    style={{ marginBottom: '20px' }}
+                  >
                     ⚠️ {error}
                   </div>
                 )}
@@ -936,6 +952,7 @@ const ImpostorGame = () => {
                   isImpostor={playerRole?.is_impostor}
                   player={playerRole?.footballers}
                   isRevealed={isRevealed}
+                  onHideRole={() => setIsRevealed(false)}
                 />
 
                 <div className="impostor-game-actions">
@@ -947,36 +964,34 @@ const ImpostorGame = () => {
                       📊 Mostrar Resultados a Todos
                     </button>
                   ) : (
-                    <div style={{
-                      textAlign: 'center',
-                      color: 'rgba(255, 255, 255, 0.85)',
-                      fontSize: '1rem',
-                      padding: '18px 25px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      backdropFilter: 'blur(10px)',
-                      borderRadius: '15px',
-                      border: '2px solid rgba(255, 255, 255, 0.2)',
-                      boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
-                      flex: 1,
-                      minWidth: '220px'
-                    }}>
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        fontSize: '1rem',
+                        padding: '18px 25px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '15px',
+                        border: '2px solid rgba(255, 255, 255, 0.2)',
+                        boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
+                        flex: 1,
+                        minWidth: '220px',
+                      }}
+                    >
                       ⏳ Esperando a que el host revele los resultados...
                     </div>
                   )}
-                  
-                  <button
-                    onClick={() => setIsRevealed(false)}
-                    className="impostor-game-btn impostor-game-btn-secondary"
-                  >
-                    🙈 Ocultar Rol
-                  </button>
                 </div>
               </>
             )}
           </div>
         )}
 
-        <button onClick={handleLeaveConfirm} className="impostor-game-btn-exit">
+        <button
+          onClick={handleLeaveConfirm}
+          className="impostor-game-btn-exit"
+        >
           ← Salir de la Sala
         </button>
       </div>

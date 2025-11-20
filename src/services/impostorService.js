@@ -119,7 +119,7 @@ class ImpostorService {
     }
   }
 
-  // ✅ NUEVO: Actualizar número de impostores
+  // Actualizar número de impostores
   async updateRoomImpostors(roomCode, numImpostors) {
     try {
       const { error } = await supabase
@@ -147,7 +147,8 @@ class ImpostorService {
       if (roomError) throw new Error('Sala no encontrada');
       if (room.status === 'finished') throw new Error('Esta sala ya finalizó');
 
-      const isWaiting = room.status === 'active';
+      // 🔹 Si la sala ya está jugando, este jugador entra "en espera"
+      const isWaiting = room.status === 'playing';
 
       const { data: existingPlayer } = await supabase
         .from('impostor_players')
@@ -157,7 +158,7 @@ class ImpostorService {
         .single();
 
       if (existingPlayer) {
-        return { playerNumber: existingPlayer.player_number, isWaiting };
+        return { playerNumber: existingPlayer.player_number, isWaiting: existingPlayer.is_waiting };
       }
 
       const { data: newPlayer, error: insertError } = await supabase
@@ -175,7 +176,7 @@ class ImpostorService {
 
       if (insertError) throw insertError;
 
-      return { playerNumber: newPlayer.player_number, isWaiting };
+      return { playerNumber: newPlayer.player_number, isWaiting: newPlayer.is_waiting };
     } catch (error) {
       console.error('Error al unirse a la sala:', error);
       throw error;
@@ -216,7 +217,7 @@ class ImpostorService {
     }
   }
 
-  // ✅ MEJORADO: Retorna info de impostores para el modal
+  // Iniciar ronda: asigna jugador y roles
   async startRound(roomCode, numPlayers, numImpostors) {
     try {
       console.log('🎮 Iniciando ronda...', { roomCode, numPlayers, numImpostors });
@@ -226,7 +227,10 @@ class ImpostorService {
       
       console.log('👥 Jugadores conectados:', actualPlayerCount, 'de', numPlayers);
       
-      const adjustedImpostors = Math.min(numImpostors, Math.max(1, Math.floor(actualPlayerCount / 2) - 1));
+      const adjustedImpostors = Math.min(
+        numImpostors,
+        Math.max(1, Math.floor(actualPlayerCount / 2) - 1)
+      );
       
       console.log(`🎭 Impostores ajustados: ${adjustedImpostors} (original: ${numImpostors})`);
       
@@ -287,7 +291,6 @@ class ImpostorService {
 
       console.log('✅ Sesiones creadas correctamente');
 
-      // ✅ Obtener nombres de impostores
       const impostorNumbers = roles.filter(r => r.isImpostor).map(r => r.playerNumber);
       const impostorPlayers = connectedPlayers.filter(p => impostorNumbers.includes(p.player_number));
 
@@ -298,7 +301,7 @@ class ImpostorService {
         roles,
         roomCode,
         adjustedImpostors,
-        impostorPlayers // ✅ NUEVO: para mostrar en modal
+        impostorPlayers
       };
     } catch (error) {
       console.error('Error starting round:', error);
@@ -318,8 +321,10 @@ class ImpostorService {
       }
     }
     
-    console.log(`✅ ${numImpostors} impostor(es) asignado(s) en posiciones:`, 
-      impostorIndices.map(i => playerNumbers[i]));
+    console.log(
+      `✅ ${numImpostors} impostor(es) asignado(s) en posiciones:`,
+      impostorIndices.map(i => playerNumbers[i])
+    );
     
     return roles;
   }

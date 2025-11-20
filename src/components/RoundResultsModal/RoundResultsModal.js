@@ -1,19 +1,24 @@
 import React from 'react';
 import './RoundResultsModal.css';
 
-const RoundResultsModal = ({ isOpen, onClose, onNewRound, impostorPlayers, selectedPlayer }) => {
+const RoundResultsModal = ({
+  isOpen,
+  onClose,
+  onNewRound,
+  impostorPlayers,
+  selectedPlayer,
+}) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="results-modal-overlay"
       onClick={onClose}
     >
-      <div 
+      <div
         className="results-modal-content"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Botón de cerrar */}
         <button
           onClick={onClose}
           className="results-modal-close"
@@ -21,14 +26,14 @@ const RoundResultsModal = ({ isOpen, onClose, onNewRound, impostorPlayers, selec
           ×
         </button>
 
-        {/* Título */}
         <div className="results-modal-header">
           <div className="results-modal-icon">🏆</div>
           <h2 className="results-modal-title">Resultados de la Ronda</h2>
-          <p className="results-modal-subtitle">¡Descubre quién era el impostor!</p>
+          <p className="results-modal-subtitle">
+            ¡Descubre quién era el impostor!
+          </p>
         </div>
 
-        {/* Jugador Revelado */}
         {selectedPlayer && (
           <div className="results-player-section">
             <div className="results-player-icon">⚽</div>
@@ -41,7 +46,6 @@ const RoundResultsModal = ({ isOpen, onClose, onNewRound, impostorPlayers, selec
           </div>
         )}
 
-        {/* Impostores */}
         <div className="results-impostor-section">
           <div className="results-impostor-header">
             <div className="results-impostor-icon">🎭</div>
@@ -58,30 +62,43 @@ const RoundResultsModal = ({ isOpen, onClose, onNewRound, impostorPlayers, selec
                   className="results-impostor-item"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <div className="results-impostor-number">#{player.player_number}</div>
+                  <div className="results-impostor-number">
+                    #{player.player_number}
+                  </div>
                   <div className="results-impostor-info">
-                    <div className="results-impostor-username">{player.username}</div>
-                    <div className="results-impostor-label">Jugador #{player.player_number}</div>
+                    <div className="results-impostor-username">
+                      {player.username}
+                    </div>
+                    <div className="results-impostor-label">
+                      Jugador #{player.player_number}
+                    </div>
                   </div>
                   <div className="results-impostor-emoji">🎭</div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="results-impostor-empty">No hay impostores para mostrar</p>
+            <p className="results-impostor-empty">
+              No hay impostores para mostrar
+            </p>
           )}
         </div>
 
-        {/* Botones de acción */}
         <div className="results-modal-actions">
           {onNewRound && (
-            <button onClick={onNewRound} className="results-btn results-btn-primary">
+            <button
+              onClick={onNewRound}
+              className="results-btn results-btn-primary"
+            >
               <span className="results-btn-icon">🔄</span>
               Nueva Ronda
             </button>
           )}
-          
-          <button onClick={onClose} className="results-btn results-btn-secondary">
+
+          <button
+            onClick={onClose}
+            className="results-btn results-btn-secondary"
+          >
             Cerrar
           </button>
         </div>
