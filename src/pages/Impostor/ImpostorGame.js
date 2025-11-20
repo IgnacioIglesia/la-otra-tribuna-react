@@ -40,9 +40,11 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
+  // ✅ MEJORADO: Detectar cuando el host abandona o la sala se cierra
   useEffect(() => {
     if (!roomCode || !room) return;
 
+    // Suscripción para detectar cuando el host se va
     const hostSubscription = supabase
       .channel(`room-${roomCode}-host-check`)
       .on(
@@ -58,6 +60,28 @@ const ImpostorGame = () => {
           
           if (room.host_user_id && payload.old.user_id === room.host_user_id) {
             console.log('👑 El host abandonó la sala, cerrando...');
+            
+            // Broadcast para avisar a todos
+            const channel = supabase.channel(`room-${roomCode}-closed-broadcast`);
+            
+            await channel.subscribe(async (status) => {
+              if (status === 'SUBSCRIBED') {
+                await channel.send({
+                  type: 'broadcast',
+                  event: 'room_closed',
+                  payload: { 
+                    roomCode,
+                    reason: 'host_left',
+                    timestamp: new Date().toISOString()
+                  }
+                });
+                console.log('📡 Broadcast enviado: room_closed');
+                
+                setTimeout(() => {
+                  supabase.removeChannel(channel);
+                }, 1000);
+              }
+            });
             
             showNotification(
               'El host abandonó la sala',
@@ -76,8 +100,65 @@ const ImpostorGame = () => {
       )
       .subscribe();
 
+    // Suscripción para detectar cuando la sala cambia a 'finished'
+    const roomStatusSubscription = supabase
+      .channel(`room-${roomCode}-status-check`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'impostor_rooms',
+          filter: `room_code=eq.${roomCode}`
+        },
+        async (payload) => {
+          console.log('🏠 Estado de sala actualizado:', payload.new);
+          
+          if (payload.new.status === 'finished') {
+            console.log('❌ Sala cerrada, redirigiendo...');
+            
+            showNotification(
+              'Sala Cerrada',
+              'La sala ha sido cerrada por el host',
+              'error',
+              3000
+            );
+            
+            setTimeout(() => {
+              navigate('/impostor');
+            }, 3000);
+          }
+        }
+      )
+      .subscribe();
+
+    // Suscripción para recibir broadcast de cierre
+    const closedBroadcastSubscription = supabase
+      .channel(`room-${roomCode}-closed-listener`)
+      .on(
+        'broadcast',
+        { event: 'room_closed' },
+        async (payload) => {
+          console.log('📡 Broadcast recibido: sala cerrada', payload);
+          
+          showNotification(
+            'Sala Cerrada',
+            'El host ha abandonado la sala. Serás redirigido...',
+            'error',
+            3000
+          );
+          
+          setTimeout(() => {
+            navigate('/impostor');
+          }, 3000);
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(hostSubscription);
+      supabase.removeChannel(roomStatusSubscription);
+      supabase.removeChannel(closedBroadcastSubscription);
     };
   }, [roomCode, room, navigate]);
 
@@ -122,7 +203,7 @@ const ImpostorGame = () => {
       }
     );
 
-    // ✅ NUEVO: Suscripción para broadcast de resultados
+    // Suscripción para broadcast de resultados
     const resultsSubscription = supabase
       .channel(`room-${roomCode}-results`)
       .on(
@@ -159,6 +240,49 @@ const ImpostorGame = () => {
       )
       .subscribe();
 
+    // ✅ NUEVO: Polling para verificar estado de la sala (respaldo)
+    const roomCheckInterval = setInterval(async () => {
+      try {
+        const roomData = await impostorService.getRoom(roomCode);
+        
+        // Si la sala está cerrada, redirigir
+        if (roomData.status === 'finished') {
+          console.log('⚠️ Polling detectó sala cerrada');
+          
+          showNotification(
+            'Sala Cerrada',
+            'La sala ya no está disponible',
+            'error',
+            3000
+          );
+          
+          clearInterval(roomCheckInterval);
+          
+          setTimeout(() => {
+            navigate('/impostor');
+          }, 2000);
+        }
+      } catch (error) {
+        // Si hay error al obtener la sala (probablemente fue eliminada)
+        if (error.message?.includes('No rows') || error.code === 'PGRST116') {
+          console.log('⚠️ Sala no encontrada, probablemente fue eliminada');
+          
+          showNotification(
+            'Sala Cerrada',
+            'La sala ya no existe',
+            'error',
+            3000
+          );
+          
+          clearInterval(roomCheckInterval);
+          
+          setTimeout(() => {
+            navigate('/impostor');
+          }, 2000);
+        }
+      }
+    }, 3000); // Verificar cada 3 segundos
+
     const pollingInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
@@ -189,8 +313,9 @@ const ImpostorGame = () => {
       supabase.removeChannel(statusSubscription);
       supabase.removeChannel(resultsSubscription);
       clearInterval(pollingInterval);
+      clearInterval(roomCheckInterval);
     };
-  }, [roomCode, gameStarted, roomPlayers, room]);
+  }, [roomCode, gameStarted, roomPlayers, room, navigate]);
 
   const showNotification = (title, message, type = 'info', duration = 4000) => {
     setNotification({ title, message, type });
@@ -384,7 +509,6 @@ const ImpostorGame = () => {
     }
   };
 
-  // ✅ ACTUALIZADO: Mostrar resultados con broadcast para todos
   const showResults = async () => {
     try {
       const sessions = await impostorService.getRoomSessions(roomCode);
@@ -401,7 +525,7 @@ const ImpostorGame = () => {
       
       setShowResultsModal(true);
       
-      // ✅ Hacer broadcast para que TODOS vean los resultados
+      // Hacer broadcast para que TODOS vean los resultados
       const channel = supabase.channel(`room-${roomCode}-results-broadcast`);
       
       await channel.subscribe(async (status) => {
@@ -445,8 +569,34 @@ const ImpostorGame = () => {
   const exitGame = async () => {
     try {
       if (isHost && currentUser) {
-        await impostorService.leaveRoom(roomCode, currentUser.id);
-        await impostorService.endRoom(roomCode);
+        console.log('👑 Host saliendo, cerrando sala para todos...');
+        
+        // Primero hacer broadcast para avisar a todos
+        const channel = supabase.channel(`room-${roomCode}-closed-broadcast-exit`);
+        
+        await channel.subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.send({
+              type: 'broadcast',
+              event: 'room_closed',
+              payload: { 
+                roomCode,
+                reason: 'host_left',
+                timestamp: new Date().toISOString()
+              }
+            });
+            console.log('📡 Broadcast enviado: room_closed desde exitGame');
+            
+            // Esperar un poco para que llegue el broadcast
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Luego cerrar la sala y salir
+            await impostorService.endRoom(roomCode);
+            await impostorService.leaveRoom(roomCode, currentUser.id);
+            
+            supabase.removeChannel(channel);
+          }
+        });
       } else if (currentUser) {
         await impostorService.leaveRoom(roomCode, currentUser.id);
       }
