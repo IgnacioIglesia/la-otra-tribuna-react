@@ -36,6 +36,11 @@ const ImpostorGame = () => {
   const hasLoadedRole = useRef(false);
   const previousPlayerIdRef = useRef(null);
 
+  // ==========================================
+  // TODOS LOS useEffect DEBEN ESTAR AQUÍ
+  // ANTES DE CUALQUIER RETURN CONDICIONAL
+  // ==========================================
+
   useEffect(() => {
     initializeRoom();
   }, [roomCode]);
@@ -197,7 +202,6 @@ const ImpostorGame = () => {
       }
     );
 
-    // 🔹 Suscripción para que TODOS reciban los resultados
     const resultsSubscription = supabase
       .channel(`room-${roomCode}-results`)
       .on(
@@ -307,6 +311,35 @@ const ImpostorGame = () => {
       clearInterval(roomCheckInterval);
     };
   }, [roomCode, gameStarted, roomPlayers, room, navigate]);
+
+  useEffect(() => {
+    if (!roomCode) return;
+
+    const waitingSubscription = supabase
+      .channel(`room-${roomCode}-waiting-listener`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'impostor_players',
+          filter: `room_code=eq.${roomCode}`,
+        },
+        (payload) => {
+          console.log('📡 Nuevo jugador en espera:', payload.new);
+          setRoomPlayers((prev) => [...prev, payload.new]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(waitingSubscription);
+    };
+  }, [roomCode]);
+
+  // ==========================================
+  // FUNCIONES AUXILIARES
+  // ==========================================
 
   const showNotification = (title, message, type = 'info', duration = 4000) => {
     setNotification({ title, message, type });
@@ -519,7 +552,6 @@ const ImpostorGame = () => {
       
       setShowResultsModal(true);
       
-      // 🔹 Broadcast en el MISMO canal que escucha todo el mundo
       const channel = supabase.channel(`room-${roomCode}-results`);
       
       await channel.subscribe(async (status) => {
@@ -553,9 +585,7 @@ const ImpostorGame = () => {
     setIsRevealed(false);
     setPlayerRole(null);
 
-    // 🔹 Primero activamos jugadores que estaban en espera
     await startNewRound();
-    // 🔹 Luego iniciamos nueva ronda
     await startGame();
   };
 
@@ -601,16 +631,42 @@ const ImpostorGame = () => {
     }
   };
 
+  const startNewRound = async () => {
+    if (!isHost) return;
+
+    try {
+      const { error } = await supabase
+        .from('impostor_players')
+        .update({ is_waiting: false })
+        .eq('room_code', roomCode)
+        .eq('is_waiting', true);
+
+      if (error) throw error;
+
+      console.log('✅ Jugadores en espera ahora activos');
+      await loadRoomPlayers();
+    } catch (err) {
+      console.error('Error al activar jugadores en espera:', err);
+    }
+  };
+
+  // ==========================================
+  // CÁLCULOS Y VARIABLES DERIVADAS
+  // ==========================================
+
   const maxImpostorsForCurrentPlayers = Math.min(
     4,
     Math.max(1, Math.floor(roomPlayers.length / 2) - 1)
   );
 
-  // 🔹 Saber si este jugador está marcado como "en espera"
   const currentPlayerRecord = roomPlayers.find(
     (p) => p.player_number === playerNumber
   );
   const isWaitingPlayer = currentPlayerRecord?.is_waiting;
+
+  // ==========================================
+  // RENDERS CONDICIONALES
+  // ==========================================
 
   if (loading && !room) {
     return (
@@ -641,50 +697,9 @@ const ImpostorGame = () => {
     );
   }
 
-  useEffect(() => {
-    if (!roomCode) return;
-
-    const waitingSubscription = supabase
-      .channel(`room-${roomCode}-waiting-listener`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'impostor_players',
-          filter: `room_code=eq.${roomCode}`,
-        },
-        (payload) => {
-          console.log('📡 Nuevo jugador en espera:', payload.new);
-          setRoomPlayers((prev) => [...prev, payload.new]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(waitingSubscription);
-    };
-  }, [roomCode]);
-
-  const startNewRound = async () => {
-    if (!isHost) return;
-
-    try {
-      // Todos los que estaban en espera pasan a activos
-      const { error } = await supabase
-        .from('impostor_players')
-        .update({ is_waiting: false })
-        .eq('room_code', roomCode)
-        .eq('is_waiting', true);
-
-      if (error) throw error;
-
-      console.log('✅ Jugadores en espera ahora activos');
-      await loadRoomPlayers();
-    } catch (err) {
-      console.error('Error al activar jugadores en espera:', err);
-    }
-  };
+  // ==========================================
+  // RENDER PRINCIPAL
+  // ==========================================
 
   return (
     <>
