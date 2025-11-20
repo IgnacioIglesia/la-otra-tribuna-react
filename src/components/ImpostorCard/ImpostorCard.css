@@ -6,49 +6,118 @@
   border-radius: 25px;
   overflow: hidden;
   position: relative;
-  transform-origin: top center;
+  transform-origin: center center;
+  perspective: 1500px;
 }
 
-/* Animación de DESENROLLAR (aparecer) */
+/* ===================================
+   ANIMACIÓN DE DESENROLLAR (APARECER)
+   =================================== */
+
 @keyframes unrollPaper {
   0% {
-    transform: scaleY(0) rotateX(90deg);
+    transform: scaleY(0.05) rotateX(90deg);
     opacity: 0;
+    filter: blur(8px);
   }
-  50% {
-    transform: scaleY(0.5) rotateX(45deg);
-    opacity: 0.5;
+  30% {
+    transform: scaleY(0.3) rotateX(60deg);
+    opacity: 0.4;
+    filter: blur(4px);
+  }
+  60% {
+    transform: scaleY(0.7) rotateX(20deg);
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+  85% {
+    transform: scaleY(0.95) rotateX(5deg);
+    opacity: 0.95;
+    filter: blur(0);
   }
   100% {
     transform: scaleY(1) rotateX(0deg);
     opacity: 1;
+    filter: blur(0);
   }
 }
 
-/* Animación de ENROLLAR (desaparecer) */
+/* ===================================
+   ANIMACIÓN DE ENROLLAR (DESAPARECER)
+   =================================== */
+
 @keyframes rollPaper {
   0% {
     transform: scaleY(1) rotateX(0deg);
     opacity: 1;
+    filter: blur(0);
+  }
+  20% {
+    transform: scaleY(0.9) rotateX(-10deg);
+    opacity: 0.9;
+    filter: blur(0);
   }
   50% {
     transform: scaleY(0.5) rotateX(-45deg);
-    opacity: 0.5;
+    opacity: 0.6;
+    filter: blur(3px);
+  }
+  80% {
+    transform: scaleY(0.15) rotateX(-75deg);
+    opacity: 0.2;
+    filter: blur(6px);
   }
   100% {
-    transform: scaleY(0) rotateX(-90deg);
+    transform: scaleY(0.05) rotateX(-90deg);
     opacity: 0;
+    filter: blur(8px);
+  }
+}
+
+/* ===================================
+   ANIMACIÓN DEL CONTENIDO INTERNO
+   =================================== */
+
+@keyframes fadeInContent {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutContent {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
   }
 }
 
 /* Aplicar animación al card cuando se revela */
 .impostor-card.revealing {
-  animation: unrollPaper 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: unrollPaper 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-style: preserve-3d;
+}
+
+.impostor-card.revealing .card-content {
+  animation: fadeInContent 0.8s ease 0.4s both;
 }
 
 /* Aplicar animación al card cuando se oculta */
 .impostor-card.hiding {
-  animation: rollPaper 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+  animation: rollPaper 0.8s cubic-bezier(0.6, -0.28, 0.735, 0.045);
+  transform-style: preserve-3d;
+}
+
+.impostor-card.hiding .card-content {
+  animation: fadeOutContent 0.4s ease both;
 }
 
 .card-content {
@@ -58,7 +127,10 @@
   z-index: 1;
 }
 
-/* Card de Impostor - Glassmorphism Oscuro */
+/* ===================================
+   CARD DE IMPOSTOR - GLASSMORPHISM
+   =================================== */
+
 .impostor-card.impostor {
   background: rgba(30, 30, 30, 0.4);
   backdrop-filter: blur(30px) saturate(150%);
@@ -67,8 +139,10 @@
   box-shadow:
     0 15px 60px rgba(0, 0, 0, 0.5),
     inset 0 0 50px rgba(168, 255, 120, 0.05);
-  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-             impostorPulse 3s infinite ease-in-out;
+}
+
+.impostor-card.impostor:not(.revealing):not(.hiding) {
+  animation: impostorPulse 3s infinite ease-in-out;
 }
 
 @keyframes impostorPulse {
@@ -89,8 +163,11 @@
 .impostor-icon {
   font-size: 100px;
   margin-bottom: 25px;
-  animation: rotateAndScale 4s ease-in-out infinite;
   filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+}
+
+.impostor-card:not(.revealing):not(.hiding) .impostor-icon {
+  animation: rotateAndScale 4s ease-in-out infinite;
 }
 
 @keyframes rotateAndScale {
@@ -115,6 +192,9 @@
   background-clip: text;
   text-shadow: 0 5px 40px rgba(168, 255, 120, 0.4);
   letter-spacing: 3px;
+}
+
+.impostor-card:not(.revealing):not(.hiding) .impostor-title {
   animation: titleGlow 2s ease-in-out infinite;
 }
 
@@ -135,7 +215,10 @@
   text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* BOTÓN MEJORADO - GLASSMORPHISM */
+/* ===================================
+   BOTÓN MEJORADO - GLASSMORPHISM
+   =================================== */
+
 .impostor-hide-role-btn {
   width: 100%;
   max-width: 320px;
@@ -204,7 +287,10 @@
   font-weight: 700;
 }
 
-/* Card de Jugador Normal - Glassmorphism Claro */
+/* ===================================
+   CARD DE JUGADOR NORMAL
+   =================================== */
+
 .impostor-card.player {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(30px) saturate(180%);
@@ -230,8 +316,11 @@
   box-shadow:
     0 10px 40px rgba(168, 255, 120, 0.3),
     inset 0 0 30px rgba(255, 255, 255, 0.1);
-  animation: imageFloat 3s ease-in-out infinite;
   position: relative;
+}
+
+.impostor-card:not(.revealing):not(.hiding) .player-image-container {
+  animation: imageFloat 3s ease-in-out infinite;
 }
 
 .player-image-container::before {
@@ -241,9 +330,12 @@
   border-radius: 50%;
   background: linear-gradient(45deg, #a8ff78, #78ffd6, #a8ff78);
   background-size: 200% 200%;
-  animation: gradientSpin 3s linear infinite;
   z-index: -1;
   filter: blur(10px);
+}
+
+.impostor-card:not(.revealing):not(.hiding) .player-image-container::before {
+  animation: gradientSpin 3s linear infinite;
 }
 
 @keyframes gradientSpin {
@@ -309,7 +401,10 @@
     inset 0 0 20px rgba(168, 255, 120, 0.15);
 }
 
-/* Card de Espera */
+/* ===================================
+   CARD DE ESPERA
+   =================================== */
+
 .impostor-card.waiting {
   background: rgba(50, 50, 50, 0.4);
   backdrop-filter: blur(30px) saturate(120%);
@@ -351,7 +446,26 @@
   font-size: 1.1rem;
 }
 
-/* Responsive */
+/* ===================================
+   MEJORAS DE RENDIMIENTO
+   =================================== */
+
+.impostor-card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.impostor-card * {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+
 @media (max-width: 768px) {
   .impostor-card {
     margin: 15px auto;
@@ -418,5 +532,14 @@
     max-width: 100%;
     padding: 14px 25px;
     font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impostor-card,
+  .impostor-card * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

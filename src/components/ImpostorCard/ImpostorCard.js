@@ -4,21 +4,34 @@ import './ImpostorCard.css';
 const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
   const [imageError, setImageError] = useState(false);
   const [animationClass, setAnimationClass] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     if (isRevealed) {
+      // Iniciar con el card invisible y colapsado
+      setIsVisible(true);
       setAnimationClass('revealing');
-      const timer = setTimeout(() => setAnimationClass(''), 800);
+      
+      // Remover la clase de animación después de que termine
+      const timer = setTimeout(() => {
+        setAnimationClass('');
+      }, 1000);
+      
       return () => clearTimeout(timer);
+    } else {
+      setIsVisible(false);
+      setAnimationClass('');
     }
   }, [isRevealed]);
 
   const handleHideRole = () => {
     setAnimationClass('hiding');
+    
+    // Esperar a que termine la animación antes de ocultar
     setTimeout(() => {
-      onHideRole();
       setAnimationClass('');
-    }, 600);
+      onHideRole();
+    }, 800);
   };
 
   if (!isRevealed) {
