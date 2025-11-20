@@ -228,17 +228,38 @@ class ImpostorService {
     }
   }
 
-  // Obtener jugadores en la sala
+  // Obtener jugadores en la sala CON NOMBRES COMPLETOS
   async getRoomPlayers(roomCode) {
     try {
       const { data, error } = await supabase
         .from('impostor_players')
-        .select('*')
+        .select(`
+          *,
+          perfil!inner(nombre, apellido, username)
+        `)
         .eq('room_code', roomCode)
         .order('player_number');
 
       if (error) throw error;
-      return data || [];
+      
+      // Formatear nombres completos
+      const playersWithNames = (data || []).map(player => {
+        const profile = player.perfil;
+        let displayName = player.username;
+        
+        if (profile?.nombre && profile?.apellido) {
+          displayName = `${profile.nombre} ${profile.apellido}`;
+        } else if (profile?.username) {
+          displayName = profile.username;
+        }
+        
+        return {
+          ...player,
+          username: displayName
+        };
+      });
+      
+      return playersWithNames;
     } catch (error) {
       console.error('Error fetching room players:', error);
       throw error;

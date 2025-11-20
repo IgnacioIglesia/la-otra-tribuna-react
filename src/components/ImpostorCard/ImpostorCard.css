@@ -2,22 +2,53 @@
   width: 100%;
   max-width: 550px;
   margin: 20px auto;
-  padding: 0 15px; /* Añadido para evitar que quede pegado a los bordes */
+  padding: 0 15px;
   border-radius: 25px;
   overflow: hidden;
-  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
+  transform-origin: top center;
 }
 
-@keyframes cardAppear {
-  from {
+/* Animación de DESENROLLAR (aparecer) */
+@keyframes unrollPaper {
+  0% {
+    transform: scaleY(0) rotateX(90deg);
     opacity: 0;
-    transform: scale(0.8) translateY(50px);
   }
-  to {
+  50% {
+    transform: scaleY(0.5) rotateX(45deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scaleY(1) rotateX(0deg);
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
+}
+
+/* Animación de ENROLLAR (desaparecer) */
+@keyframes rollPaper {
+  0% {
+    transform: scaleY(1) rotateX(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(0.5) rotateX(-45deg);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scaleY(0) rotateX(-90deg);
+    opacity: 0;
+  }
+}
+
+/* Aplicar animación al card cuando se revela */
+.impostor-card.revealing {
+  animation: unrollPaper 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Aplicar animación al card cuando se oculta */
+.impostor-card.hiding {
+  animation: rollPaper 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045);
 }
 
 .card-content {
@@ -99,38 +130,78 @@
 .impostor-subtitle {
   font-size: 1.2rem;
   line-height: 1.8;
-  margin: 25px 0;
+  margin: 25px 0 40px 0;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
 }
 
-.impostor-warning {
-  background: rgba(168, 255, 120, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 18px 30px;
+/* BOTÓN MEJORADO - GLASSMORPHISM */
+.impostor-hide-role-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 16px 32px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.15) 0%, rgba(120, 255, 214, 0.15) 100%);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 2px solid rgba(168, 255, 120, 0.4);
   border-radius: 50px;
-  margin-top: 35px;
+  color: white;
+  font-size: 1rem;
   font-weight: 700;
-  font-size: 1.15rem;
-  color: #a8ff78;
-  border: 2px solid rgba(168, 255, 120, 0.3);
-  box-shadow:
-    0 8px 30px rgba(168, 255, 120, 0.2),
-    inset 0 0 20px rgba(168, 255, 120, 0.1);
-  animation: warningPulse 2s infinite;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    0 6px 25px rgba(168, 255, 120, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-@keyframes warningPulse {
-  0%, 100% {
-    box-shadow:
-      0 8px 30px rgba(168, 255, 120, 0.2),
-      inset 0 0 20px rgba(168, 255, 120, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 8px 40px rgba(168, 255, 120, 0.4),
-      inset 0 0 30px rgba(168, 255, 120, 0.15);
-  }
+.impostor-hide-role-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.impostor-hide-role-btn:hover::before {
+  left: 100%;
+}
+
+.impostor-hide-role-btn:hover {
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.25) 0%, rgba(120, 255, 214, 0.25) 100%);
+  border-color: rgba(168, 255, 120, 0.6);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 10px 35px rgba(168, 255, 120, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.impostor-hide-role-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.hide-btn-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.hide-btn-text {
+  font-weight: 700;
 }
 
 /* Card de Jugador Normal - Glassmorphism Claro */
@@ -211,7 +282,7 @@
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin: 25px 0;
+  margin: 25px 0 35px 0;
   flex-wrap: wrap;
 }
 
@@ -236,21 +307,6 @@
   box-shadow:
     0 6px 25px rgba(168, 255, 120, 0.3),
     inset 0 0 20px rgba(168, 255, 120, 0.15);
-}
-
-.player-instruction {
-  background: rgba(168, 255, 120, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 22px 30px;
-  border-radius: 18px;
-  margin-top: 35px;
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(168, 255, 120, 0.25);
-  box-shadow:
-    0 8px 30px rgba(168, 255, 120, 0.2),
-    inset 0 0 20px rgba(168, 255, 120, 0.05);
 }
 
 /* Card de Espera */
@@ -295,36 +351,11 @@
   font-size: 1.1rem;
 }
 
-/* Card de Rol Oculto */
-.impostor-card.hidden-role {
-  background: rgba(50, 50, 50, 0.4);
-  backdrop-filter: blur(20px) saturate(120%);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.5),
-    inset 0 0 30px rgba(255, 255, 255, 0.05);
-  padding: 40px 30px;
-  text-align: center;
-  border-radius: 25px;
-}
-
-.hidden-role h2 {
-  font-size: 2rem;
-  color: #ffffff;
-  margin-bottom: 15px;
-}
-
-.hidden-role p {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .impostor-card {
     margin: 15px auto;
-    padding: 0 10px; /* Ajuste adicional para pantallas medianas */
+    padding: 0 10px;
   }
 
   .card-content {
@@ -352,12 +383,18 @@
   .waiting-icon {
     font-size: 80px;
   }
+
+  .impostor-hide-role-btn {
+    max-width: 280px;
+    padding: 16px 30px;
+    font-size: 1.05rem;
+  }
 }
 
 @media (max-width: 480px) {
   .impostor-card {
     margin: 10px auto;
-    padding: 0 8px; /* Ajuste adicional para pantallas pequeñas */
+    padding: 0 8px;
   }
 
   .card-content {
@@ -375,5 +412,11 @@
   .player-image-container {
     width: 160px;
     height: 160px;
+  }
+
+  .impostor-hide-role-btn {
+    max-width: 100%;
+    padding: 14px 25px;
+    font-size: 0.95rem;
   }
 }

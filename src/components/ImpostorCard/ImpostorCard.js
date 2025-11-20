@@ -1,8 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ImpostorCard.css';
 
 const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
   const [imageError, setImageError] = useState(false);
+  const [animationClass, setAnimationClass] = useState('');
+
+  useEffect(() => {
+    if (isRevealed) {
+      setAnimationClass('revealing');
+      const timer = setTimeout(() => setAnimationClass(''), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isRevealed]);
+
+  const handleHideRole = () => {
+    setAnimationClass('hiding');
+    setTimeout(() => {
+      onHideRole();
+      setAnimationClass('');
+    }, 600);
+  };
 
   if (!isRevealed) {
     return (
@@ -18,7 +35,7 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
 
   if (isImpostor) {
     return (
-      <div className="impostor-card impostor">
+      <div className={`impostor-card impostor ${animationClass}`}>
         <div className="card-content">
           <div className="impostor-icon">🎭</div>
           <h1 className="impostor-title">¡ERES EL IMPOSTOR!</h1>
@@ -30,10 +47,10 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
 
           <button
             className="impostor-hide-role-btn"
-            onClick={onHideRole}
+            onClick={handleHideRole}
           >
             <span className="hide-btn-icon">🙈</span>
-            <span className="hide-btn-text">Ocultar Rol</span>
+            <span className="hide-btn-text">Ocultar mi rol</span>
           </button>
         </div>
       </div>
@@ -52,7 +69,7 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
   };
 
   return (
-    <div className="impostor-card player">
+    <div className={`impostor-card player ${animationClass}`}>
       <div className="card-content">
         <div className="player-image-container">
           <img
@@ -89,10 +106,10 @@ const ImpostorCard = ({ isImpostor, player, isRevealed, onHideRole }) => {
 
         <button
           className="impostor-hide-role-btn"
-          onClick={onHideRole}
+          onClick={handleHideRole}
         >
           <span className="hide-btn-icon">🙈</span>
-          <span className="hide-btn-text">Ocultar Rol</span>
+          <span className="hide-btn-text">Ocultar mi rol</span>
         </button>
       </div>
     </div>

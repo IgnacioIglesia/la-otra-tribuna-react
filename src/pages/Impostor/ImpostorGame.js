@@ -3,7 +3,6 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import impostorService from '../../services/impostorService';
 import ImpostorCard from '../../components/ImpostorCard/ImpostorCard';
-import RoundResultsModal from '../../components/RoundResultsModal/RoundResultsModal';
 import Header from '../../components/Header/Header';
 import './ImpostorGame.css';
 
@@ -29,6 +28,7 @@ const ImpostorGame = () => {
   
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [roundResults, setRoundResults] = useState(null);
+  const [showResultsView, setShowResultsView] = useState(false);
   
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   
@@ -219,7 +219,9 @@ const ImpostorGame = () => {
               selectedPlayer: room?.footballers
             });
             
-            setShowResultsModal(true);
+            // En lugar de modal, cambiar a vista de resultados
+            setShowResultsView(true);
+            setIsRevealed(false);
             
             showNotification(
               '📊 Resultados Disponibles',
@@ -544,7 +546,9 @@ const ImpostorGame = () => {
         selectedPlayer: room?.footballers
       });
       
-      setShowResultsModal(true);
+      // Cambiar a vista de resultados
+      setShowResultsView(true);
+      setIsRevealed(false);
       
       // 🔥 ENVIAR BROADCAST A TODOS LOS JUGADORES
       await impostorService.broadcastResults(roomCode);
@@ -563,6 +567,7 @@ const ImpostorGame = () => {
   };
 
   const handleNewRound = async () => {
+    setShowResultsView(false);
     setShowResultsModal(false);
     
     hasLoadedRole.current = false;
@@ -649,7 +654,7 @@ const ImpostorGame = () => {
       <>
         <Header />
         <div className="impostor-game-container loading">
-          <div className="impostor-game-spinner">⏳</div>
+          <div className="impostor-game-spinner rotating">⏳</div>
           <p>Cargando sala...</p>
         </div>
       </>
@@ -676,14 +681,6 @@ const ImpostorGame = () => {
   return (
     <>
       <Header />
-      
-      <RoundResultsModal
-        isOpen={showResultsModal}
-        onClose={() => setShowResultsModal(false)}
-        onNewRound={isHost ? handleNewRound : null}
-        impostorPlayers={roundResults?.impostorPlayers}
-        selectedPlayer={roundResults?.selectedPlayer}
-      />
       
       {showLeaveConfirm && (
         <div
@@ -904,7 +901,81 @@ const ImpostorGame = () => {
 
         {gameStarted && (
           <div className="impostor-game-active">
-            {isWaitingPlayer ? (
+            {showResultsView ? (
+              /* VISTA DE RESULTADOS */
+              <div className="impostor-results-view">
+                <div className="results-header">
+                  <div className="results-icon">🏆</div>
+                  <h2>Resultados de la Ronda</h2>
+                  <p>¡Descubre quién era el impostor!</p>
+                </div>
+
+                {roundResults?.selectedPlayer && (
+                  <div className="results-player-card">
+                    <div className="results-player-icon">⚽</div>
+                    <h3>Jugador de la Ronda</h3>
+                    <p className="results-player-name">{roundResults.selectedPlayer.name}</p>
+                    <div className="results-player-badges">
+                      <span className="results-badge">{roundResults.selectedPlayer.position}</span>
+                      <span className="results-badge">{roundResults.selectedPlayer.nationality}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="results-impostor-card">
+                  <div className="results-impostor-header">
+                    <div className="results-impostor-icon">🎭</div>
+                    <h3>
+                      {roundResults?.impostorPlayers?.length === 1 ? 'El Impostor' : 'Los Impostores'}
+                    </h3>
+                  </div>
+
+                  {roundResults?.impostorPlayers && roundResults.impostorPlayers.length > 0 ? (
+                    <div className="results-impostor-list">
+                      {roundResults.impostorPlayers.map((player, index) => (
+                        <div
+                          key={index}
+                          className="results-impostor-item"
+                          style={{ animationDelay: `${index * 0.15}s` }}
+                        >
+                          <div className="results-impostor-number">
+                            #{player.player_number}
+                          </div>
+                          <div className="results-impostor-info">
+                            <div className="results-impostor-username">
+                              {player.username}
+                            </div>
+                            <div className="results-impostor-label">
+                              Jugador #{player.player_number}
+                            </div>
+                          </div>
+                          <div className="results-impostor-emoji">🎭</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="results-impostor-empty">
+                      No hay impostores para mostrar
+                    </p>
+                  )}
+                </div>
+
+                {isHost && (
+                  <button
+                    onClick={handleNewRound}
+                    className="impostor-game-btn impostor-game-btn-primary impostor-game-btn-large"
+                  >
+                    🔄 Nueva Ronda
+                  </button>
+                )}
+
+                {!isHost && (
+                  <p className="impostor-game-waiting-host">
+                    ⏳ Esperando a que el host inicie una nueva ronda...
+                  </p>
+                )}
+              </div>
+            ) : isWaitingPlayer ? (
               <div className="impostor-game-reveal-section">
                 <h2>🙋 Estás en espera</h2>
                 <p className="impostor-game-reveal-instructions">

@@ -1524,3 +1524,317 @@
     transform: translateY(0);
   }
 }
+
+/* Agregar al final de ImpostorGame.css */
+
+.impostor-game-spinner.rotating {
+  animation: spinClock 2s linear infinite !important;
+}
+
+@keyframes spinClock {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===================================
+   VISTA DE RESULTADOS INLINE
+   =================================== */
+
+.impostor-results-view {
+  max-width: 750px;
+  margin: 0 auto;
+  animation: resultsSlideUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes resultsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.results-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.results-icon {
+  font-size: 70px;
+  margin-bottom: 20px;
+  animation: resultsBounce 1s ease infinite;
+  filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+}
+
+@keyframes resultsBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+.results-header h2 {
+  font-size: 2.3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffffff 0%, #a8ff78 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+  text-shadow: 0 5px 30px rgba(168, 255, 120, 0.4);
+}
+
+.results-header p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Card del jugador seleccionado */
+.results-player-card {
+  background: rgba(168, 255, 120, 0.15);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 22px;
+  padding: 32px 28px;
+  margin-bottom: 30px;
+  border: 2px solid rgba(168, 255, 120, 0.35);
+  box-shadow: 
+    0 12px 45px rgba(168, 255, 120, 0.25),
+    inset 0 0 30px rgba(168, 255, 120, 0.08);
+  text-align: center;
+  animation: resultsCardAppear 0.5s ease 0.2s backwards;
+}
+
+@keyframes resultsCardAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.results-player-icon {
+  font-size: 45px;
+  margin-bottom: 18px;
+}
+
+.results-player-card h3 {
+  color: #a8ff78;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+  text-shadow: 0 0 25px rgba(168, 255, 120, 0.5);
+}
+
+.results-player-name {
+  color: white;
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 18px;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(168, 255, 120, 0.3);
+}
+
+.results-player-badges {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.results-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 9px 20px;
+  border-radius: 22px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Card de impostores */
+.results-impostor-card {
+  background: rgba(255, 100, 100, 0.18);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 22px;
+  padding: 32px 28px;
+  margin-bottom: 30px;
+  border: 2px solid rgba(255, 100, 100, 0.35);
+  box-shadow: 
+    0 12px 45px rgba(255, 100, 100, 0.25),
+    inset 0 0 30px rgba(255, 100, 100, 0.08);
+  animation: resultsCardAppear 0.5s ease 0.4s backwards;
+}
+
+.results-impostor-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.results-impostor-icon {
+  font-size: 45px;
+  animation: impostorWiggle 1s ease infinite;
+}
+
+@keyframes impostorWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+
+.results-impostor-card h3 {
+  color: #ff6b6b;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 0 0 25px rgba(255, 107, 107, 0.5);
+}
+
+.results-impostor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.results-impostor-item {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  transition: all 0.3s ease;
+  animation: impostorSlideIn 0.4s ease backwards;
+}
+
+@keyframes impostorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.results-impostor-item:hover {
+  transform: translateX(6px);
+  background: rgba(255, 100, 100, 0.22);
+  border-color: rgba(255, 100, 100, 0.35);
+}
+
+.results-impostor-number {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 5px 22px rgba(255, 107, 107, 0.45);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.results-impostor-info {
+  flex: 1;
+}
+
+.results-impostor-username {
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.results-impostor-label {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.results-impostor-emoji {
+  font-size: 1.8rem;
+}
+
+.results-impostor-empty {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  font-size: 1.05rem;
+  padding: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .results-header h2 {
+    font-size: 1.8rem;
+  }
+
+  .results-player-card h3,
+  .results-impostor-card h3 {
+    font-size: 1.3rem;
+  }
+
+  .results-player-name {
+    font-size: 1.6rem;
+  }
+
+  .results-impostor-username {
+    font-size: 1.1rem;
+  }
+
+  .results-player-card,
+  .results-impostor-card {
+    padding: 25px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .results-icon {
+    font-size: 55px;
+  }
+
+  .results-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .results-player-icon,
+  .results-impostor-icon {
+    font-size: 38px;
+  }
+
+  .results-impostor-item {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .results-impostor-number {
+    width: 40px;
+    height: 40px;
+    font-size: 1.4rem;
+  }
+}
