@@ -1,5 +1,5 @@
 /* ================================
-   ESTILOS REGISTRO (VERDE INSTITUCIONAL)
+   REGISTER.CSS - ESTILOS COMPLETOS
    ================================ */
 
 /* ===== Fondo general ===== */
@@ -12,174 +12,423 @@
   padding: 48px 16px 64px;
 }
 
-/* ===== Tarjeta ===== */
+/* ===== Tarjeta principal ===== */
 .auth-card {
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
   padding: 32px 28px 36px;
 }
 
-/* ===== Logo ===== */
+.register-selection-card {
+  max-width: 560px;
+}
+
+/* ===== Header ===== */
+.auth-head {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
 .auth-logo {
   display: block;
-  height: 100px;
-  width: auto;
-  margin: 0 auto 16px;
+  max-width: 120px;
+  height: auto;
+  margin: 0 auto 1rem;
   object-fit: contain;
 }
 
-/* ===== Título ===== */
 .auth-title {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 22px;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #1b1b1f;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.auth-subtitle {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* ===== Progress Bar ===== */
+.progress-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.progress-bar__step {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e5e7eb;
+  transition: background 0.3s ease;
 }
 
 /* ===== Formulario ===== */
 .auth-form {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
+/* ===== Campos ===== */
 .field {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.field span {
+.field__label {
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: #374151;
 }
 
-.field input,
-.field select {
-  height: 42px;
-  padding: 0 12px;
-  border: 1px solid #e5e7eb;
+.field__input {
+  height: 46px;
+  padding: 0 1rem;
+  border: 1.5px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 1rem;
   background: #fff;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.field input:focus,
-.field select:focus {
+.field__input:focus {
   outline: none;
-  border-color: #004225; /* Verde institucional */
-  box-shadow: 0 0 0 3px rgba(0, 66, 37, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* ===== Error ===== */
-.err {
-  color: #b91c1c;
-  font-size: 12px;
+.field__input--password {
+  padding-right: 3rem;
 }
 
-/* ===== Links ===== */
-.auth-card a {
-  color: #004225;
-  font-weight: 700;
-  text-decoration: none;
+.field__select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
 }
 
-.auth-card a:hover {
-  text-decoration: underline;
+/* ===== Password wrapper ===== */
+.field__password-wrap {
+  position: relative;
 }
 
-/* ===== Indicador de pasos ===== */
-.step-track {
-  height: 4px;
-  border-radius: 2px;
-  background: #e5e7eb;
+.field__toggle-password {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: #6b7280;
+  padding: 4px;
+  transition: opacity 0.2s;
 }
 
-.step-track.is-active {
-  background: #004225;
+.field__toggle-password:hover {
+  opacity: 0.7;
 }
 
-/* ===== Botones ===== */
-.actions-row {
+/* ===== Password Strength ===== */
+.password-strength {
+  margin-top: 0.75rem;
+}
+
+.password-strength__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
+.password-strength__bar {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.password-strength__fill {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.password-strength__requirements {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.requirement--met {
+  color: #374151;
+}
+
+.requirement--met span:first-child {
+  color: #16a34a;
+}
+
+/* ===== Password Match ===== */
+.password-match {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.password-match--success {
+  color: #16a34a;
+}
+
+.password-match--error {
+  color: #ef4444;
+}
+
+/* ===== Terms Checkbox ===== */
+.terms-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+
+.terms-checkbox:hover {
+  background: #f3f4f6;
+}
+
+.terms-checkbox input[type="checkbox"] {
+  margin-top: 0.25rem;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.terms-checkbox span {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.terms-link {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.terms-link:hover {
+  text-decoration: none;
+}
+
+/* ===== Error Message ===== */
+.error-message {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}
+
+/* ===== Form Actions ===== */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* ===== Botones ===== */
 .btn {
   border: none;
-  border-radius: 10px;
-  height: 44px;
-  padding: 0 18px;
-  font-weight: 700;
+  border-radius: 8px;
+  height: 48px;
+  padding: 0 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.1s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Botón primario (verde) */
-.btn-primary,
-.auth-card button[type="submit"] {
+.btn--primary {
+  flex: 2;
   background: #004225;
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 66, 37, 0.2);
 }
 
-.btn-primary:hover,
-.auth-card button[type="submit"]:hover {
-  background: #063c22; /* Hover verde más oscuro */
+.btn--primary:hover:not(:disabled) {
+  background: #063c22;
   transform: translateY(-1px);
 }
 
-/* Botón deshabilitado */
-.btn[disabled],
-.auth-card button[disabled] {
+.btn--secondary {
+  flex: 1;
+  background: #ffffff;
+  color: #374151;
+  border: 1.5px solid #e5e7eb;
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Botón fantasma */
-.btn-ghost {
-  background: transparent;
-  color: #004225;
-  border: 1px solid #004225;
+/* ===== Auth Alt / Link ===== */
+.auth-alt {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
-.btn-ghost:hover {
-  background: rgba(0, 66, 37, 0.05);
-}
-
-/* ===== Términos ===== */
-.terms {
-  margin-top: 10px;
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.4;
-}
-
-.terms a {
+.auth-link {
   color: #004225;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-link:hover {
   text-decoration: underline;
 }
 
-/* ===== Alternativa inferior ===== */
-.auth-alt {
-  margin-top: 18px;
-  text-align: center;
-  color: #475569;
+/* ===== Register Options (Selección) ===== */
+.register-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.auth-alt a {
-  color: #004225;
+.register-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.register-option--full:hover {
+  border-color: #004225;
+  background: #f0fdf4;
+}
+
+.register-option--impostor:hover {
+  border-color: #7c3aed;
+  background: #faf5ff;
+}
+
+.register-option__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.register-option__icon span {
+  font-size: 1.5rem;
+}
+
+.register-option__icon--full {
+  background: #004225;
+}
+
+.register-option__icon--impostor {
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+}
+
+.register-option__content {
+  flex: 1;
+}
+
+.register-option__title {
+  font-size: 1.1rem;
   font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
 }
 
-/* ===== Overlay (modal) ===== */
+.register-option__desc {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.register-option__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.register-option__arrow {
+  color: #9ca3af;
+  font-size: 1.25rem;
+  align-self: center;
+}
+
+/* ===== Tags ===== */
+.tag {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tag--green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.tag--purple {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+/* ===== Overlay ===== */
 .overlay-backdrop {
   position: fixed;
   inset: 0;
@@ -198,40 +447,109 @@
   width: 100%;
   text-align: center;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: overlayIn 0.2s ease-out;
 }
 
-.overlay-card h3 {
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.overlay-card__icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.overlay-card__title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #111827;
   margin-bottom: 0.75rem;
 }
 
-.overlay-card p {
+.overlay-card__text {
   color: #6b7280;
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
 
-.overlay-card .overlay-btn {
+.overlay-card__btn {
   padding: 0.75rem 2rem;
-  background: #004225;
   color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: opacity 0.2s;
 }
 
-.overlay-card .overlay-btn:hover {
-  background: #063c22;
+.overlay-card__btn:hover {
+  opacity: 0.9;
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 520px) {
+  .auth-wrap {
+    padding: 24px 16px 48px;
+  }
+
   .auth-card {
-    padding: 22px;
+    padding: 24px 20px 28px;
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+  }
+
+  .register-option {
+    padding: 1rem;
+  }
+
+  .register-option__icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .register-option__icon span {
+    font-size: 1.25rem;
+  }
+
+  .register-option__title {
+    font-size: 1rem;
+  }
+
+  .register-option__desc {
+    font-size: 0.85rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn--primary,
+  .btn--secondary {
+    flex: none;
+    width: 100%;
+  }
+
+  .btn--secondary {
+    order: 2;
+  }
+
+  .btn--primary {
+    order: 1;
+  }
+}
+
+@media (max-width: 360px) {
+  .register-option__tags {
+    display: none;
   }
 }

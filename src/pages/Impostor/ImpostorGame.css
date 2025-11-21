@@ -1,6 +1,6 @@
 .impostor-game-container {
   min-height: calc(100vh - 80px);
-  background: linear-gradient(135deg, #0a3d0c 0%, #1a5c1e 50%, #2d7a32 100%);
+  background: url('/public/assets/fondoimp2.png') center center / cover no-repeat fixed;
   padding: 40px 20px 100px;
   position: relative;
   overflow: hidden;
@@ -14,16 +14,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.impostor-game-container::before {
-  content: '';
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(168, 255, 120, 0.1) 0%, transparent 70%);
-  border-radius: 50%;
-  top: -250px;
-  left: -250px;
-  animation: gameFloat 25s infinite ease-in-out;
+.impostor-game-container::after {
+  display: none;
 }
 
 .impostor-game-container::after {

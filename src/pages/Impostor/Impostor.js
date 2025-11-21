@@ -33,7 +33,6 @@ const Impostor = () => {
       setError('');
 
       const userId = user?.id || null;
-      // Crear sala con valores por defecto: 5 jugadores, 1 impostor
       const room = await impostorService.createRoom(5, 1, userId);
       
       navigate(`/impostor/sala/${room.room_code}`, {
@@ -74,7 +73,7 @@ const Impostor = () => {
       
       <div className="impostor-page">
         <div className="impostor-hero">
-          <div className="hero-icon">🎭</div>
+          {/* Eliminado el emoji hero-icon */}
           <h1 className="impostor-main-title">IMPOSTOR FÚTBOL</h1>
           <p className="impostor-subtitle">
             ¿Quién es el impostor? Descúbrelo en este juego de deducción
@@ -253,4 +252,4 @@ const Impostor = () => {
   );
 };
 
-export default Impostor;  
+export default Impostor;
