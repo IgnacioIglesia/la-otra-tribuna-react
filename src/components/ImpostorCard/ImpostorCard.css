@@ -1,34 +1,116 @@
+/* ===================================
+   IMPOSTOR CARD - FLIP CARD ANIMATION
+   =================================== */
+
 .impostor-card {
   width: 100%;
   max-width: 550px;
   margin: 20px auto;
-  padding: 0 15px; /* Añadido para evitar que quede pegado a los bordes */
+  padding: 0 15px;
+  border-radius: 25px;
+  overflow: visible;
+  position: relative;
+  perspective: 1500px;
+}
+
+/* ===================================
+   CONTENEDOR DEL FLIP
+   =================================== */
+
+.card-flip-container {
+  position: relative;
+  width: 100%;
+  min-height: 450px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Estado: carta boca abajo (oculta) */
+.card-flip-container.hidden {
+  transform: rotateY(0deg);
+}
+
+/* Estado: carta boca arriba (revelada) */
+.card-flip-container.revealed {
+  transform: rotateY(180deg);
+}
+
+/* ===================================
+   CARAS DE LA CARTA
+   =================================== */
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  min-height: 450px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   border-radius: 25px;
   overflow: hidden;
-  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
 }
 
-@keyframes cardAppear {
-  from {
-    opacity: 0;
-    transform: scale(0.8) translateY(50px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+/* Cara trasera (la que se ve cuando está oculta) */
+.card-back {
+  background: linear-gradient(135deg, #0a3d0c 0%, #1a5c1e 50%, #2d7a32 100%);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border: 3px solid rgba(168, 255, 120, 0.4);
+  box-shadow:
+    0 15px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 50px rgba(168, 255, 120, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateY(0deg);
 }
 
-.card-content {
-  padding: 50px 35px;
+.card-back-content {
   text-align: center;
-  position: relative;
-  z-index: 1;
+  padding: 50px 35px;
 }
 
-/* Card de Impostor - Glassmorphism Oscuro */
-.impostor-card.impostor {
+.card-back-icon {
+  font-size: 100px;
+  margin-bottom: 25px;
+  filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+  animation: cardBackPulse 2s ease-in-out infinite;
+}
+
+@keyframes cardBackPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 50px rgba(168, 255, 120, 0.9));
+  }
+}
+
+.card-back-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 15px;
+  text-shadow: 0 2px 20px rgba(168, 255, 120, 0.4);
+}
+
+.card-back-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+}
+
+/* Cara frontal (la que se ve cuando está revelada) */
+.card-front {
+  transform: rotateY(180deg);
+}
+
+/* ===================================
+   CARD DE IMPOSTOR - GLASSMORPHISM
+   =================================== */
+
+.card-front.impostor {
   background: rgba(30, 30, 30, 0.4);
   backdrop-filter: blur(30px) saturate(150%);
   -webkit-backdrop-filter: blur(30px) saturate(150%);
@@ -36,8 +118,10 @@
   box-shadow:
     0 15px 60px rgba(0, 0, 0, 0.5),
     inset 0 0 50px rgba(168, 255, 120, 0.05);
-  animation: cardAppear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-             impostorPulse 3s infinite ease-in-out;
+}
+
+.card-flip-container.revealed .card-front.impostor {
+  animation: impostorPulse 3s infinite ease-in-out;
 }
 
 @keyframes impostorPulse {
@@ -55,11 +139,39 @@
   }
 }
 
+/* ===================================
+   CARD DE JUGADOR NORMAL
+   =================================== */
+
+.card-front.player {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 15px 60px rgba(0, 0, 0, 0.4),
+    inset 0 0 50px rgba(255, 255, 255, 0.05);
+}
+
+/* ===================================
+   CONTENIDO DE LA CARTA
+   =================================== */
+
+.card-content {
+  padding: 50px 35px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
 .impostor-icon {
   font-size: 100px;
   margin-bottom: 25px;
-  animation: rotateAndScale 4s ease-in-out infinite;
   filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+}
+
+.card-flip-container.revealed .impostor-icon {
+  animation: rotateAndScale 4s ease-in-out infinite;
 }
 
 @keyframes rotateAndScale {
@@ -84,6 +196,9 @@
   background-clip: text;
   text-shadow: 0 5px 40px rgba(168, 255, 120, 0.4);
   letter-spacing: 3px;
+}
+
+.card-flip-container.revealed .impostor-title {
   animation: titleGlow 2s ease-in-out infinite;
 }
 
@@ -99,50 +214,14 @@
 .impostor-subtitle {
   font-size: 1.2rem;
   line-height: 1.8;
-  margin: 25px 0;
+  margin: 25px 0 40px 0;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
 }
 
-.impostor-warning {
-  background: rgba(168, 255, 120, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 18px 30px;
-  border-radius: 50px;
-  margin-top: 35px;
-  font-weight: 700;
-  font-size: 1.15rem;
-  color: #a8ff78;
-  border: 2px solid rgba(168, 255, 120, 0.3);
-  box-shadow:
-    0 8px 30px rgba(168, 255, 120, 0.2),
-    inset 0 0 20px rgba(168, 255, 120, 0.1);
-  animation: warningPulse 2s infinite;
-}
-
-@keyframes warningPulse {
-  0%, 100% {
-    box-shadow:
-      0 8px 30px rgba(168, 255, 120, 0.2),
-      inset 0 0 20px rgba(168, 255, 120, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 8px 40px rgba(168, 255, 120, 0.4),
-      inset 0 0 30px rgba(168, 255, 120, 0.15);
-  }
-}
-
-/* Card de Jugador Normal - Glassmorphism Claro */
-.impostor-card.player {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow:
-    0 15px 60px rgba(0, 0, 0, 0.4),
-    inset 0 0 50px rgba(255, 255, 255, 0.05);
-}
+/* ===================================
+   IMAGEN DEL JUGADOR
+   =================================== */
 
 .player-image-container {
   width: 220px;
@@ -159,8 +238,11 @@
   box-shadow:
     0 10px 40px rgba(168, 255, 120, 0.3),
     inset 0 0 30px rgba(255, 255, 255, 0.1);
-  animation: imageFloat 3s ease-in-out infinite;
   position: relative;
+}
+
+.card-flip-container.revealed .player-image-container {
+  animation: imageFloat 3s ease-in-out infinite;
 }
 
 .player-image-container::before {
@@ -170,9 +252,12 @@
   border-radius: 50%;
   background: linear-gradient(45deg, #a8ff78, #78ffd6, #a8ff78);
   background-size: 200% 200%;
-  animation: gradientSpin 3s linear infinite;
   z-index: -1;
   filter: blur(10px);
+}
+
+.card-flip-container.revealed .player-image-container::before {
+  animation: gradientSpin 3s linear infinite;
 }
 
 @keyframes gradientSpin {
@@ -211,7 +296,7 @@
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin: 25px 0;
+  margin: 25px 0 35px 0;
   flex-wrap: wrap;
 }
 
@@ -238,22 +323,82 @@
     inset 0 0 20px rgba(168, 255, 120, 0.15);
 }
 
-.player-instruction {
-  background: rgba(168, 255, 120, 0.15);
-  backdrop-filter: blur(10px);
-  padding: 22px 30px;
-  border-radius: 18px;
-  margin-top: 35px;
-  font-size: 1.1rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(168, 255, 120, 0.25);
-  box-shadow:
-    0 8px 30px rgba(168, 255, 120, 0.2),
-    inset 0 0 20px rgba(168, 255, 120, 0.05);
+/* ===================================
+   BOTÓN DE OCULTAR ROL
+   =================================== */
+
+.impostor-hide-role-btn {
+  width: 100%;
+  max-width: 320px;
+  padding: 16px 32px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.15) 0%, rgba(120, 255, 214, 0.15) 100%);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 2px solid rgba(168, 255, 120, 0.4);
+  border-radius: 50px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: 
+    0 6px 25px rgba(168, 255, 120, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-/* Card de Espera */
+.impostor-hide-role-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.impostor-hide-role-btn:hover::before {
+  left: 100%;
+}
+
+.impostor-hide-role-btn:hover {
+  background: linear-gradient(135deg, rgba(168, 255, 120, 0.25) 0%, rgba(120, 255, 214, 0.25) 100%);
+  border-color: rgba(168, 255, 120, 0.6);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 10px 35px rgba(168, 255, 120, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.impostor-hide-role-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.hide-btn-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.hide-btn-text {
+  font-weight: 700;
+}
+
+/* ===================================
+   CARD DE ESPERA
+   =================================== */
+
 .impostor-card.waiting {
   background: rgba(50, 50, 50, 0.4);
   backdrop-filter: blur(30px) saturate(120%);
@@ -295,39 +440,43 @@
   font-size: 1.1rem;
 }
 
-/* Card de Rol Oculto */
-.impostor-card.hidden-role {
-  background: rgba(50, 50, 50, 0.4);
-  backdrop-filter: blur(20px) saturate(120%);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.5),
-    inset 0 0 30px rgba(255, 255, 255, 0.05);
-  padding: 40px 30px;
-  text-align: center;
-  border-radius: 25px;
+/* ===================================
+   MEJORAS DE RENDIMIENTO
+   =================================== */
+
+.impostor-card,
+.card-flip-container,
+.card-face {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.hidden-role h2 {
-  font-size: 2rem;
-  color: #ffffff;
-  margin-bottom: 15px;
-}
+/* ===================================
+   RESPONSIVE
+   =================================== */
 
-.hidden-role p {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* Responsive */
 @media (max-width: 768px) {
   .impostor-card {
     margin: 15px auto;
-    padding: 0 10px; /* Ajuste adicional para pantallas medianas */
+    padding: 0 10px;
+  }
+
+  .card-flip-container {
+    min-height: 400px;
+  }
+
+  .card-face {
+    min-height: 400px;
   }
 
   .card-content {
+    padding: 30px 20px;
+  }
+
+  .card-back-content {
     padding: 30px 20px;
   }
 
@@ -349,18 +498,45 @@
   }
 
   .impostor-icon,
-  .waiting-icon {
+  .waiting-icon,
+  .card-back-icon {
     font-size: 80px;
+  }
+
+  .impostor-hide-role-btn {
+    max-width: 280px;
+    padding: 16px 30px;
+    font-size: 1.05rem;
+  }
+
+  .card-back-title {
+    font-size: 1.5rem;
+  }
+
+  .card-back-subtitle {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .impostor-card {
     margin: 10px auto;
-    padding: 0 8px; /* Ajuste adicional para pantallas pequeñas */
+    padding: 0 8px;
+  }
+
+  .card-flip-container {
+    min-height: 380px;
+  }
+
+  .card-face {
+    min-height: 380px;
   }
 
   .card-content {
+    padding: 25px 15px;
+  }
+
+  .card-back-content {
     padding: 25px 15px;
   }
 
@@ -375,5 +551,25 @@
   .player-image-container {
     width: 160px;
     height: 160px;
+  }
+
+  .impostor-hide-role-btn {
+    max-width: 100%;
+    padding: 14px 25px;
+    font-size: 0.95rem;
+  }
+
+  .card-back-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .impostor-card,
+  .impostor-card *,
+  .card-flip-container {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.2s !important;
   }
 }
