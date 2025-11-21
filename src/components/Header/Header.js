@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import LocationModal from "../Modals/LocationModal";
@@ -47,11 +47,12 @@ export default function Header() {
   const menuRef = useRef(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // ✅ MENU MÓVIL CON IMPOSTOR FÚTBOL INCLUIDO
   const MOBILE_MENU = [
     { label: "Catálogo", href: "/", state: { scrollTo: "catalogo" } },
     { label: "Ofertas", href: "/offers" },
     { label: "Vender", href: "/sell" },
-    { label: "Impostor Fútbol", href: "/impostor" }, // ✅ NUEVO
+    { label: "Impostor Fútbol", href: "/impostor" },
     { label: "Rastrear Pedido", href: "/track-order" },
     { label: "Favoritos", href: "/favorites" },
     { label: "Cómo funciona", href: "/how-it-works" },
@@ -245,34 +246,19 @@ export default function Header() {
 
                 {menuOpen && (
                   <div className="user-dropdown" role="menu">
-                    <button
-                      className="user-item"
-                      onClick={() => goAndClose("/perfil")}
-                    >
+                    <button className="user-item" onClick={() => goAndClose("/perfil")}>
                       Mi perfil
                     </button>
-                    <button
-                      className="user-item"
-                      onClick={() => goAndClose("/my-listings")}
-                    >
+                    <button className="user-item" onClick={() => goAndClose("/my-listings")}>
                       Mis publicaciones
                     </button>
-                    <button
-                      className="user-item"
-                      onClick={() => goAndClose("/my-orders")}
-                    >
+                    <button className="user-item" onClick={() => goAndClose("/my-orders")}>
                       Mis pedidos
                     </button>
-                    <button
-                      className="user-item"
-                      onClick={() => goAndClose("/my-sales")}
-                    >
+                    <button className="user-item" onClick={() => goAndClose("/my-sales")}>
                       Mis ventas
                     </button>
-                    <button
-                      className="user-item danger"
-                      onClick={handleLogout}
-                    >
+                    <button className="user-item danger" onClick={handleLogout}>
                       Cerrar sesión
                     </button>
                   </div>
@@ -284,21 +270,11 @@ export default function Header() {
               </button>
             )}
 
-            <button
-              className="pill"
-              type="button"
-              aria-label="Favoritos"
-              onClick={openFavorites}
-            >
+            <button className="pill" type="button" aria-label="Favoritos" onClick={openFavorites}>
               ❤️<span>{favCount}</span>
             </button>
 
-            <button
-              className="pill"
-              type="button"
-              aria-label="Carrito"
-              onClick={openCart}
-            >
+            <button className="pill" type="button" aria-label="Carrito" onClick={openCart}>
               🛒<span>{cartCount}</span>
             </button>
 
@@ -309,17 +285,8 @@ export default function Header() {
 
       <nav className="subnav" aria-label="Subnavegación">
         <div className="container subnav-inner">
-          <button
-            className="loc-link"
-            onClick={() => setIsLocationModalOpen(true)}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
+          <button className="loc-link" onClick={() => setIsLocationModalOpen(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path
                 d="M12 22s7-6.46 7-12a7 7 0 1 0-14 0c0 5.54 7 12 7 12Z"
                 stroke="currentColor"
@@ -327,65 +294,22 @@ export default function Header() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <circle
-                cx="12"
-                cy="10"
-                r="2.5"
-                stroke="currentColor"
-                strokeWidth="1.6"
-              />
+              <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.6" />
             </svg>
             <span>{getLocationText()}</span>
           </button>
 
-          <button className="subnav-link" onClick={goToCatalog}>
-            Catálogo
-          </button>
-
-          <button className="subnav-link" onClick={() => navigate("/offers")}>
-            Ofertas
-          </button>
-
-          <button className="subnav-link" onClick={() => navigate("/sell")}>
-            Vender
-          </button>
-
-          {/* ✅ NUEVO - Link de Impostor en subnav */}
+          <button className="subnav-link" onClick={goToCatalog}>Catálogo</button>
+          <button className="subnav-link" onClick={() => navigate("/offers")}>Ofertas</button>
+          <button className="subnav-link" onClick={() => navigate("/sell")}>Vender</button>
           <button className="subnav-link impostor-link" onClick={() => navigate("/impostor")}>
-            Impostor
+            🎭 Impostor
           </button>
-
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/track-order")}
-          >
-            Rastrear Pedido
-          </button>
-
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/favorites")}
-          >
-            Favoritos
-          </button>
-
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/how-it-works")}
-          >
-            Cómo funciona
-          </button>
-
-          <button
-            className="subnav-link"
-            onClick={() => navigate("/authenticity")}
-          >
-            Autenticidad
-          </button>
-
-          <button className="subnav-link" onClick={() => navigate("/help")}>
-            Ayuda
-          </button>
+          <button className="subnav-link" onClick={() => navigate("/track-order")}>Rastrear Pedido</button>
+          <button className="subnav-link" onClick={() => navigate("/favorites")}>Favoritos</button>
+          <button className="subnav-link" onClick={() => navigate("/how-it-works")}>Cómo funciona</button>
+          <button className="subnav-link" onClick={() => navigate("/authenticity")}>Autenticidad</button>
+          <button className="subnav-link" onClick={() => navigate("/help")}>Ayuda</button>
         </div>
       </nav>
 

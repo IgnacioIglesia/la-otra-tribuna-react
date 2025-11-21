@@ -49,6 +49,9 @@ export default function MobileDrawer({
     return `${currentLocation.ciudad}, ${currentLocation.departamento}`;
   };
 
+  // Detectar si es el item de Impostor
+  const isImpostorItem = (item) => item.href === "/impostor";
+
   return (
     <div className={`lot-drawer ${open ? "open" : ""}`} aria-hidden={!open}>
       <div className="drawer-backdrop" onClick={onClose} />
@@ -69,14 +72,17 @@ export default function MobileDrawer({
             <li key={it.href || idx}>
               <button
                 onClick={() => handleItemClick(it)}
-                className="drawer-link"
+                className={`drawer-link ${isImpostorItem(it) ? 'drawer-link-impostor' : ''}`}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}
               >
-                <span>{it.label}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {isImpostorItem(it) && <span className="impostor-emoji">🎭</span>}
+                  {it.label}
+                </span>
 
                 {it.action === "location" && (
                   <span

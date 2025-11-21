@@ -8,11 +8,11 @@
 .lot-drawer{
   position: fixed;
   inset: 0;
-  z-index: 6000;              /* alto para superar header/hero */
-  pointer-events: none;       /* bloqueado por defecto */
+  z-index: 6000;
+  pointer-events: none;
 }
 .lot-drawer.open{
-  pointer-events: auto;       /* interactivo cuando está abierto */
+  pointer-events: auto;
 }
 
 /* Backdrop */
@@ -25,33 +25,43 @@
 }
 .lot-drawer.open .drawer-backdrop{ opacity: 1; }
 
-/* Panel */
+/* Panel - ARREGLADO EL CORTE DE ARRIBA */
 .drawer-panel{
   position: fixed;
   top: 0;
   left: 0;
-  height: 100vh;              /* ocupa toda la altura visible */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height - mejor para móviles */
   width: 85%;
   max-width: 340px;
   background: var(--bg);
   transform: translateX(-100%);
   transition: transform .28s ease;
   box-shadow: 4px 0 18px rgba(0,0,0,.20);
-  z-index: 6001;              /* por encima del backdrop */
+  z-index: 6001;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: env(safe-area-inset-bottom); /* notch-friendly */
+  /* Safe areas para dispositivos con notch */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 .lot-drawer.open .drawer-panel{ transform: translateX(0); }
 
-/* Head y lista */
+/* Head - ARREGLADO PADDING SUPERIOR */
 .drawer-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:14px 16px;
+  padding: 14px 16px;
+  /* Agregar padding extra si hay safe area */
+  padding-top: max(14px, calc(env(safe-area-inset-top, 0px) + 10px));
   border-bottom:1px solid var(--ring);
   font-weight:600;
+  background: var(--bg);
+  /* Sticky para que se vea siempre */
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 /* Contenedor del buscador */
@@ -81,16 +91,18 @@
 
 /* Ajustar el dropdown de resultados en el drawer */
 .drawer-search .search-results-panel {
-  max-height: 300px; /* Más pequeño en móvil */
+  max-height: 300px;
 }
 
 .drawer-list{
   list-style:none;
   margin:0;
   padding:8px 0 16px;
+  /* Agregar padding inferior para safe area */
+  padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 16px));
 }
 
-/* Estilo para los links (ahora son <button> en lugar de <a>) */
+/* Estilo para los links */
 .drawer-link{
   display:block;
   padding:12px 16px;
@@ -109,6 +121,41 @@
 
 .drawer-link:hover{ 
   background:#f6f6f7; 
+}
+
+/* ===================================
+   IMPOSTOR ITEM - DESTACADO
+   =================================== */
+
+.drawer-link-impostor {
+  background: linear-gradient(135deg, rgba(10, 61, 12, 0.08) 0%, rgba(45, 122, 50, 0.1) 100%);
+  border: 1px solid rgba(168, 255, 120, 0.3);
+  margin: 4px 8px;
+  width: calc(100% - 16px);
+  border-radius: 12px;
+}
+
+.drawer-link-impostor:hover {
+  background: linear-gradient(135deg, rgba(10, 61, 12, 0.15) 0%, rgba(45, 122, 50, 0.18) 100%);
+  border-color: rgba(168, 255, 120, 0.5);
+}
+
+.drawer-link-impostor span:first-child {
+  color: #0a3d0c;
+  font-weight: 700;
+}
+
+/* Emoji animado */
+.impostor-emoji {
+  display: inline-block;
+  font-size: 1.2rem;
+  animation: emojiWiggle 2.5s ease-in-out infinite;
+}
+
+@keyframes emojiWiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-10deg) scale(1.1); }
+  75% { transform: rotate(10deg) scale(1.1); }
 }
 
 /* Cerrar button */
@@ -132,6 +179,10 @@
 @media (prefers-reduced-motion: reduce){
   .drawer-backdrop,
   .drawer-panel{ transition: none; }
+  
+  .impostor-emoji {
+    animation: none;
+  }
 }
 
 /* Ajustes específicos para pantallas muy pequeñas */
@@ -147,10 +198,43 @@
 
   .drawer-head {
     padding: 12px;
+    padding-top: max(12px, calc(env(safe-area-inset-top, 0px) + 8px));
   }
 
   .drawer-link {
     padding: 10px 12px;
     font-size: 14px;
+  }
+
+  .drawer-link-impostor {
+    margin: 4px 6px;
+    width: calc(100% - 12px);
+  }
+}
+
+/* ===================================
+   iOS SPECIFIC - SAFE AREAS
+   =================================== */
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .drawer-panel {
+    /* Asegura que el contenido no se corte con el notch */
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .drawer-head {
+    padding-top: calc(14px + env(safe-area-inset-top));
+  }
+  
+  .drawer-list {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Para dispositivos con notch específicamente */
+@media screen and (min-device-width: 375px) and (max-device-width: 812px) and (-webkit-device-pixel-ratio: 3) {
+  .drawer-head {
+    padding-top: calc(14px + constant(safe-area-inset-top)); /* iOS 11 */
+    padding-top: calc(14px + env(safe-area-inset-top)); /* iOS 11.2+ */
   }
 }
