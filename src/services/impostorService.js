@@ -548,19 +548,31 @@ class ImpostorService {
     return channel;
   }
 
-  // 🔥 FUNCIÓN CORREGIDA: Broadcast de resultados para TODOS los jugadores
+  // 🔥 FUNCIÓN MEJORADA: Actualiza la sala a estado "results" para forzar sincronización
   async broadcastResults(roomCode) {
     try {
       console.log('📊 Enviando broadcast de resultados a todos...');
       
-      // 🔥 CRÍTICO: Usar el MISMO nombre de canal que los listeners
+      // 🔥 PASO 1: Actualizar el estado de la sala en la DB para trigger
+      const { error: updateError } = await supabase
+        .from('impostor_rooms')
+        .update({ 
+          status: 'showing_results',
+          updated_at: new Date().toISOString()
+        })
+        .eq('room_code', roomCode);
+
+      if (updateError) {
+        console.error('❌ Error actualizando sala:', updateError);
+      }
+      
+      // 🔥 PASO 2: Enviar broadcast
       const channel = supabase.channel(`room-${roomCode}-results`);
       
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           console.log('✅ Canal suscrito, enviando broadcast...');
           
-          // Enviar el broadcast
           const result = await channel.send({
             type: 'broadcast',
             event: 'show_results',
@@ -572,7 +584,6 @@ class ImpostorService {
           
           console.log('📡 Resultado del broadcast:', result);
           
-          // Esperar un poco para que llegue el mensaje
           setTimeout(() => {
             console.log('🔌 Cerrando canal después de broadcast');
             supabase.removeChannel(channel);

@@ -565,3 +565,230 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ===================================
+   IMPOSTOR CARD - SIN ANIMACIONES LENTAS
+   =================================== */
+
+.impostor-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 25px;
+  padding: 45px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 15px 50px rgba(0, 0, 0, 0.4),
+    inset 0 0 40px rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  margin: 0 auto;
+  /* ❌ REMOVIDO: animation */
+  /* ✅ Transición suave solo para opacity */
+  transition: opacity 0.2s ease;
+}
+
+.impostor-card h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  font-weight: 900;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Estilos para IMPOSTOR */
+.impostor-card.impostor {
+  border-color: rgba(255, 100, 100, 0.4);
+  background: rgba(255, 100, 100, 0.15);
+}
+
+.impostor-card.impostor h1 {
+  color: #ff6b6b;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(255, 107, 107, 0.5);
+}
+
+/* Estilos para JUGADOR NORMAL */
+.impostor-card.normal {
+  border-color: rgba(168, 255, 120, 0.4);
+  background: rgba(168, 255, 120, 0.15);
+}
+
+.impostor-card.normal h1 {
+  color: #a8ff78;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(168, 255, 120, 0.5);
+}
+
+/* Icono del rol */
+.impostor-card-icon {
+  font-size: 80px;
+  margin-bottom: 25px;
+  filter: drop-shadow(0 0 30px rgba(168, 255, 120, 0.6));
+  /* ❌ REMOVIDO: animation */
+}
+
+/* Instrucciones */
+.player-instruction {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 25px 0;
+  line-height: 1.7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  font-weight: 600;
+}
+
+/* Información del jugador */
+.player-info {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+  padding: 30px;
+  margin: 30px 0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  /* ❌ REMOVIDO: animation */
+}
+
+.player-info h2 {
+  color: #ffffff;
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 20px;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(168, 255, 120, 0.3);
+}
+
+.player-info p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.1rem;
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.player-info .highlight {
+  color: #a8ff78;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+/* Botón de ocultar */
+.impostor-card-hide-btn {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 14px 35px;
+  border-radius: 50px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease; /* ✅ Transición más rápida */
+  margin-top: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.impostor-card-hide-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px); /* ✅ Menos movimiento */
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.impostor-card-hide-btn:active {
+  transform: scale(0.98);
+}
+
+/* ===================================
+   RESPONSIVE
+   =================================== */
+
+@media (max-width: 768px) {
+  .impostor-card {
+    padding: 30px 25px;
+  }
+
+  .impostor-card h1 {
+    font-size: 2rem;
+  }
+
+  .impostor-card-icon {
+    font-size: 65px;
+  }
+
+  .player-instruction {
+    font-size: 1.1rem;
+  }
+
+  .player-info h2 {
+    font-size: 1.8rem;
+  }
+
+  .player-info p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .impostor-card {
+    padding: 25px 20px;
+    border-radius: 18px;
+  }
+
+  .impostor-card h1 {
+    font-size: 1.7rem;
+  }
+
+  .impostor-card-icon {
+    font-size: 55px;
+  }
+
+  .player-instruction {
+    font-size: 1rem;
+  }
+
+  .player-info {
+    padding: 20px;
+  }
+
+  .player-info h2 {
+    font-size: 1.5rem;
+  }
+
+  .player-info p {
+    font-size: 0.95rem;
+  }
+
+  .impostor-card-hide-btn {
+    padding: 12px 25px;
+    font-size: 0.95rem;
+  }
+}
+
+/* ===================================
+   OPTIMIZACIONES DE RENDIMIENTO
+   =================================== */
+
+.impostor-card,
+.player-info {
+  will-change: opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reducir animaciones en dispositivos con preferencia */
+@media (prefers-reduced-motion: reduce) {
+  .impostor-card,
+  .impostor-card-hide-btn {
+    transition-duration: 0.01ms !important;
+  }
+}
