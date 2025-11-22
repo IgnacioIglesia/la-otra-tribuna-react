@@ -40,6 +40,44 @@ const ImpostorGame = () => {
     initializeRoom();
   }, [roomCode]);
 
+  // 🔥 NUEVA FUNCIÓN: Cargar resultados desde la DB
+  const loadResultsFromDB = async () => {
+    try {
+      console.log('📊 Cargando resultados desde DB...');
+      
+      const [sessions, players, roomData] = await Promise.all([
+        impostorService.getRoomSessions(roomCode),
+        impostorService.getRoomPlayers(roomCode),
+        impostorService.getRoom(roomCode)
+      ]);
+      
+      const currentImpostors = sessions.filter(s => s.is_impostor);
+      
+      const impostorPlayersList = players.filter(p => 
+        currentImpostors.some(s => s.player_number === p.player_number)
+      );
+      
+      console.log('🎭 Impostores encontrados:', impostorPlayersList);
+      
+      setRoundResults({
+        impostorPlayers: impostorPlayersList,
+        selectedPlayer: roomData?.footballers
+      });
+      
+      setShowResultsView(true);
+      setIsRevealed(false);
+      
+      showNotification(
+        '📊 Resultados Disponibles',
+        'Los resultados de la ronda están listos',
+        'info',
+        4000
+      );
+    } catch (err) {
+      console.error('❌ Error cargando resultados:', err);
+    }
+  };
+
   useEffect(() => {
     if (!roomCode || !room) return;
 
@@ -124,6 +162,12 @@ const ImpostorGame = () => {
               navigate('/impostor');
             }, 3000);
           }
+          
+          // 🔥 NUEVO: Detectar cambio a showing_results
+          if (payload.new.status === 'showing_results' && !showResultsView) {
+            console.log('📊 Detectado estado showing_results, cargando resultados...');
+            await loadResultsFromDB();
+          }
         }
       )
       .subscribe();
@@ -155,7 +199,7 @@ const ImpostorGame = () => {
       supabase.removeChannel(roomStatusSubscription);
       supabase.removeChannel(closedBroadcastSubscription);
     };
-  }, [roomCode, room, navigate]);
+  }, [roomCode, room, navigate, showResultsView]);
 
   useEffect(() => {
     if (!roomCode) return;
@@ -183,6 +227,7 @@ const ImpostorGame = () => {
           hasLoadedRole.current = false;
           setIsRevealed(false);
           setPlayerRole(null);
+          setShowResultsView(false);
           setGameStarted(true);
           
           showNotification(
@@ -197,44 +242,15 @@ const ImpostorGame = () => {
       }
     );
 
-    // 🔥 SUSCRIPCIÓN A RESULTADOS PARA TODOS LOS JUGADORES
+    // 🔥 SUSCRIPCIÓN MEJORADA A RESULTADOS
     const resultsSubscription = supabase
-      .channel(`room-${roomCode}-results`) // 🔥 MISMO nombre que en el service
+      .channel(`room-${roomCode}-results-listener`)
       .on(
         'broadcast',
         { event: 'show_results' },
         async (payload) => {
           console.log('📊 ✅ Broadcast recibido: mostrar resultados', payload);
-          
-          try {
-            // Cargar datos de la ronda actual
-            const sessions = await impostorService.getRoomSessions(roomCode);
-            const currentImpostors = sessions.filter(s => s.is_impostor);
-            
-            const impostorPlayersList = roomPlayers.filter(p => 
-              currentImpostors.some(s => s.player_number === p.player_number)
-            );
-            
-            console.log('🎭 Impostores encontrados:', impostorPlayersList);
-            
-            setRoundResults({
-              impostorPlayers: impostorPlayersList,
-              selectedPlayer: room?.footballers
-            });
-            
-            // Cambiar a vista de resultados
-            setShowResultsView(true);
-            setIsRevealed(false);
-            
-            showNotification(
-              '📊 Resultados Disponibles',
-              'Los resultados de la ronda están listos',
-              'info',
-              4000
-            );
-          } catch (err) {
-            console.error('❌ Error cargando resultados:', err);
-          }
+          await loadResultsFromDB();
         }
       )
       .subscribe((status) => {
@@ -246,7 +262,7 @@ const ImpostorGame = () => {
         }
       });
 
-    // Polling de backup (por si falla el broadcast)
+    // Polling de backup
     const roomCheckInterval = setInterval(async () => {
       try {
         const roomData = await impostorService.getRoom(roomCode);
@@ -267,6 +283,12 @@ const ImpostorGame = () => {
             navigate('/impostor');
           }, 2000);
         }
+        
+        // 🔥 NUEVO: Polling también detecta resultados
+        if (roomData.status === 'showing_results' && !showResultsView) {
+          console.log('⏰ Polling detectó resultados');
+          await loadResultsFromDB();
+        }
       } catch (error) {
         if (error.message?.includes('No rows') || error.code === 'PGRST116') {
           console.log('⚠️ Sala no encontrada, probablemente fue eliminada');
@@ -285,7 +307,7 @@ const ImpostorGame = () => {
           }, 2000);
         }
       }
-    }, 3000);
+    }, 2000);
 
     const pollingInterval = setInterval(async () => {
       try {
@@ -295,6 +317,7 @@ const ImpostorGame = () => {
           hasLoadedRole.current = false;
           setIsRevealed(false);
           setPlayerRole(null);
+          setShowResultsView(false);
           setGameStarted(true);
           
           showNotification(
@@ -319,7 +342,8 @@ const ImpostorGame = () => {
       clearInterval(pollingInterval);
       clearInterval(roomCheckInterval);
     };
-  }, [roomCode, gameStarted, roomPlayers, room, navigate]);
+  }, [roomCode, gameStarted, navigate, showResultsView]);
+
   useEffect(() => {
     if (!roomCode) return;
 
@@ -400,6 +424,13 @@ const ImpostorGame = () => {
       }
 
       await loadRoomPlayers();
+      
+      // 🔥 NUEVO: Verificar si ya hay resultados pendientes
+      const roomData = await impostorService.getRoom(roomCode);
+      if (roomData.status === 'showing_results') {
+        await loadResultsFromDB();
+      }
+      
       setLoading(false);
     } catch (err) {
       console.error('Error inicializando sala:', err);
@@ -427,7 +458,7 @@ const ImpostorGame = () => {
       
       setRoom(roomData);
       setNumImpostors(roomData.num_impostors);
-      setGameStarted(roomData.status === 'playing');
+      setGameStarted(roomData.status === 'playing' || roomData.status === 'showing_results');
     } catch (err) {
       console.error('Error cargando sala:', err);
       throw err;
@@ -491,6 +522,7 @@ const ImpostorGame = () => {
       
       previousPlayerIdRef.current = result.selectedPlayer.id;
       hasLoadedRole.current = false;
+      setShowResultsView(false);
       setGameStarted(true);
       setLoading(false);
       
@@ -540,10 +572,11 @@ const ImpostorGame = () => {
     }
   };
 
-  // 🔥 FUNCIÓN ACTUALIZADA: Usa broadcast en lugar de solo abrir el modal localmente
+  // 🔥 FUNCIÓN MEJORADA: Mostrar resultados a todos
   const showResults = async () => {
     try {
-      // Cargar resultados localmente primero
+      setLoading(true);
+      
       const sessions = await impostorService.getRoomSessions(roomCode);
       const currentImpostors = sessions.filter(s => s.is_impostor);
       
@@ -556,12 +589,12 @@ const ImpostorGame = () => {
         selectedPlayer: room?.footballers
       });
       
-      // Cambiar a vista de resultados
       setShowResultsView(true);
       setIsRevealed(false);
       
-      // 🔥 ENVIAR BROADCAST A TODOS LOS JUGADORES
       await impostorService.broadcastResults(roomCode);
+      
+      setLoading(false);
       
       showNotification(
         'Resultados Enviados',
@@ -572,6 +605,7 @@ const ImpostorGame = () => {
       
     } catch (err) {
       console.error('Error obteniendo resultados:', err);
+      setLoading(false);
       showNotification('Error', 'No se pudieron cargar los resultados', 'error', 3000);
     }
   };
@@ -912,7 +946,6 @@ const ImpostorGame = () => {
         {gameStarted && (
           <div className="impostor-game-active">
             {showResultsView ? (
-              /* VISTA DE RESULTADOS */
               <div className="impostor-results-view">
                 <div className="results-header">
                   <div className="results-icon">🏆</div>
@@ -973,9 +1006,10 @@ const ImpostorGame = () => {
                 {isHost && (
                   <button
                     onClick={handleNewRound}
+                    disabled={loading}
                     className="impostor-game-btn impostor-game-btn-primary impostor-game-btn-large"
                   >
-                    🔄 Nueva Ronda
+                    {loading ? '⏳ Cargando...' : '🔄 Nueva Ronda'}
                   </button>
                 )}
 
@@ -1027,9 +1061,10 @@ const ImpostorGame = () => {
                   {isHost ? (
                     <button
                       onClick={showResults}
+                      disabled={loading}
                       className="impostor-game-btn impostor-game-btn-primary"
                     >
-                      📊 Mostrar Resultados a Todos
+                      {loading ? '⏳ Cargando...' : '📊 Mostrar Resultados a Todos'}
                     </button>
                   ) : (
                     <div

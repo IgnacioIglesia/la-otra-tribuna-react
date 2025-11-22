@@ -47,31 +47,73 @@ class ImpostorService {
         }
         
         const randomIndex = Math.floor(Math.random() * allPlayers.length);
-        return allPlayers[randomIndex];
+        return { player: allPlayers[randomIndex], wasReset: true };
       }
       
       const randomIndex = Math.floor(Math.random() * data.length);
-      return data[randomIndex];
+      return { player: data[randomIndex], wasReset: false };
     } catch (error) {
       console.error('Error fetching random player:', error);
       throw error;
     }
   }
 
-  // Obtener jugadores ya usados en esta sala
+  // 🔥 NUEVO: Obtener jugadores ya usados desde la columna de la sala
   async getUsedPlayers(roomCode) {
     try {
       const { data, error } = await supabase
-        .from('impostor_sessions')
-        .select('player_id')
-        .eq('room_code', roomCode);
+        .from('impostor_rooms')
+        .select('used_player_ids')
+        .eq('room_code', roomCode)
+        .single();
 
       if (error) throw error;
       
-      return data ? [...new Set(data.map(session => session.player_id))].filter(Boolean) : [];
+      return data?.used_player_ids || [];
     } catch (error) {
       console.error('Error fetching used players:', error);
       return [];
+    }
+  }
+
+  // 🔥 NUEVO: Agregar un jugador a la lista de usados
+  async addUsedPlayer(roomCode, playerId) {
+    try {
+      const currentUsed = await this.getUsedPlayers(roomCode);
+      
+      if (!currentUsed.includes(playerId)) {
+        const updatedList = [...currentUsed, playerId];
+        
+        const { error } = await supabase
+          .from('impostor_rooms')
+          .update({ used_player_ids: updatedList })
+          .eq('room_code', roomCode);
+
+        if (error) throw error;
+        console.log(`✅ Jugador ${playerId} agregado a usados. Total: ${updatedList.length}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error adding used player:', error);
+      throw error;
+    }
+  }
+
+  // 🔥 NUEVO: Resetear jugadores usados
+  async resetUsedPlayers(roomCode) {
+    try {
+      const { error } = await supabase
+        .from('impostor_rooms')
+        .update({ used_player_ids: [] })
+        .eq('room_code', roomCode);
+
+      if (error) throw error;
+      console.log('🔄 Jugadores usados reseteados');
+      return true;
+    } catch (error) {
+      console.error('Error resetting used players:', error);
+      throw error;
     }
   }
 
@@ -84,7 +126,8 @@ class ImpostorService {
         room_code: roomCode,
         num_players: numPlayers,
         num_impostors: numImpostors,
-        status: 'waiting'
+        status: 'waiting',
+        used_player_ids: []
       };
 
       if (hostUserId) {
@@ -162,7 +205,7 @@ class ImpostorService {
         };
       }
 
-      // 🔥 OBTENER NOMBRE COMPLETO DEL PERFIL
+      // Obtener nombre completo del perfil
       const { data: profile } = await supabase
         .from('perfil')
         .select('nombre, apellido')
@@ -304,16 +347,28 @@ class ImpostorService {
       
       console.log(`🎭 Impostores ajustados: ${adjustedImpostors} (original: ${numImpostors})`);
       
+      // 🔥 Obtener jugadores ya usados desde la sala
       const usedPlayers = await this.getUsedPlayers(roomCode);
       console.log('Jugadores ya usados:', usedPlayers);
       
-      const selectedPlayer = await this.getRandomPlayerExcluding(usedPlayers);
+      // 🔥 Obtener jugador aleatorio excluyendo los usados
+      const result = await this.getRandomPlayerExcluding(usedPlayers);
+      const selectedPlayer = result.player;
+      
+      // 🔥 Si se reseteó la lista, limpiar los usados en la DB
+      if (result.wasReset) {
+        console.log('🔄 Se agotaron los jugadores, reseteando lista...');
+        await this.resetUsedPlayers(roomCode);
+      }
       
       if (!selectedPlayer) {
         throw new Error('No hay jugadores disponibles en la base de datos');
       }
 
       console.log('Jugador seleccionado:', selectedPlayer.name);
+
+      // 🔥 NUEVO: Registrar este jugador como usado
+      await this.addUsedPlayer(roomCode, selectedPlayer.id);
 
       const { error: updateError } = await supabase
         .from('impostor_rooms')
@@ -548,17 +603,16 @@ class ImpostorService {
     return channel;
   }
 
-  // 🔥 FUNCIÓN MEJORADA: Actualiza la sala a estado "results" para forzar sincronización
+  // Actualiza la sala a estado "results" para forzar sincronización
   async broadcastResults(roomCode) {
     try {
       console.log('📊 Enviando broadcast de resultados a todos...');
       
-      // 🔥 PASO 1: Actualizar el estado de la sala en la DB para trigger
+      // Actualizar el estado de la sala en la DB para trigger
       const { error: updateError } = await supabase
         .from('impostor_rooms')
         .update({ 
-          status: 'showing_results',
-          updated_at: new Date().toISOString()
+          status: 'showing_results'
         })
         .eq('room_code', roomCode);
 
@@ -566,8 +620,8 @@ class ImpostorService {
         console.error('❌ Error actualizando sala:', updateError);
       }
       
-      // 🔥 PASO 2: Enviar broadcast
-      const channel = supabase.channel(`room-${roomCode}-results`);
+      // 🔥 IMPORTANTE: Usar el mismo nombre de canal que en el listener
+      const channel = supabase.channel(`room-${roomCode}-results-listener`);
       
       await channel.subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
